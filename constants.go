@@ -14,6 +14,11 @@
 
 package twodee
 
+const (
+	IntNearest = iota
+	IntLinear
+)
+
 // Keyboard key definitions: 8-bit ISO-8859-1 (Latin 1) encoding is used
 // for printable keys (such as A-Z, 0-9 etc), and values above 256
 // represent Special (non-printable) keys (e.g. F1, Page Up etc).

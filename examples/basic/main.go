@@ -37,7 +37,10 @@ func main() {
 	}
 	defer system.Terminate()
 	window = &twodee.Window{Width: 640, Height: 480}
-	system.Open(window)
+	if err = system.Open(window); err != nil {
+		PrintError(err)
+		os.Exit(1)
+	}
 	for run {
 		system.Paint()
 		run = system.Key(twodee.KeyEsc) == 0 && window.Opened()
