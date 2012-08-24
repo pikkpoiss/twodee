@@ -13,16 +13,20 @@ My expectation is to use this for Ludum Dare competitions as I go.
 
 Dependencies
 ------------
-libglew from: http://www.glfw.org/download.html
+
+GLEW - http://glew.sourceforge.net/
+I used version 1.9.0
+
+    tar xvzf glew-1.9.0.tgz
+    cd glew-1.9.0
+    make
+    sudo make install
+
+libglfw - http://www.glfw.org/download.html
 I used version 2.7.6
+Unzip the source and cd to the base of the package.  Run (OSX):
 
-Unzip the source and cd to the base of the package.
-You need to build the project as a shared lib, so I used the
-following (OSX):
-
-    cd lib/cocoa && 
-    make -f Makefile.cocoa libglfw.dylib
-    install -c -m 644 libglfw.dylib /usr/local/lib/libglfw.dylib
+    make cocoa-dist-install
 
 Then:
 
@@ -37,4 +41,18 @@ To run the examples from the local source, run:
 
 From the project root.  This will symlink the twodee source folder into your
 $GOPATH, so the examples can be built from a local checkout.
+
+
+Old instructions
+----------------
+I think cocoa-dist-install works now, but previously you had to explicitly 
+build the dylib using something like the following:
+
+Unzip the source and cd to the base of the package.
+You need to build the project as a shared lib, so I used the
+following (OSX):
+
+    cd lib/cocoa
+    make -f Makefile.cocoa libglfw.dylib
+    install -c -m 644 libglfw.dylib /usr/local/lib/
 
