@@ -15,8 +15,8 @@
 package main
 
 import (
-	"github.com/kurrik/twodee"
 	"fmt"
+	"github.com/kurrik/twodee"
 	"os"
 )
 
@@ -28,21 +28,38 @@ func main() {
 	var (
 		system *twodee.System
 		window *twodee.Window
-		err error
-		run bool = true
+		err    error
+		run    bool = true
 	)
 	if system, err = twodee.Init(); err != nil {
 		PrintError(err)
 		os.Exit(1)
 	}
 	defer system.Terminate()
+
 	window = &twodee.Window{Width: 640, Height: 480}
 	if err = system.Open(window); err != nil {
 		PrintError(err)
 		os.Exit(1)
 	}
+
+	textures := map[string]string{
+		"bricks": "examples/basic/texture.png",
+	}
+	for name, path := range textures {
+		if err = system.LoadTexture(name, path, twodee.IntNearest); err != nil {
+			PrintError(err)
+			os.Exit(1)
+		}
+	}
+
+	scene := &twodee.Scene{}
+	parent := system.NewSprite("bricks", 0, 0, 32, 32, 4)
+	parent.AddChild(system.NewSprite("bricks", 32, 0, 32, 32, 4))
+	scene.AddChild(parent)
+	parent.Frame = 1
 	for run {
-		system.Paint()
+		system.Paint(scene)
 		run = system.Key(twodee.KeyEsc) == 0 && window.Opened()
 	}
 }

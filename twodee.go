@@ -35,8 +35,56 @@ func (w *Window) Opened() bool {
 	return glfw.WindowParam(glfw.Opened) == 1
 }
 
+type Texture struct {
+	texture gl.Texture
+	Width   int
+	Height  int
+}
+
+func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
+	var (
+		file      *os.File
+		img       image.Image
+		bounds    image.Rectangle
+		data      *bytes.Buffer
+		gltexture gl.Texture
+	)
+	gltexture = gl.GenTexture()
+	gltexture.Bind(gl.TEXTURE_2D)
+	if file, err = os.Open(path); err != nil {
+		return
+	}
+	if img, err = png.Decode(file); err != nil {
+		return
+	}
+	if data, err = EncodeTGA(path, img); err != nil {
+		return
+	}
+	if !glfw.LoadMemoryTexture2D(data.Bytes(), 0) {
+		err = fmt.Errorf("Failed to load texture: %v", path)
+		return
+	}
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, smoothing)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, smoothing)
+	bounds = img.Bounds()
+	texture = &Texture{
+		texture: gltexture,
+		Width:   bounds.Dx(),
+		Height:  bounds.Dy(),
+	}
+	return
+}
+
+func (t *Texture) Bind() {
+	t.texture.Bind(gl.TEXTURE_2D)
+}
+
+func (t *Texture) Unbind() {
+	t.texture.Unbind(gl.TEXTURE_2D)
+}
+
 type System struct {
-	Textures []gl.Texture
+	Textures map[string]*Texture
 }
 
 func Init() (sys *System, err error) {
@@ -44,7 +92,7 @@ func Init() (sys *System, err error) {
 		return
 	}
 	sys = &System{}
-	sys.Textures = make([]gl.Texture, 0)
+	sys.Textures = make(map[string]*Texture, 0)
 	return
 }
 
@@ -68,44 +116,15 @@ func (s *System) Open(win *Window) (err error) {
 	gl.Ortho(0, float64(win.Width), float64(win.Height), 0, 0, 1)
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.Enable(gl.TEXTURE_2D)
-	_, err = s.LoadTexture("examples/basic/texture.png", IntNearest)
 	return
 }
 
-func (s *System) LoadTexture(path string, smoothing int) (index int, err error) {
-	var (
-		file *os.File
-		img  image.Image
-		data *bytes.Buffer
-	)
-	texture := gl.GenTexture()
-	texture.Bind(gl.TEXTURE_2D)
-
-	if file, err = os.Open(path); err != nil {
+func (s *System) LoadTexture(name string, path string, inter int) (err error) {
+	var texture *Texture
+	if texture, err = LoadTexture(path, inter); err != nil {
 		return
 	}
-	if img, err = png.Decode(file); err != nil {
-		return
-	}
-	if data, err = EncodeTGA(" ", img); err != nil {
-		return
-	}
-	if !glfw.LoadMemoryTexture2D(data.Bytes(), 0) {
-		err = fmt.Errorf("Failed to load texture: %v", path)
-		return
-	}
-	switch smoothing {
-	default:
-		fallthrough
-	case IntNearest:
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	case IntLinear:
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	}
-	s.Textures = append(s.Textures, texture)
-	index = len(s.Textures)
+	s.Textures[name] = texture
 	return
 }
 
@@ -163,25 +182,8 @@ func EncodeTGA(name string, img image.Image) (buf *bytes.Buffer, err error) {
 	return
 }
 
-func (s *System) Paint() {
+func (s *System) Paint(scene *Scene) {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
-
-	s.Textures[0].Unbind(gl.TEXTURE_2D)
-	gl.Begin(gl.LINES)
-	gl.Vertex2f(0, 0)
-	gl.Vertex2f(640, 480)
-	gl.End()
-
-	s.Textures[0].Bind(gl.TEXTURE_2D)
-	gl.Begin(gl.QUADS)
-	gl.Vertex2f(50, 50)
-	gl.TexCoord2f(0, 0)
-	gl.Vertex2f(100, 50)
-	gl.TexCoord2f(1, 0)
-	gl.Vertex2f(100, 100)
-	gl.TexCoord2f(1, 1)
-	gl.Vertex2f(50, 100)
-	gl.TexCoord2f(0, 1)
-	gl.End()
+	scene.Draw()
 	glfw.SwapBuffers()
 }

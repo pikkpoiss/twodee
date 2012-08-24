@@ -14,9 +14,13 @@
 
 package twodee
 
+import (
+	"github.com/banthar/gl"
+)
+
 const (
-	IntNearest = iota
-	IntLinear
+	IntNearest = gl.NEAREST
+	IntLinear  = gl.LINEAR
 )
 
 // Keyboard key definitions: 8-bit ISO-8859-1 (Latin 1) encoding is used
@@ -101,5 +105,3 @@ const (
 	KeyMenu
 	KeyLast = KeyMenu
 )
-
-
