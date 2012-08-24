@@ -20,6 +20,15 @@ function yellow {
   echo -e "\033[1;33m$1\033[0m $2"
 }
 
+function red {
+  echo -e "\033[1;31m$1\033[0m $2"
+}
+
+if [ -z "$GOPATH" ]; then
+  red "Empty \$GOPATH!"
+  exit 1
+fi
+  
 if [ -e $PROJPATH ]; then
   yellow "Removing $PROJPATH"
   rm $PROJPATH
