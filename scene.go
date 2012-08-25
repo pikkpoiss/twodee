@@ -77,12 +77,14 @@ type Scene struct {
 
 type Sprite struct {
 	Element
-	system  *System
-	texture *Texture
-	Width   int
-	Height  int
-	Frames  int
-	Frame   int
+	system    *System
+	texture   *Texture
+	Width     int
+	Height    int
+	Frames    int
+	Frame     int
+	VelocityX float32
+	VelocityY float32
 }
 
 func (s *System) NewSprite(name string, x float32, y float32, w int, h int, frames int) *Sprite {
@@ -100,6 +102,38 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, fram
 	sprite.X = x
 	sprite.Y = y
 	return sprite
+}
+
+func inside(point float32, start float32, end float32) bool {
+	return start <= point && point <= end
+}
+
+func (s *Sprite) TestMove(dx float32, dy float32, sprite *Sprite) bool {
+	var (
+		x11 float32 = s.GlobalX() + dx
+		x12 float32 = x11 + float32(s.Width)
+		x21 float32 = sprite.GlobalX()
+		x22 float32 = x21 + float32(sprite.Width)
+	)
+	inX := (inside(x11, x21, x22) || inside(x12, x21, x22) || inside(x21, x11, x12) || inside(x22, x11, x12))
+	if !inX {
+		return true
+	}
+	var (
+		y11 float32 = s.GlobalY() + dy
+		y12 float32 = y11 + float32(s.Height)
+		y21 float32 = sprite.GlobalY()
+		y22 float32 = y21 + float32(sprite.Height)
+	)
+	inY := (inside(y11, y21, y22) || inside(y12, y21, y22) || inside(y21, y11, y12) || inside(y22, y11, y12))
+	if !inY {
+		return true
+	}
+	return false
+}
+
+func (s *Sprite) CollidesWith(sprite *Sprite) bool {
+	return !s.TestMove(0, 0, sprite)
 }
 
 func (s *Sprite) Draw() {
