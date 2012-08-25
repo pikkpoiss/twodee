@@ -29,6 +29,7 @@ type Node interface {
 	Draw()
 	GlobalX() float32
 	GlobalY() float32
+	GlobalZ() float32
 }
 
 type Element struct {
@@ -36,6 +37,7 @@ type Element struct {
 	parent   Node
 	X        float32
 	Y        float32
+	Z        float32
 }
 
 func (e *Element) AddChild(node Node) {
@@ -73,6 +75,13 @@ func (e *Element) GlobalY() float32 {
 		return e.Y
 	}
 	return e.parent.GlobalY() + e.Y
+}
+
+func (e *Element) GlobalZ() float32 {
+	if e.parent == nil {
+		return e.Z
+	}
+	return e.parent.GlobalZ() + e.Z
 }
 
 type Scene struct {
@@ -144,44 +153,45 @@ func (s *Sprite) SetFrame(frame int) {
 }
 
 func (s *Sprite) Draw() {
-	s.Element.Draw()
 	var (
-		x1         float32 = s.GlobalX()
-		y1         float32 = s.GlobalY()
-		x2         float32 = x1 + float32(s.Width)
-		y2         float32 = y1 + float32(s.Height)
+		x1 float32 = s.GlobalX()
+		y1 float32 = s.GlobalY()
+		z1 float32 = s.GlobalZ()
+		x2 float32 = x1 + float32(s.Width)
+		y2 float32 = y1 + float32(s.Height)
 	)
 	s.texture.Bind()
-	gl.MatrixMode(gl.TEXTURE);
+	gl.MatrixMode(gl.TEXTURE)
 	//gl.Scalef(1.0/64.0, 1.0/64.0, 1.0);
 	gl.Begin(gl.QUADS)
 	gl.TexCoord2d(s.texture1, 1)
-	gl.Vertex2f(x1, y1)
+	gl.Vertex3f(x1, y1, z1)
 	gl.TexCoord2d(s.texture2, 1)
-	gl.Vertex2f(x2, y1)
+	gl.Vertex3f(x2, y1, z1)
 	gl.TexCoord2d(s.texture2, 0)
-	gl.Vertex2f(x2, y2)
+	gl.Vertex3f(x2, y2, z1)
 	gl.TexCoord2d(s.texture1, 0)
-	gl.Vertex2f(x1, y2)
+	gl.Vertex3f(x1, y2, z1)
 	gl.End()
-	gl.MatrixMode(gl.MODELVIEW);
+	gl.MatrixMode(gl.MODELVIEW)
 	s.texture.Unbind()
+	s.Element.Draw()
 }
 
 type Text struct {
 	Element
-	system    *System
-	texture   *Texture
-	Width     int
-	Height    int
-	text      string
-	ratio     int
+	system  *System
+	texture *Texture
+	Width   int
+	Height  int
+	text    string
+	ratio   int
 }
 
 func (s *System) NewText(name string, x float32, y float32, r int, text string) *Text {
 	t := &Text{
-		system: s,
-		ratio: r,
+		system:  s,
+		ratio:   r,
 		texture: s.Textures[name],
 	}
 	t.X = x
@@ -200,13 +210,13 @@ func (t *Text) SetText(text string) {
 		sprite := &Sprite{
 			system:  t.system,
 			texture: t.texture,
-			Width: width,
-			Height: t.Height,
+			Width:   width,
+			Height:  t.Height,
 		}
 		sprite.SetFrame(frame)
 		sprite.X = float32(x)
 		sprite.Y = 0
-		x += width +  (1 * t.ratio)
+		x += width + (1 * t.ratio)
 		t.AddChild(sprite)
 	}
 	t.Width = x

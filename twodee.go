@@ -187,7 +187,7 @@ func (s *System) Terminate() {
 func (s *System) setProjection(win *Window) {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	gl.Ortho(0, float64(win.Width), float64(win.Height), 0, 0, 1)
+	gl.Ortho(0, float64(win.Width), float64(win.Height), 0, -1, 1)
 	gl.MatrixMode(gl.MODELVIEW)
 }
 
@@ -207,8 +207,9 @@ func (s *System) Open(win *Window) (err error) {
 	win.Width, win.Height = glfw.WindowSize()
 	s.setProjection(win)
 	gl.Enable(gl.TEXTURE_2D)
-	gl.Enable(gl.BLEND)
+	gl.Enable(gl.DEPTH_TEST)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Enable(gl.BLEND)
 	return
 }
 
@@ -290,7 +291,7 @@ func EncodeTGA(name string, img image.Image) (buf *bytes.Buffer, err error) {
 }
 
 func (s *System) Paint(scene *Scene) {
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Draw()
 	glfw.SwapBuffers()
 }
