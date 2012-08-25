@@ -17,6 +17,7 @@ package twodee
 import (
 	"github.com/banthar/gl"
 	"image"
+	"image/color"
 	"image/png"
 	"os"
 )
@@ -32,9 +33,9 @@ type Node interface {
 
 type Element struct {
 	Children []Node
-	parent Node
-	X float32
-	Y float32
+	parent   Node
+	X        float32
+	Y        float32
 }
 
 func (e *Element) AddChild(node Node) {
@@ -127,38 +128,81 @@ func (s *Sprite) Draw() {
 	s.texture.Unbind()
 }
 
-type Environment struct {
-	Element
+type EnvOpts struct {
+	Blocks      []*EnvBlock
+	TextureName string
+	MapPath     string
+	BlockWidth  int
+	BlockHeight int
+	Frames      int
 }
 
-func (s *System) LoadEnvironment(name string, path string) (env *Environment, err error) {
+type EnvBlockLoadedHandler func(sprite *Sprite, block *EnvBlock)
+
+type EnvBlock struct {
+	Type       int
+	Color      color.Color
+	FrameIndex int
+	Handler    EnvBlockLoadedHandler
+}
+
+type Env struct {
+	Element
+	Width  int
+	Height int
+}
+
+func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 	var (
 		file   *os.File
 		img    image.Image
 		bounds image.Rectangle
-		colors map[uint32]int
+		colors map[uint32]*EnvBlock
 		sprite *Sprite
 	)
-	if file, err = os.Open(path); err != nil {
+	GetIndex := func(c color.Color) uint32 {
+		r, g, b, a := c.RGBA()
+		return ((r<<8+g)<<8+b)<<8 + a
+	}
+	if file, err = os.Open(opts.MapPath); err != nil {
 		return
 	}
 	defer file.Close()
 	if img, err = png.Decode(file); err != nil {
 		return
 	}
-	colors = make(map[uint32]int, 0)
+	colors = make(map[uint32]*EnvBlock, 0)
+	for _, block := range opts.Blocks {
+		colors[GetIndex(block.Color)] = block
+	}
 	bounds = img.Bounds()
-	env = &Environment{}
+	env = &Env{
+		Width:  opts.BlockWidth * bounds.Dx(),
+		Height: opts.BlockHeight * bounds.Dy(),
+	}
 	for y := 0; y < bounds.Dy(); y++ {
 		for x := 0; x < bounds.Dx(); x++ {
-			r, g, b, _ := img.At(x, y).RGBA()
-			index := (r << 8 + g) << 8 + b
-			if _, exists := colors[index]; exists == false {
-				colors[index] = len(colors)
+			index := GetIndex(img.At(x, y))
+			var (
+				block  *EnvBlock
+				exists bool
+			)
+			if block, exists = colors[index]; exists == false {
+				// Unrecognized colors just get a pass
+				continue
 			}
-			sprite = s.NewSprite(name, float32(x * 32), float32(y * 32), 32, 32, 2)
-			sprite.Frame = colors[index]
+			sprite = s.NewSprite(
+				opts.TextureName,
+				float32(x*opts.BlockWidth),
+				float32(y*opts.BlockHeight),
+				opts.BlockWidth,
+				opts.BlockHeight,
+				opts.Frames)
+			sprite.Frame = block.FrameIndex
 			env.AddChild(sprite)
+			if block.Handler != nil {
+				block.Handler(sprite, block)
+			}
 		}
 	}
 	return

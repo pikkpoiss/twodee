@@ -106,6 +106,10 @@ func (s *System) Key(key int) int {
 	return glfw.Key(key)
 }
 
+func (s *System) SetCharCallback(handler glfw.CharHandler) {
+	glfw.SetCharCallback(handler)
+}
+
 func (s *System) Terminate() {
 	glfw.Terminate()
 	s.Textures = nil
@@ -133,7 +137,17 @@ func (s *System) Open(win *Window) (err error) {
 	win.Width, win.Height = glfw.WindowSize()
 	s.setProjection(win)
 	gl.Enable(gl.TEXTURE_2D)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 	return
+}
+
+func (s *System) clamp(i int, max int) gl.GLclampf {
+	return gl.GLclampf(float32(i) / float32(max))
+}
+
+func (s *System) SetClearColor(r int, g int, b int, a int) {
+	gl.ClearColor(s.clamp(r, 255), s.clamp(g, 255), s.clamp(b, 255), s.clamp(a, 255))
 }
 
 func (s *System) LoadTexture(name string, path string, inter int) (err error) {
