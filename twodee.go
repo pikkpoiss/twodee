@@ -98,6 +98,10 @@ func Init() (sys *System, err error) {
 	return
 }
 
+func (s *System) SetKeyCallback(handler glfw.KeyHandler) {
+	glfw.SetKeyCallback(handler)
+}
+
 func (s *System) Key(key int) int {
 	return glfw.Key(key)
 }
@@ -107,17 +111,27 @@ func (s *System) Terminate() {
 	s.Textures = nil
 }
 
+func (s *System) setProjection(win *Window) {
+	gl.MatrixMode(gl.PROJECTION)
+	gl.LoadIdentity()
+	gl.Ortho(0, float64(win.Width), float64(win.Height), 0, 0, 1)
+	gl.MatrixMode(gl.MODELVIEW)
+}
+
 func (s *System) Open(win *Window) (err error) {
+	glfw.SetWindowSizeCallback(func(w, h int) {
+		win.Width = w
+		win.Height = h
+		s.setProjection(win)
+	})
 	err = glfw.OpenWindow(
 		win.Width,
 		win.Height,
 		0, 0, 0, 0, 0, 0,
 		glfw.Windowed)
 	glfw.SetWindowTitle(win.Title)
-	gl.MatrixMode(gl.PROJECTION)
-	gl.LoadIdentity()
-	gl.Ortho(0, float64(win.Width), float64(win.Height), 0, 0, 1)
-	gl.MatrixMode(gl.MODELVIEW)
+	win.Width, win.Height = glfw.WindowSize()
+	s.setProjection(win)
 	gl.Enable(gl.TEXTURE_2D)
 	return
 }
