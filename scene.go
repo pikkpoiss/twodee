@@ -105,7 +105,7 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, fram
 }
 
 func inside(point float32, start float32, end float32) bool {
-	return start <= point && point <= end
+	return start < point && point < end
 }
 
 func (s *Sprite) TestMove(dx float32, dy float32, sprite *Sprite) bool {
@@ -116,7 +116,7 @@ func (s *Sprite) TestMove(dx float32, dy float32, sprite *Sprite) bool {
 		x22 float32 = x21 + float32(sprite.Width)
 	)
 	inX := (inside(x11, x21, x22) || inside(x12, x21, x22) || inside(x21, x11, x12) || inside(x22, x11, x12))
-	if !inX {
+	if !inX && x11 != x21 && x12 != x22 {
 		return true
 	}
 	var (
