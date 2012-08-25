@@ -99,14 +99,16 @@ type Sprite struct {
 	texture2  float64
 	VelocityX float32
 	VelocityY float32
+	Type      int
 }
 
-func (s *System) NewSprite(name string, x float32, y float32, w int, h int) *Sprite {
+func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t int) *Sprite {
 	sprite := &Sprite{
 		system:  s,
 		texture: s.Textures[name],
 		Width:   w,
 		Height:  h,
+		Type:    t,
 	}
 	sprite.X = x
 	sprite.Y = y
@@ -230,7 +232,7 @@ type EnvOpts struct {
 	BlockHeight int
 }
 
-type EnvBlockLoadedHandler func(sprite *Sprite, block *EnvBlock)
+type EnvBlockLoadedHandler func(env *Env, block *EnvBlock, sprite *Sprite, x float32, y float32)
 
 type EnvBlock struct {
 	Type       int
@@ -279,21 +281,27 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 			var (
 				block  *EnvBlock
 				exists bool
+				gX     = float32(x * opts.BlockWidth)
+				gY     = float32(y * opts.BlockHeight)
 			)
 			if block, exists = colors[index]; exists == false {
 				// Unrecognized colors just get a pass
 				continue
 			}
-			sprite = s.NewSprite(
-				opts.TextureName,
-				float32(x*opts.BlockWidth),
-				float32(y*opts.BlockHeight),
-				opts.BlockWidth,
-				opts.BlockHeight)
-			sprite.SetFrame(block.FrameIndex)
-			env.AddChild(sprite)
+			// Pass -1 to not render anything (important parts)
+			if block.FrameIndex != -1 {
+				sprite = s.NewSprite(
+					opts.TextureName,
+					gX,
+					gY,
+					opts.BlockWidth,
+					opts.BlockHeight,
+					block.Type)
+				sprite.SetFrame(block.FrameIndex)
+				env.AddChild(sprite)
+			}
 			if block.Handler != nil {
-				block.Handler(sprite, block)
+				block.Handler(env, block, sprite, gX, gY)
 			}
 		}
 	}
