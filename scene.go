@@ -81,26 +81,23 @@ type Sprite struct {
 	texture   *Texture
 	Width     int
 	Height    int
-	Frames    int
-	Frame     int
+	frame     int
+	texture1  float32
+	texture2  float32
 	VelocityX float32
 	VelocityY float32
 }
 
-func (s *System) NewSprite(name string, x float32, y float32, w int, h int, frames int) *Sprite {
-	if frames <= 0 {
-		frames = 1
-	}
+func (s *System) NewSprite(name string, x float32, y float32, w int, h int) *Sprite {
 	sprite := &Sprite{
 		system:  s,
 		texture: s.Textures[name],
 		Width:   w,
 		Height:  h,
-		Frame:   0,
-		Frames:  frames,
 	}
 	sprite.X = x
 	sprite.Y = y
+	sprite.SetFrame(0)
 	return sprite
 }
 
@@ -136,6 +133,12 @@ func (s *Sprite) CollidesWith(sprite *Sprite) bool {
 	return !s.TestMove(0, 0, sprite)
 }
 
+func (s *Sprite) SetFrame(frame int) {
+	s.frame = frame % len(s.texture.Frames)
+	s.texture1 = float32(s.texture.Frames[s.frame][0]) / float32(s.texture.Width)
+	s.texture2 = float32(s.texture.Frames[s.frame][1]) / float32(s.texture.Width)
+}
+
 func (s *Sprite) Draw() {
 	s.Element.Draw()
 	var (
@@ -143,24 +146,52 @@ func (s *Sprite) Draw() {
 		y1         float32 = s.GlobalY()
 		x2         float32 = x1 + float32(s.Width)
 		y2         float32 = y1 + float32(s.Height)
-		frame      int     = s.Frame % s.Frames
-		framestep  float32 = 1.0 / float32(s.Frames)
-		framestart float32 = framestep * float32(frame)
-		framestop  float32 = framestep * float32(frame+1)
 	)
 	s.texture.Bind()
 	gl.Begin(gl.QUADS)
-	gl.TexCoord2f(framestart, 1)
+	gl.TexCoord2f(s.texture1, 1)
 	gl.Vertex2f(x1, y1)
-	gl.TexCoord2f(framestop, 1)
+	gl.TexCoord2f(s.texture2, 1)
 	gl.Vertex2f(x2, y1)
-	gl.TexCoord2f(framestop, 0)
+	gl.TexCoord2f(s.texture2, 0)
 	gl.Vertex2f(x2, y2)
-	gl.TexCoord2f(framestart, 0)
+	gl.TexCoord2f(s.texture1, 0)
 	gl.Vertex2f(x1, y2)
 	gl.End()
 	s.texture.Unbind()
 }
+
+type Text struct {
+	Element
+	system    *System
+	texture   *Texture
+	Width     int
+	Height    int
+	Frames    int
+	Frame     int
+	Text      string
+}
+
+func (s *System) NewText(name string, x float32, y float32, w int, h int, text string) *Text {
+	/*
+	sprite := &Sprite{
+		system:  s,
+		texture: s.Textures[name],
+		Width:   w,
+		Height:  h,
+		Frame:   0,
+		Frames:  frames,
+	}
+	sprite.X = x
+	sprite.Y = y
+	return sprite
+	*/
+	return nil
+}
+
+func (t *Text) Draw() {
+}
+
 
 type EnvOpts struct {
 	Blocks      []*EnvBlock
@@ -168,7 +199,6 @@ type EnvOpts struct {
 	MapPath     string
 	BlockWidth  int
 	BlockHeight int
-	Frames      int
 }
 
 type EnvBlockLoadedHandler func(sprite *Sprite, block *EnvBlock)
@@ -230,9 +260,8 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 				float32(x*opts.BlockWidth),
 				float32(y*opts.BlockHeight),
 				opts.BlockWidth,
-				opts.BlockHeight,
-				opts.Frames)
-			sprite.Frame = block.FrameIndex
+				opts.BlockHeight)
+			sprite.SetFrame(block.FrameIndex)
 			env.AddChild(sprite)
 			if block.Handler != nil {
 				block.Handler(sprite, block)

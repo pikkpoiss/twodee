@@ -40,40 +40,102 @@ type Texture struct {
 	texture gl.Texture
 	Width   int
 	Height  int
+	Frames  [][]int
 }
 
-func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
-	var (
-		file      *os.File
-		img       image.Image
-		bounds    image.Rectangle
-		data      *bytes.Buffer
-		gltexture gl.Texture
-	)
-	gltexture = gl.GenTexture()
-	gltexture.Bind(gl.TEXTURE_2D)
+func LoadPNG(path string) (img image.Image, err error) {
+	var file *os.File
 	if file, err = os.Open(path); err != nil {
 		return
 	}
 	defer file.Close()
-	if img, err = png.Decode(file); err != nil {
+	img, err = png.Decode(file)
+	return
+}
+
+func LoadTexture(path string, smoothing int, framewidth int) (texture *Texture, err error) {
+	var (
+		img    image.Image
+		bounds image.Rectangle
+		gltex  gl.Texture
+	)
+	if img, err = LoadPNG(path); err != nil {
 		return
 	}
-	if data, err = EncodeTGA(path, img); err != nil {
+	bounds = img.Bounds()
+	if gltex, err = GetGLTexture(img, smoothing); err != nil {
 		return
 	}
+	texture = &Texture{
+		texture: gltex,
+		Width:   bounds.Dx(),
+		Height:  bounds.Dy(),
+		Frames:  make([][]int, 0),
+	}
+	frames := bounds.Dx() / framewidth
+	for i := 0; i < frames; i++ {
+		texture.Frames = append(texture.Frames, []int{
+			i * framewidth,
+			(i+1)*framewidth,
+		})
+	}
+	fmt.Printf("LoadTexture: %v %v\n", path, texture.Frames)
+	return
+}
+
+func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err error) {
+	var (
+		img    image.Image
+		bounds image.Rectangle
+		gltex  gl.Texture
+	)
+	if img, err = LoadPNG(path); err != nil {
+		return
+	}
+	bounds = img.Bounds()
+	if gltex, err = GetGLTexture(img, smoothing); err != nil {
+		return
+	}
+	texture = &Texture{
+		texture: gltex,
+		Width:   bounds.Dx(),
+		Height:  bounds.Dy(),
+		Frames:  make([][]int, 0),
+	}
+	var (
+		aprime uint32 = 0
+		pair          = make([]int, 2)
+		x             = 0
+	)
+	for ; x < bounds.Dx(); x++ {
+		_, _, _, a := img.At(x, 0).RGBA()
+		if aprime == 0 && a > 0 {
+			pair[0] = x
+		} else if aprime > 0 && a == 0 {
+			pair[1] = x
+			texture.Frames = append(texture.Frames, pair)
+			pair = make([]int, 2)
+		}
+		aprime = a
+	}
+	pair[1] = x
+	texture.Frames = append(texture.Frames, pair)
+	return
+}
+
+func GetGLTexture(img image.Image, smoothing int) (gltexture gl.Texture, err error) {
+	var data *bytes.Buffer
+	if data, err = EncodeTGA("texture", img); err != nil {
+		return
+	}
+	gltexture = gl.GenTexture()
+	gltexture.Bind(gl.TEXTURE_2D)
 	if !glfw.LoadMemoryTexture2D(data.Bytes(), 0) {
-		err = fmt.Errorf("Failed to load texture: %v", path)
+		err = fmt.Errorf("Failed to load texture")
 		return
 	}
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, smoothing)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, smoothing)
-	bounds = img.Bounds()
-	texture = &Texture{
-		texture: gltexture,
-		Width:   bounds.Dx(),
-		Height:  bounds.Dy(),
-	}
 	return
 }
 
@@ -151,10 +213,16 @@ func (s *System) SetClearColor(r int, g int, b int, a int) {
 	gl.ClearColor(s.clamp(r, 255), s.clamp(g, 255), s.clamp(b, 255), s.clamp(a, 255))
 }
 
-func (s *System) LoadTexture(name string, path string, inter int) (err error) {
+func (s *System) LoadTexture(name string, path string, inter int, width int) (err error) {
 	var texture *Texture
-	if texture, err = LoadTexture(path, inter); err != nil {
-		return
+	if width > 0 {
+		if texture, err = LoadTexture(path, inter, width); err != nil {
+			return
+		}
+	} else {
+		if texture, err = LoadVarWidthTexture(path, inter); err != nil {
+			return
+		}
 	}
 	s.Textures[name] = texture
 	return
