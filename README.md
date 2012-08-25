@@ -13,22 +13,32 @@ My expectation is to use this for Ludum Dare competitions as I go.
 
 Dependencies
 ------------
+Ubuntu:
 
-GLEW - http://glew.sourceforge.net/
-I used version 1.9.0
+    sudo apt-get install freeglut3-dev
+    sudo apt-get install libxmu-dev
+    sudo apt-get install libxi-dev
+    sudo apt-get install libxrandr-dev
+    sudo apt-get install libglew-dev
+    sudo apt-get install libglfw-dev
+
+OSX:
+  GLEW - http://glew.sourceforge.net/
+  I used version 1.9.0
 
     tar xvzf glew-1.9.0.tgz
     cd glew-1.9.0
     make
     sudo make install
 
-libglfw - http://www.glfw.org/download.html
-I used version 2.7.6
-Unzip the source and cd to the base of the package.  Run (OSX):
+  I also needed
+  libglfw - http://www.glfw.org/download.html
+  I used version 2.7.6
+  Unzip the source and cd to the base of the package.  Run (OSX):
 
     make cocoa-dist-install
 
-Then:
+Then (both):
 
     go get github.com/banthar/gl
     go get github.com/jteeuwen/glfw
@@ -45,7 +55,7 @@ $GOPATH, so the examples can be built from a local checkout.
 
 Old instructions
 ----------------
-I think cocoa-dist-install works now, but previously you had to explicitly 
+I think cocoa-dist-install works now, but previously you had to explicitly
 build the dylib using something like the following:
 
 Unzip the source and cd to the base of the package.
