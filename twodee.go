@@ -124,6 +124,7 @@ func (s *System) setProjection(win *Window) {
 
 func (s *System) Open(win *Window) (err error) {
 	glfw.SetWindowSizeCallback(func(w, h int) {
+		fmt.Printf("Resizing window to %v, %v\n", w, h)
 		win.Width = w
 		win.Height = h
 		s.setProjection(win)
