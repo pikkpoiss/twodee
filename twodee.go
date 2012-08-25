@@ -94,7 +94,7 @@ func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err erro
 	var (
 		bounds     = img.Bounds()
 		trimbounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy() - 1)
-		trimpoint  = image.Pt(0, 2)
+		trimpoint  = image.Pt(0, 1)
 	)
 	trim = image.NewNRGBA(trimbounds)
 	draw.Draw(trim, trimbounds, img, trimpoint, draw.Src)
@@ -103,8 +103,8 @@ func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err erro
 	}
 	texture = &Texture{
 		texture: gltex,
-		Width:   bounds.Dx(),
-		Height:  bounds.Dy(),
+		Width:   trimbounds.Dx(),
+		Height:  trimbounds.Dy(),
 		Frames:  make([][]int, 0),
 	}
 	var (
