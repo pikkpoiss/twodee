@@ -29,6 +29,7 @@ import (
 type Window struct {
 	Width  int
 	Height int
+	Title  string
 }
 
 func (w *Window) Opened() bool {
@@ -54,6 +55,7 @@ func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
 	if file, err = os.Open(path); err != nil {
 		return
 	}
+	defer file.Close()
 	if img, err = png.Decode(file); err != nil {
 		return
 	}
@@ -111,6 +113,7 @@ func (s *System) Open(win *Window) (err error) {
 		win.Height,
 		0, 0, 0, 0, 0, 0,
 		glfw.Windowed)
+	glfw.SetWindowTitle(win.Title)
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
 	gl.Ortho(0, float64(win.Width), float64(win.Height), 0, 0, 1)

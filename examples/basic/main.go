@@ -54,12 +54,13 @@ func main() {
 	}
 
 	scene := &twodee.Scene{}
-	parent := system.NewSprite("bricks", 0, 0, 32, 32, 4)
-	parent.AddChild(system.NewSprite("bricks", 32, 0, 32, 32, 4))
+	parent := system.NewSprite("bricks", 16, 0, 32, 32, 4)
+	parent.AddChild(system.NewSprite("bricks", 32, 16, 32, 32, 4))
 	scene.AddChild(parent)
 	parent.Frame = 1
 	for run {
 		system.Paint(scene)
+		parent.X += 0.1
 		run = system.Key(twodee.KeyEsc) == 0 && window.Opened()
 	}
 }
