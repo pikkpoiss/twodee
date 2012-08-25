@@ -76,24 +76,29 @@ func LoadTexture(path string, smoothing int, framewidth int) (texture *Texture, 
 	for i := 0; i < frames; i++ {
 		texture.Frames = append(texture.Frames, []int{
 			i * framewidth,
-			(i+1)*framewidth,
+			(i + 1) * framewidth,
 		})
 	}
-	fmt.Printf("LoadTexture: %v %v\n", path, texture.Frames)
 	return
 }
 
 func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err error) {
 	var (
-		img    image.Image
-		bounds image.Rectangle
-		gltex  gl.Texture
+		img   image.Image
+		trim  *image.NRGBA
+		gltex gl.Texture
 	)
 	if img, err = LoadPNG(path); err != nil {
 		return
 	}
-	bounds = img.Bounds()
-	if gltex, err = GetGLTexture(img, smoothing); err != nil {
+	var (
+		bounds     = img.Bounds()
+		trimbounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy() - 1)
+		trimpoint  = image.Pt(0, 1)
+	)
+	trim = image.NewNRGBA(trimbounds)
+	draw.Draw(trim, trimbounds, img, trimpoint, draw.Src)
+	if gltex, err = GetGLTexture(trim, smoothing); err != nil {
 		return
 	}
 	texture = &Texture{
@@ -118,8 +123,10 @@ func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err erro
 		}
 		aprime = a
 	}
-	pair[1] = x
-	texture.Frames = append(texture.Frames, pair)
+	if pair[0] != 0 {
+		pair[1] = x
+		texture.Frames = append(texture.Frames, pair)
+	}
 	return
 }
 

@@ -43,6 +43,10 @@ func (e *Element) AddChild(node Node) {
 	e.Children = append(e.Children, node)
 }
 
+func (e *Element) Clear() {
+	e.Children = make([]Node, 0)
+}
+
 func (e *Element) SetParent(node Node) {
 	e.parent = node
 }
@@ -82,8 +86,8 @@ type Sprite struct {
 	Width     int
 	Height    int
 	frame     int
-	texture1  float32
-	texture2  float32
+	texture1  float64
+	texture2  float64
 	VelocityX float32
 	VelocityY float32
 }
@@ -135,8 +139,8 @@ func (s *Sprite) CollidesWith(sprite *Sprite) bool {
 
 func (s *Sprite) SetFrame(frame int) {
 	s.frame = frame % len(s.texture.Frames)
-	s.texture1 = float32(s.texture.Frames[s.frame][0]) / float32(s.texture.Width)
-	s.texture2 = float32(s.texture.Frames[s.frame][1]) / float32(s.texture.Width)
+	s.texture1 = float64(s.texture.Frames[s.frame][0]) / float64(s.texture.Width)
+	s.texture2 = float64(s.texture.Frames[s.frame][1]) / float64(s.texture.Width)
 }
 
 func (s *Sprite) Draw() {
@@ -148,16 +152,19 @@ func (s *Sprite) Draw() {
 		y2         float32 = y1 + float32(s.Height)
 	)
 	s.texture.Bind()
+	gl.MatrixMode(gl.TEXTURE);
+	//gl.Scalef(1.0/64.0, 1.0/64.0, 1.0);
 	gl.Begin(gl.QUADS)
-	gl.TexCoord2f(s.texture1, 1)
+	gl.TexCoord2d(s.texture1, 1)
 	gl.Vertex2f(x1, y1)
-	gl.TexCoord2f(s.texture2, 1)
+	gl.TexCoord2d(s.texture2, 1)
 	gl.Vertex2f(x2, y1)
-	gl.TexCoord2f(s.texture2, 0)
+	gl.TexCoord2d(s.texture2, 0)
 	gl.Vertex2f(x2, y2)
-	gl.TexCoord2f(s.texture1, 0)
+	gl.TexCoord2d(s.texture1, 0)
 	gl.Vertex2f(x1, y2)
 	gl.End()
+	gl.MatrixMode(gl.MODELVIEW);
 	s.texture.Unbind()
 }
 
@@ -167,31 +174,43 @@ type Text struct {
 	texture   *Texture
 	Width     int
 	Height    int
-	Frames    int
-	Frame     int
-	Text      string
+	text      string
+	ratio     int
 }
 
-func (s *System) NewText(name string, x float32, y float32, w int, h int, text string) *Text {
-	/*
-	sprite := &Sprite{
-		system:  s,
+func (s *System) NewText(name string, x float32, y float32, r int, text string) *Text {
+	t := &Text{
+		system: s,
+		ratio: r,
 		texture: s.Textures[name],
-		Width:   w,
-		Height:  h,
-		Frame:   0,
-		Frames:  frames,
 	}
-	sprite.X = x
-	sprite.Y = y
-	return sprite
-	*/
-	return nil
+	t.X = x
+	t.Y = y
+	t.Height = t.texture.Height * t.ratio
+	t.SetText(text)
+	return t
 }
 
-func (t *Text) Draw() {
+func (t *Text) SetText(text string) {
+	t.Clear()
+	var x int = 0
+	for _, c := range text {
+		frame := (int(c) - int(' ')) % len(t.texture.Frames)
+		width := t.ratio * (t.texture.Frames[frame][1] - t.texture.Frames[frame][0])
+		sprite := &Sprite{
+			system:  t.system,
+			texture: t.texture,
+			Width: width,
+			Height: t.Height,
+		}
+		sprite.SetFrame(frame)
+		sprite.X = float32(x)
+		sprite.Y = 0
+		x += width +  (1 * t.ratio)
+		t.AddChild(sprite)
+	}
+	t.Width = x
 }
-
 
 type EnvOpts struct {
 	Blocks      []*EnvBlock
