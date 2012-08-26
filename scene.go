@@ -24,6 +24,7 @@ import (
 
 type Node interface {
 	AddChild(node Node)
+	RemoveChild(node Node)
 	Parent() Node
 	SetParent(Node)
 	Draw()
@@ -51,6 +52,16 @@ type Element struct {
 func (e *Element) AddChild(node Node) {
 	node.SetParent(e)
 	e.Children = append(e.Children, node)
+}
+
+func (e *Element) RemoveChild(node Node) {
+	for i, c := range e.Children {
+		if c == node {
+			e.Children = append(e.Children[:i], e.Children[i+1:]...)
+			break
+		}
+	}
+	return
 }
 
 func (e *Element) Clear() {
@@ -166,10 +177,15 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t in
 
 func (s *Sprite) TestMove(dx float32, dy float32, r *Sprite) bool {
 	var (
+		pad = float32(0.01)
 		sb = s.GlobalBounds()
 		rb = r.GlobalBounds()
 		p  = Pt(dx, dy)
 	)
+	sb.Min.X += pad
+	sb.Min.Y += pad
+	sb.Max.X -= pad
+	sb.Max.Y -= pad
 	if sb.Add(p).Overlaps(rb) {
 		return false
 	}
@@ -253,7 +269,7 @@ type EnvOpts struct {
 	BlockHeight int
 }
 
-type EnvBlockLoadedHandler func(env *Env, block *EnvBlock, sprite *Sprite, x float32, y float32)
+type EnvBlockLoadedHandler func(block *EnvBlock, sprite *Sprite, x float32, y float32)
 
 type EnvBlock struct {
 	Type       int
@@ -266,7 +282,7 @@ type Env struct {
 	Element
 }
 
-func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
+func (e *Env) Load(system *System, opts EnvOpts) (err error) {
 	var (
 		file   *os.File
 		img    image.Image
@@ -290,8 +306,7 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 		colors[GetIndex(block.Color)] = block
 	}
 	bounds = img.Bounds()
-	env = &Env{}
-	env.SetBounds(Rect(0, 0, float32(opts.BlockWidth*bounds.Dx()), float32(opts.BlockHeight*bounds.Dy())))
+	e.SetBounds(Rect(0, 0, float32(opts.BlockWidth*bounds.Dx()), float32(opts.BlockHeight*bounds.Dy())))
 	for y := 0; y < bounds.Dy(); y++ {
 		for x := 0; x < bounds.Dx(); x++ {
 			index := GetIndex(img.At(x, y))
@@ -307,7 +322,7 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 			}
 			// Pass -1 to not render anything (important parts)
 			if block.FrameIndex != -1 {
-				sprite = s.NewSprite(
+				sprite = system.NewSprite(
 					opts.TextureName,
 					gX,
 					gY,
@@ -315,10 +330,10 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 					opts.BlockHeight,
 					block.Type)
 				sprite.SetFrame(block.FrameIndex)
-				env.AddChild(sprite)
+				e.AddChild(sprite)
 			}
 			if block.Handler != nil {
-				block.Handler(env, block, sprite, gX, gY)
+				block.Handler(block, sprite, gX, gY)
 			}
 		}
 	}
