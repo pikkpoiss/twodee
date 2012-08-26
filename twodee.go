@@ -47,12 +47,41 @@ func Rect(x1 float32, y1 float32, x2 float32, y2 float32) Rectangle {
 	if y1 > y2 {
 		y1, y2 = y2, y1
 	}
-	return Rectangle{Min:Pt(x1, y1), Max:Pt(x2, y2)}
+	return Rectangle{Min: Pt(x1, y1), Max: Pt(x2, y2)}
 }
 
 func (r Rectangle) Overlaps(s Rectangle) bool {
 	return r.Min.X < s.Max.X && s.Min.X < r.Max.X &&
-	       r.Min.Y < s.Max.Y && s.Min.Y < r.Max.Y
+		r.Min.Y < s.Max.Y && s.Min.Y < r.Max.Y
+}
+
+func (r Rectangle) Dx() float32 {
+	return r.Max.X - r.Min.X
+}
+
+func (r Rectangle) Dy() float32 {
+	return r.Max.Y - r.Min.Y
+}
+
+func (r Rectangle) Size() Point {
+	return Point{
+		r.Max.X - r.Min.X,
+		r.Max.Y - r.Min.Y,
+	}
+}
+
+func (r Rectangle) Add(p Point) Rectangle {
+	return Rectangle{
+		Point{r.Min.X + p.X, r.Min.Y + p.Y},
+		Point{r.Max.X + p.X, r.Max.Y + p.Y},
+	}
+}
+
+func (r Rectangle) Sub(p Point) Rectangle {
+	return Rectangle{
+		Point{r.Min.X - p.X, r.Min.Y - p.Y},
+		Point{r.Max.X - p.X, r.Max.Y - p.Y},
+	}
 }
 
 type Window struct {
@@ -123,7 +152,7 @@ func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err erro
 	}
 	var (
 		bounds     = img.Bounds()
-		trimbounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy() - 1)
+		trimbounds = image.Rect(0, 0, bounds.Dx(), bounds.Dy()-1)
 		trimpoint  = image.Pt(0, 1)
 	)
 	trim = image.NewNRGBA(trimbounds)
@@ -217,7 +246,7 @@ func (s *System) Terminate() {
 func (s *System) setProjection(win *Window) {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	win.View = Rect(0, 0, float32(win.Width) / 2, float32(win.Height) / 2)
+	win.View = Rect(0, 0, float32(win.Width), float32(win.Height))
 	gl.Ortho(0, float64(win.View.Max.X), float64(win.View.Max.Y), 0, -1, 1)
 	gl.MatrixMode(gl.MODELVIEW)
 }

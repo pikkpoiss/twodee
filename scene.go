@@ -27,23 +27,25 @@ type Node interface {
 	Parent() Node
 	SetParent(Node)
 	Draw()
-	GlobalX() float32
-	GlobalY() float32
-	GlobalZ() float32
-	IsOffsetParent() bool
+	SetBounds(Rectangle)
+	GlobalBounds() Rectangle
+	Bounds() Rectangle
+	RelativeBounds(Node) Rectangle
+	Width() float32
+	Height() float32
+	SetWidth(float32)
+	SetHeight(float32)
+	SetZ(float32)
+	X() float32
+	Y() float32
+	Z() float32
 }
 
 type Element struct {
 	Children []Node
 	parent   Node
-	offsetparent bool
-	X        float32
-	Y        float32
-	Z        float32
-}
-
-func (e *Element) IsOffsetParent() bool {
-	return e.offsetparent
+	z        float32
+	bounds   Rectangle
 }
 
 func (e *Element) AddChild(node Node) {
@@ -69,34 +71,70 @@ func (e *Element) Draw() {
 	}
 }
 
-func (e *Element) GlobalX() float32 {
-	if e.IsOffsetParent() {
-		return 0
-	}
-	if e.parent == nil {
-		return e.X
-	}
-	return e.parent.GlobalX() + e.X
+func (e *Element) SetBounds(r Rectangle) {
+	e.bounds = r
 }
 
-func (e *Element) GlobalY() float32 {
-	if e.IsOffsetParent() {
-		return 0
-	}
+func (e *Element) GlobalBounds() Rectangle {
 	if e.parent == nil {
-		return e.Y
+		return e.Bounds()
 	}
-	return e.parent.GlobalY() + e.Y
+	return e.Bounds().Add(e.parent.GlobalBounds().Min)
 }
 
-func (e *Element) GlobalZ() float32 {
-	if e.IsOffsetParent() {
-		return 0
-	}
+func (e *Element) Bounds() Rectangle {
+	return e.bounds
+}
+
+func (e *Element) RelativeBounds(n Node) Rectangle {
+	return e.GlobalBounds().Sub(n.GlobalBounds().Min)
+}
+
+func (e *Element) Move(p Point) {
+	e.bounds = e.bounds.Add(p)
+}
+
+func (e *Element) MoveTo(p Point) {
+	var (
+		x = p.X + e.bounds.Max.X - e.bounds.Min.X
+		y = p.Y + e.bounds.Max.Y - e.bounds.Min.Y
+	)
+	e.bounds = Rectangle{Min: p, Max: Pt(x, y)}
+}
+
+func (e *Element) Width() float32 {
+	return e.bounds.Max.X - e.bounds.Min.X
+}
+
+func (e *Element) SetWidth(w float32) {
+	e.bounds.Max.X = e.bounds.Min.X + w
+}
+
+func (e *Element) Height() float32 {
+	return e.bounds.Max.Y - e.bounds.Min.Y
+}
+
+func (e *Element) SetHeight(h float32) {
+	e.bounds.Max.Y = e.bounds.Min.Y + h
+}
+
+func (e *Element) X() float32 {
+	return e.bounds.Min.X
+}
+
+func (e *Element) Y() float32 {
+	return e.bounds.Min.Y
+}
+
+func (e *Element) Z() float32 {
 	if e.parent == nil {
-		return e.Z
+		return e.z
 	}
-	return e.parent.GlobalZ() + e.Z
+	return e.parent.Z() + e.z
+}
+
+func (e *Element) SetZ(z float32) {
+	e.z = z
 }
 
 type Scene struct {
@@ -107,8 +145,6 @@ type Sprite struct {
 	Element
 	system    *System
 	texture   *Texture
-	Width     int
-	Height    int
 	frame     int
 	texture1  float64
 	texture2  float64
@@ -121,42 +157,23 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t in
 	sprite := &Sprite{
 		system:  s,
 		texture: s.Textures[name],
-		Width:   w,
-		Height:  h,
 		Type:    t,
 	}
-	sprite.X = x
-	sprite.Y = y
+	sprite.SetBounds(Rect(x, y, x+float32(w), y+float32(h)))
 	sprite.SetFrame(0)
 	return sprite
 }
 
-func inside(point float32, start float32, end float32) bool {
-	return start < point && point < end
-}
-
-func (s *Sprite) TestMove(dx float32, dy float32, sprite *Sprite) bool {
+func (s *Sprite) TestMove(dx float32, dy float32, r *Sprite) bool {
 	var (
-		x11 float32 = s.GlobalX() + dx
-		x12 float32 = x11 + float32(s.Width)
-		x21 float32 = sprite.GlobalX()
-		x22 float32 = x21 + float32(sprite.Width)
+		sb = s.GlobalBounds()
+		rb = r.GlobalBounds()
+		p  = Pt(dx, dy)
 	)
-	inX := (inside(x11, x21, x22) || inside(x12, x21, x22) || inside(x21, x11, x12) || inside(x22, x11, x12))
-	if !inX && x11 != x21 && x12 != x22 {
-		return true
+	if sb.Add(p).Overlaps(rb) {
+		return false
 	}
-	var (
-		y11 float32 = s.GlobalY() + dy
-		y12 float32 = y11 + float32(s.Height)
-		y21 float32 = sprite.GlobalY()
-		y22 float32 = y21 + float32(sprite.Height)
-	)
-	inY := (inside(y11, y21, y22) || inside(y12, y21, y22) || inside(y21, y11, y12) || inside(y22, y11, y12))
-	if !inY && y11 != y21 && y12 != y22 {
-		return true
-	}
-	return false
+	return true
 }
 
 func (s *Sprite) CollidesWith(sprite *Sprite) bool {
@@ -171,24 +188,20 @@ func (s *Sprite) SetFrame(frame int) {
 
 func (s *Sprite) Draw() {
 	var (
-		x1 float32 = s.GlobalX()
-		y1 float32 = s.GlobalY()
-		z1 float32 = s.GlobalZ()
-		x2 float32 = x1 + float32(s.Width)
-		y2 float32 = y1 + float32(s.Height)
+		b = s.GlobalBounds()
+		z = s.Z()
 	)
 	s.texture.Bind()
 	gl.MatrixMode(gl.TEXTURE)
-	//gl.Scalef(1.0/64.0, 1.0/64.0, 1.0);
 	gl.Begin(gl.QUADS)
 	gl.TexCoord2d(s.texture1, 1)
-	gl.Vertex3f(x1, y1, z1)
+	gl.Vertex3f(b.Min.X, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 1)
-	gl.Vertex3f(x2, y1, z1)
+	gl.Vertex3f(b.Max.X, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 0)
-	gl.Vertex3f(x2, y2, z1)
+	gl.Vertex3f(b.Max.X, b.Max.Y, z)
 	gl.TexCoord2d(s.texture1, 0)
-	gl.Vertex3f(x1, y2, z1)
+	gl.Vertex3f(b.Min.X, b.Max.Y, z)
 	gl.End()
 	gl.MatrixMode(gl.MODELVIEW)
 	s.texture.Unbind()
@@ -199,8 +212,6 @@ type Text struct {
 	Element
 	system  *System
 	texture *Texture
-	Width   int
-	Height  int
 	text    string
 	ratio   int
 }
@@ -211,32 +222,27 @@ func (s *System) NewText(name string, x float32, y float32, r int, text string) 
 		ratio:   r,
 		texture: s.Textures[name],
 	}
-	t.X = x
-	t.Y = y
-	t.Height = t.texture.Height * t.ratio
+	t.SetBounds(Rect(x, y, x, y+float32(t.texture.Height*t.ratio)))
 	t.SetText(text)
 	return t
 }
 
 func (t *Text) SetText(text string) {
 	t.Clear()
-	var x int = 0
+	var x float32 = 0
 	for _, c := range text {
 		frame := (int(c) - int(' ')) % len(t.texture.Frames)
 		width := t.ratio * (t.texture.Frames[frame][1] - t.texture.Frames[frame][0])
 		sprite := &Sprite{
 			system:  t.system,
 			texture: t.texture,
-			Width:   width,
-			Height:  t.Height,
 		}
+		sprite.SetBounds(Rect(x, 0, x+float32(width), t.Height()))
 		sprite.SetFrame(frame)
-		sprite.X = float32(x)
-		sprite.Y = 0
-		x += width + (1 * t.ratio)
+		x += float32(width + (1 * t.ratio))
 		t.AddChild(sprite)
 	}
-	t.Width = x
+	t.SetWidth(float32(x))
 }
 
 type EnvOpts struct {
@@ -258,8 +264,6 @@ type EnvBlock struct {
 
 type Env struct {
 	Element
-	Width  int
-	Height int
 }
 
 func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
@@ -286,11 +290,8 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 		colors[GetIndex(block.Color)] = block
 	}
 	bounds = img.Bounds()
-	env = &Env{
-		Width:  opts.BlockWidth * bounds.Dx(),
-		Height: opts.BlockHeight * bounds.Dy(),
-	}
-	//env.Element.offsetparent = true
+	env = &Env{}
+	env.SetBounds(Rect(0, 0, float32(opts.BlockWidth*bounds.Dx()), float32(opts.BlockHeight*bounds.Dy())))
 	for y := 0; y < bounds.Dy(); y++ {
 		for x := 0; x < bounds.Dx(); x++ {
 			index := GetIndex(img.At(x, y))
@@ -323,4 +324,3 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 	}
 	return
 }
-

@@ -47,7 +47,7 @@ func main() {
 		"bricks": "examples/basic/texture.png",
 	}
 	for name, path := range textures {
-		if err = system.LoadTexture(name, path, twodee.IntNearest); err != nil {
+		if err = system.LoadTexture(name, path, twodee.IntNearest, 8); err != nil {
 			PrintError(err)
 			os.Exit(1)
 		}
@@ -57,10 +57,10 @@ func main() {
 	parent := system.NewSprite("bricks", 16, 0, 32, 32, 4)
 	parent.AddChild(system.NewSprite("bricks", 32, 16, 32, 32, 4))
 	scene.AddChild(parent)
-	parent.Frame = 1
+	parent.SetFrame(1)
 	for run {
 		system.Paint(scene)
-		parent.X += 0.1
+		parent.Move(twodee.Pt(0.1, 0))
 		run = system.Key(twodee.KeyEsc) == 0 && window.Opened()
 	}
 }
