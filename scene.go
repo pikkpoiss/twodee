@@ -36,13 +36,14 @@ type Node interface {
 type Element struct {
 	Children []Node
 	parent   Node
+	offsetparent bool
 	X        float32
 	Y        float32
 	Z        float32
 }
 
 func (e *Element) IsOffsetParent() bool {
-	return false
+	return e.offsetparent
 }
 
 func (e *Element) AddChild(node Node) {
@@ -69,21 +70,30 @@ func (e *Element) Draw() {
 }
 
 func (e *Element) GlobalX() float32 {
-	if e.parent == nil || e.parent.IsOffsetParent() {
+	if e.IsOffsetParent() {
+		return 0
+	}
+	if e.parent == nil {
 		return e.X
 	}
 	return e.parent.GlobalX() + e.X
 }
 
 func (e *Element) GlobalY() float32 {
-	if e.parent == nil || e.parent.IsOffsetParent() {
+	if e.IsOffsetParent() {
+		return 0
+	}
+	if e.parent == nil {
 		return e.Y
 	}
 	return e.parent.GlobalY() + e.Y
 }
 
 func (e *Element) GlobalZ() float32 {
-	if e.parent == nil || e.parent.IsOffsetParent() {
+	if e.IsOffsetParent() {
+		return 0
+	}
+	if e.parent == nil {
 		return e.Z
 	}
 	return e.parent.GlobalZ() + e.Z
@@ -143,7 +153,7 @@ func (s *Sprite) TestMove(dx float32, dy float32, sprite *Sprite) bool {
 		y22 float32 = y21 + float32(sprite.Height)
 	)
 	inY := (inside(y11, y21, y22) || inside(y12, y21, y22) || inside(y21, y11, y12) || inside(y22, y11, y12))
-	if !inY {
+	if !inY && y11 != y21 && y12 != y22 {
 		return true
 	}
 	return false
@@ -280,6 +290,7 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 		Width:  opts.BlockWidth * bounds.Dx(),
 		Height: opts.BlockHeight * bounds.Dy(),
 	}
+	//env.Element.offsetparent = true
 	for y := 0; y < bounds.Dy(); y++ {
 		for x := 0; x < bounds.Dx(); x++ {
 			index := GetIndex(img.At(x, y))
@@ -311,9 +322,5 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 		}
 	}
 	return
-}
-
-func (e *Env) IsOffsetParent() bool {
-	return true
 }
 
