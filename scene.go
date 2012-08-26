@@ -30,6 +30,7 @@ type Node interface {
 	GlobalX() float32
 	GlobalY() float32
 	GlobalZ() float32
+	IsOffsetParent() bool
 }
 
 type Element struct {
@@ -38,6 +39,10 @@ type Element struct {
 	X        float32
 	Y        float32
 	Z        float32
+}
+
+func (e *Element) IsOffsetParent() bool {
+	return false
 }
 
 func (e *Element) AddChild(node Node) {
@@ -64,21 +69,21 @@ func (e *Element) Draw() {
 }
 
 func (e *Element) GlobalX() float32 {
-	if e.parent == nil {
+	if e.parent == nil || e.parent.IsOffsetParent() {
 		return e.X
 	}
 	return e.parent.GlobalX() + e.X
 }
 
 func (e *Element) GlobalY() float32 {
-	if e.parent == nil {
+	if e.parent == nil || e.parent.IsOffsetParent() {
 		return e.Y
 	}
 	return e.parent.GlobalY() + e.Y
 }
 
 func (e *Element) GlobalZ() float32 {
-	if e.parent == nil {
+	if e.parent == nil || e.parent.IsOffsetParent() {
 		return e.Z
 	}
 	return e.parent.GlobalZ() + e.Z
@@ -307,3 +312,8 @@ func (s *System) LoadEnv(opts EnvOpts) (env *Env, err error) {
 	}
 	return
 }
+
+func (e *Env) IsOffsetParent() bool {
+	return true
+}
+
