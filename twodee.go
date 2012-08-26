@@ -246,7 +246,7 @@ func (s *System) Terminate() {
 func (s *System) setProjection(win *Window) {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	win.View = Rect(0, 0, float32(win.Width), float32(win.Height))
+	win.View = Rect(0, 0, float32(win.Width) / 2, float32(win.Height) / 2)
 	gl.Ortho(0, float64(win.View.Max.X), float64(win.View.Max.Y), 0, -1, 1)
 	gl.MatrixMode(gl.MODELVIEW)
 }

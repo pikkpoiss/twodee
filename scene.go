@@ -20,7 +20,17 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"math"
 )
+
+func Round(a float32) float32 {
+	if a > 0 {
+		a += 0.5
+	} else {
+		a -= 0.5
+	}
+	return float32(math.Floor(float64(a)))
+}
 
 type Node interface {
 	AddChild(node Node)
@@ -211,13 +221,13 @@ func (s *Sprite) Draw() {
 	gl.MatrixMode(gl.TEXTURE)
 	gl.Begin(gl.QUADS)
 	gl.TexCoord2d(s.texture1, 1)
-	gl.Vertex3f(b.Min.X, b.Min.Y, z)
+	gl.Vertex3i(int(b.Min.X), int(b.Min.Y), int(z))
 	gl.TexCoord2d(s.texture2, 1)
-	gl.Vertex3f(b.Max.X, b.Min.Y, z)
+	gl.Vertex3i(int(b.Max.X), int(b.Min.Y), int(z))
 	gl.TexCoord2d(s.texture2, 0)
-	gl.Vertex3f(b.Max.X, b.Max.Y, z)
+	gl.Vertex3i(int(b.Max.X), int(b.Max.Y), int(z))
 	gl.TexCoord2d(s.texture1, 0)
-	gl.Vertex3f(b.Min.X, b.Max.Y, z)
+	gl.Vertex3i(int(b.Min.X), int(b.Max.Y), int(z))
 	gl.End()
 	gl.MatrixMode(gl.MODELVIEW)
 	s.texture.Unbind()
