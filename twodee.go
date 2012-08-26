@@ -267,7 +267,7 @@ func (s *System) Open(win *Window) (err error) {
 	win.Width, win.Height = glfw.WindowSize()
 	s.setProjection(win)
 	gl.Enable(gl.TEXTURE_2D)
-	gl.Enable(gl.DEPTH_TEST)
+	gl.Disable(gl.DEPTH_TEST)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Enable(gl.BLEND)
 	return
