@@ -19,8 +19,8 @@ import (
 	"image"
 	"image/color"
 	"image/png"
-	"os"
 	"math"
+	"os"
 )
 
 func Round(a float32) float32 {
@@ -172,6 +172,7 @@ type Sprite struct {
 	VelocityX float32
 	VelocityY float32
 	Type      int
+	Ratio     float32
 }
 
 func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t int) *Sprite {
@@ -179,6 +180,8 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t in
 		system:  s,
 		texture: s.Textures[name],
 		Type:    t,
+		//TODO: Figure out texture scaling in a better way
+		Ratio:   float32(h) / float32(s.Textures[name].Height),
 	}
 	sprite.SetBounds(Rect(x, y, x+float32(w), y+float32(h)))
 	sprite.SetFrame(0)
@@ -188,9 +191,9 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t in
 func (s *Sprite) TestMove(dx float32, dy float32, r *Sprite) bool {
 	var (
 		pad = float32(0.01)
-		sb = s.GlobalBounds()
-		rb = r.GlobalBounds()
-		p  = Pt(dx, dy)
+		sb  = s.GlobalBounds()
+		rb  = r.GlobalBounds()
+		p   = Pt(dx, dy)
 	)
 	sb.Min.X += pad
 	sb.Min.Y += pad
@@ -208,8 +211,15 @@ func (s *Sprite) CollidesWith(sprite *Sprite) bool {
 
 func (s *Sprite) SetFrame(frame int) {
 	s.frame = frame % len(s.texture.Frames)
-	s.texture1 = float64(s.texture.Frames[s.frame][0]) / float64(s.texture.Width)
-	s.texture2 = float64(s.texture.Frames[s.frame][1]) / float64(s.texture.Width)
+	var (
+		tex   = s.texture.Frames[s.frame]
+		width = tex[1] - tex[0]
+	)
+	s.texture1 = float64(tex[0]) / float64(s.texture.Width)
+	s.texture2 = float64(tex[1]) / float64(s.texture.Width)
+	if s.Ratio != 0 {
+		s.SetWidth(float32(width) * s.Ratio)
+	}
 }
 
 func (s *Sprite) Draw() {
