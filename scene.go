@@ -21,6 +21,7 @@ import (
 	"image/png"
 	"math"
 	"os"
+	"sort"
 )
 
 func Round(a float32) float32 {
@@ -35,6 +36,7 @@ func Round(a float32) float32 {
 type Node interface {
 	AddChild(node Node)
 	RemoveChild(node Node)
+	GetAllChildren() []Node
 	Parent() Node
 	SetParent(Node)
 	Draw()
@@ -50,6 +52,20 @@ type Node interface {
 	X() float32
 	Y() float32
 	Z() float32
+}
+
+type ByDepth []Node
+
+func (s ByDepth) Len() int {
+	return len(s)
+}
+
+func (s ByDepth) Less(i int, j int) bool {
+	return s[i].Z() < s[j].Z()
+}
+
+func (s ByDepth) Swap(i int, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 type Element struct {
@@ -72,6 +88,14 @@ func (e *Element) RemoveChild(node Node) {
 		}
 	}
 	return
+}
+
+func (e *Element) GetAllChildren() []Node {
+	r := append([]Node{}, e.Children[:]...)
+	for _, c := range e.Children {
+		r = append(r, c.GetAllChildren()[:]...)
+	}
+	return r
 }
 
 func (e *Element) Clear() {
@@ -148,10 +172,7 @@ func (e *Element) Y() float32 {
 }
 
 func (e *Element) Z() float32 {
-	if e.parent == nil {
-		return e.z
-	}
-	return e.parent.Z() + e.z
+	return e.z
 }
 
 func (e *Element) SetZ(z float32) {
@@ -160,6 +181,14 @@ func (e *Element) SetZ(z float32) {
 
 type Scene struct {
 	Element
+}
+
+func (s *Scene) Draw() {
+	l := s.GetAllChildren()
+	sort.Sort(ByDepth(l))
+	for _, c := range l {
+		c.Draw()
+	}
 }
 
 type Sprite struct {
@@ -173,6 +202,7 @@ type Sprite struct {
 	VelocityY float32
 	Type      int
 	Ratio     float32
+	Collide   bool
 }
 
 func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t int) *Sprite {
@@ -182,6 +212,7 @@ func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t in
 		Type:    t,
 		//TODO: Figure out texture scaling in a better way
 		Ratio:   float32(h) / float32(s.Textures[name].Height),
+		Collide: true,
 	}
 	sprite.SetBounds(Rect(x, y, x+float32(w), y+float32(h)))
 	sprite.SetFrame(0)
