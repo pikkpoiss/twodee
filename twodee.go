@@ -19,7 +19,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/banthar/gl"
-	"github.com/jteeuwen/glfw"
+	"github.com/metaleap/go-glfwdll-win64"
 	"image"
 	"image/draw"
 	"image/png"
