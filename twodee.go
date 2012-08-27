@@ -89,6 +89,7 @@ type Window struct {
 	Height int
 	Title  string
 	View   Rectangle
+	Fullscreen bool
 }
 
 func (w *Window) Opened() bool {
@@ -258,11 +259,15 @@ func (s *System) Open(win *Window) (err error) {
 		win.Height = h
 		s.setProjection(win)
 	})
+	mode := glfw.Windowed
+	if win.Fullscreen {
+		mode = glfw.Fullscreen
+	}
 	err = glfw.OpenWindow(
 		win.Width,
 		win.Height,
 		0, 0, 0, 0, 0, 0,
-		glfw.Windowed)
+		mode)
 	glfw.SetWindowTitle(win.Title)
 	win.Width, win.Height = glfw.WindowSize()
 	s.setProjection(win)
