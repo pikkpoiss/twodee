@@ -15,9 +15,15 @@
 package main
 
 import (
+	"../.." // Use "github.com/kurrik/twodee"
+	"flag"
 	"fmt"
-	"github.com/kurrik/twodee"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
+	"runtime"
+	"runtime/pprof"
 )
 
 func PrintError(err error) {
@@ -26,11 +32,35 @@ func PrintError(err error) {
 
 func main() {
 	var (
-		system *twodee.System
-		window *twodee.Window
-		err    error
-		run    bool = true
+		system     *twodee.System
+		window     *twodee.Window
+		err        error
+		run        bool = true
+		cpuprofile *string
+		memprofile *string
+		webprofile *bool
 	)
+	cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+	memprofile = flag.String("memprofile", "", "write memory profile to this file")
+	webprofile = flag.Bool("webprofile", false, "profile with web service")
+	flag.Parse()
+
+	if *memprofile != "" || *webprofile == true {
+		runtime.MemProfileRate = 1
+	}
+	if *cpuprofile != "" {
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+	if *webprofile == true {
+		go func() {
+			log.Println(http.ListenAndServe("localhost:6060", nil))
+		}()
+	}
 	if system, err = twodee.Init(); err != nil {
 		PrintError(err)
 		os.Exit(1)
@@ -62,5 +92,14 @@ func main() {
 		system.Paint(scene)
 		parent.Move(twodee.Pt(0.1, 0))
 		run = system.Key(twodee.KeyEsc) == 0 && window.Opened()
+	}
+	if *memprofile != "" {
+		f, err := os.Create(*memprofile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.WriteHeapProfile(f)
+		f.Close()
+		return
 	}
 }
