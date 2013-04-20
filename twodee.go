@@ -18,8 +18,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/banthar/gl"
-	"github.com/jteeuwen/glfw"
+	"github.com/go-gl/gl"
+	"github.com/go-gl/glfw"
 	"image"
 	"image/draw"
 	"image/png"
@@ -190,22 +190,6 @@ func LoadVarWidthTexture(path string, smoothing int) (texture *Texture, err erro
 	return
 }
 
-func GetGLTexture(img image.Image, smoothing int) (gltexture gl.Texture, err error) {
-	var data *bytes.Buffer
-	if data, err = EncodeTGA("texture", img); err != nil {
-		return
-	}
-	gltexture = gl.GenTexture()
-	gltexture.Bind(gl.TEXTURE_2D)
-	if !glfw.LoadMemoryTexture2D(data.Bytes(), 0) {
-		err = fmt.Errorf("Failed to load texture")
-		return
-	}
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, smoothing)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, smoothing)
-	return
-}
-
 func (t *Texture) Bind() {
 	t.texture.Bind(gl.TEXTURE_2D)
 }
@@ -214,8 +198,14 @@ func (t *Texture) Unbind() {
 	t.texture.Unbind(gl.TEXTURE_2D)
 }
 
+func (t *Texture) Dispose() {
+	t.texture.Delete();
+}
+
 type System struct {
 	Textures map[string]*Texture
+	Framebuffer *Framebuffer
+	Win *Window
 }
 
 func Init() (sys *System, err error) {
@@ -240,8 +230,11 @@ func (s *System) SetCharCallback(handler glfw.CharHandler) {
 }
 
 func (s *System) Terminate() {
+	for _, t := range s.Textures {
+		t.Dispose()
+	}
+	s.Framebuffer.Dispose()
 	glfw.Terminate()
-	s.Textures = nil
 }
 
 func (s *System) setProjection(win *Window) {
@@ -253,6 +246,7 @@ func (s *System) setProjection(win *Window) {
 }
 
 func (s *System) Open(win *Window) (err error) {
+	s.Win = win
 	glfw.SetWindowSizeCallback(func(w, h int) {
 		fmt.Printf("Resizing window to %v, %v\n", w, h)
 		win.Width = w
@@ -270,11 +264,16 @@ func (s *System) Open(win *Window) (err error) {
 		mode)
 	glfw.SetWindowTitle(win.Title)
 	win.Width, win.Height = glfw.WindowSize()
+	gl.Init()
 	s.setProjection(win)
 	gl.Enable(gl.TEXTURE_2D)
 	gl.Disable(gl.DEPTH_TEST)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.Enable(gl.BLEND)
+	v1, v2, v3 := glfw.GLVersion()
+	fmt.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
+	fmt.Printf("Framebuffer supported: %v\n", glfw.ExtensionSupported("GL_EXT_framebuffer_object"))
+	s.Framebuffer, err = NewFramebuffer(win.Width / 2, win.Height / 2)
 	return
 }
 
@@ -356,7 +355,16 @@ func EncodeTGA(name string, img image.Image) (buf *bytes.Buffer, err error) {
 }
 
 func (s *System) Paint(scene *Scene) {
+	s.Framebuffer.Bind()
+	gl.MatrixMode(gl.PROJECTION)
+	gl.LoadIdentity()
+	gl.Ortho(0, 64, 0, 64, 1, -1)
+	gl.ClearColor(0.0, 0.0, 1.0, 0)
+	gl.ClearDepth(1.0)
+	gl.Enable(gl.TEXTURE_2D)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Draw()
+	gl.Flush()
+	s.Framebuffer.Draw(int(s.Win.View.Max.X), int(s.Win.View.Max.Y))
 	glfw.SwapBuffers()
 }
