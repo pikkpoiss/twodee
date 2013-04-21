@@ -72,8 +72,9 @@ func main() {
 	camera := twodee.NewCamera(0, 0, 10, 10)
 	system.SetSizeCallback(func(w, h int) {
 		camera.MatchRatio(w, h)
+		camera.Top(0)
 	})
-	window = &twodee.Window{Width: 640, Height: 480, Scale:4}
+	window = &twodee.Window{Width: 640, Height: 480, Scale:2}
 	if err = system.Open(window); err != nil {
 		PrintError(err)
 		os.Exit(1)
@@ -111,6 +112,12 @@ func main() {
 		exit <- true
 		return 0
 	})
+	system.SetScrollCallback(func(pos int) {
+		fmt.Printf("Scroll: %v\n", pos)
+		camera.Zoom(float64(pos) / 50.0)
+		camera.Top(0)
+	})
+	v := twodee.Pt(0.08, 0.1)
 	for run {
 		worked := false
 		for worked == false {
@@ -119,7 +126,13 @@ func main() {
 				run = false
 				worked = true
 			case <-ticker:
-				parent.Move(twodee.Pt(0.1, 0))
+				b := parent.GlobalBounds()
+				if b.Max.X > 10 || b.Min.X < 0 {
+					v = twodee.Pt(-v.X, v.Y)
+				} else if b.Max.Y > 10 || b.Min.Y < 0 {
+					v = twodee.Pt(v.X, -v.Y)
+				}
+				parent.Move(v)
 				worked = true
 			default:
 				time.Sleep(1 * time.Microsecond)

@@ -187,6 +187,10 @@ func (s *System) SetCloseCallback(handler CloseHandler) {
 	glfw.SetWindowCloseCallback(glfw.WindowCloseHandler(handler))
 }
 
+type ScrollHandler func(pos int)
+func (s *System) SetScrollCallback(handler ScrollHandler) {
+	glfw.SetMouseWheelCallback(glfw.MouseWheelHandler(handler))
+}
 
 func (s *System) Terminate() {
 	for _, t := range s.Textures {

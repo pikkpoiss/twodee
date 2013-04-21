@@ -19,22 +19,69 @@ import (
 )
 
 type Camera struct {
-	View Rectangle
+	view   Rectangle
+	focus  Point
+	width  float64
+	height float64
+	zoom   float64
 }
 
-func NewCamera(x float64, y float64, w float64, h float64) *Camera {
-	return &Camera{
-		View: Rect(x, y, x+w, y+h),
+func NewCamera(x float64, y float64, w float64, h float64) (c *Camera) {
+	c = &Camera{
+		width:  w,
+		height: h,
+		focus:  Pt(x+w/2.0, y+h/2.0),
+		zoom:   0,
 	}
+	c.calcView()
+	return
+}
+
+func (c *Camera) calcView() {
+	var (
+		ratio = c.height / c.width
+		hw = c.width / 2.0
+		hh = hw * ratio
+		zw = hw * c.zoom
+		zh = zw * ratio
+	)
+	c.view.Min.X = c.focus.X - hw - zw
+	c.view.Min.Y = c.focus.Y - hh - zh
+	c.view.Max.X = c.focus.X + hw + zw
+	c.view.Max.Y = c.focus.Y + hh + zh
 }
 
 func (c *Camera) MatchRatio(width int, height int) {
 	ratio := float64(height) / float64(width)
-	c.View.Max.Y = c.View.Max.X * ratio
+	c.height = c.width * ratio
+	c.calcView()
+}
+
+func (c *Camera) Top(y float64) {
+	var (
+		dy = y - c.view.Min.Y
+	)
+	c.focus.Y += dy
+	c.calcView()
+}
+
+func (c *Camera) Pan(x float64, y float64) {
+	c.focus.X += x
+	c.focus.Y += y
+	c.calcView()
+}
+
+func (c *Camera) Zoom(z float64) {
+	c.zoom = z
+	c.calcView()
+}
+
+func (c *Camera) Bounds() Rectangle {
+	return c.view
 }
 
 func (c *Camera) SetProjection() {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	gl.Ortho(c.View.Min.X, c.View.Max.X, c.View.Max.Y, c.View.Min.Y, -1, 1)
+	gl.Ortho(c.view.Min.X, c.view.Max.X, c.view.Max.Y, c.view.Min.Y, -1, 1)
 }
