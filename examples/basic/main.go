@@ -137,6 +137,7 @@ func main() {
 	ticker := time.NewTicker(time.Second / 60)
 	run := true
 	for run == true {
+		<-ticker.C
 		system.Paint(scene)
 		select {
 		case <-exit:
@@ -144,7 +145,6 @@ func main() {
 			run = false
 		default:
 		}
-		<-ticker.C
 	}
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
