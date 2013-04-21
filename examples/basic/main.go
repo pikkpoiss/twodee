@@ -94,11 +94,14 @@ func main() {
 	exit := make(chan bool, 1)
 	go func() {
 		for {
-			parent.Move(twodee.Pt(0.1, 0))
 			if system.Key(twodee.KeyEsc) != 0 || !window.Opened() {
-				fmt.Println("Exiting")
 				exit <- true
 			}
+		}
+	}()
+	go func() {
+		for {
+			parent.Move(twodee.Pt(0.1, 0))
 			time.Sleep(100 * time.Millisecond)
 		}
 	}()
