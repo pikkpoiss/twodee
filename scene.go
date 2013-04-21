@@ -181,6 +181,7 @@ func (e *Element) SetZ(z float64) {
 type Scene struct {
 	Element
 	*Camera
+	*Font
 }
 
 func (s *Scene) Draw() {

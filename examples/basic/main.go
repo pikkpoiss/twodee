@@ -35,6 +35,7 @@ func main() {
 	var (
 		system     *twodee.System
 		window     *twodee.Window
+		font       *twodee.Font
 		err        error
 		run        bool = true
 		cpuprofile *string
@@ -67,7 +68,11 @@ func main() {
 		os.Exit(1)
 	}
 	defer system.Terminate()
-
+	
+	camera := twodee.NewCamera(0, 0, 10, 10)
+	system.SetSizeCallback(func(w, h int) {
+		camera.MatchRatio(w, h)
+	})
 	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
 	if err = system.Open(window); err != nil {
 		PrintError(err)
@@ -83,10 +88,11 @@ func main() {
 			os.Exit(1)
 		}
 	}
-
-	camera := twodee.NewCamera(0, 0, 10, 10)
-	camera.MatchRatio(window)
-	scene := &twodee.Scene{Camera: camera}
+	if font, err = twodee.LoadFont("examples/basic/slkscr.ttf", 24); err != nil {
+		PrintError(err)
+		os.Exit(1)
+	}
+	scene := &twodee.Scene{Camera: camera, Font: font}
 	parent := system.NewSprite("bricks", 0, 0, 1, 1, 4)
 	parent.AddChild(system.NewSprite("bricks", 1, 0.5, 1, 1, 4))
 	scene.AddChild(parent)

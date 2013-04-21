@@ -40,18 +40,9 @@ OSX:
 
 Then (both):
 
-    go get github.com/banthar/gl
-    go get github.com/jteeuwen/glfw
-
-Setup
------
-To run the examples from the local source, run:
-
-    ./setup_devel.sh
-
-From the project root.  This will symlink the twodee source folder into your
-$GOPATH, so the examples can be built from a local checkout.
-
+    go get github.com/go-gl/gl
+    go get github.com/go-gl/glfw
+    go get github.com/go-gl/gltext
 
 Old instructions
 ----------------
@@ -66,3 +57,7 @@ following (OSX):
     make -f Makefile.cocoa libglfw.dylib
     install -c -m 644 libglfw.dylib /usr/local/lib/
 
+Thanks
+------
+Silkscreen font by Jason Kottke
+http://kottke.org/plus/type/silkscreen/

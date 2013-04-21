@@ -28,12 +28,9 @@ func NewCamera(x float64, y float64, w float64, h float64) *Camera {
 	}
 }
 
-func (c *Camera) MatchRatio(win *Window) {
-	var (
-		ratio float64
-	)
-	ratio = float64(win.Height) / float64(win.Width)
-	c.View.Max.Y *= ratio
+func (c *Camera) MatchRatio(width int, height int) {
+	ratio := float64(height) / float64(width)
+	c.View.Max.Y = c.View.Max.X * ratio
 }
 
 func (c *Camera) SetProjection() {

@@ -22,6 +22,7 @@ import (
 	"image/draw"
 	"image/png"
 	"os"
+	"time"
 )
 
 type Window struct {
@@ -144,9 +145,13 @@ func (t *Texture) Dispose() {
 }
 
 type System struct {
-	Textures    map[string]*Texture
-	Framebuffer *Framebuffer
-	Win         *Window
+	Textures      map[string]*Texture
+	Framebuffer   *Framebuffer
+	Overlay       *Framebuffer
+	OverlayCamera *Camera
+	Win           *Window
+	LastPaint     time.Time
+	resizeHandler glfw.WindowSizeHandler
 }
 
 func Init() (sys *System, err error) {
@@ -170,11 +175,16 @@ func (s *System) SetCharCallback(handler glfw.CharHandler) {
 	glfw.SetCharCallback(handler)
 }
 
+func (s *System) SetSizeCallback(handler glfw.WindowSizeHandler) {
+	s.resizeHandler = handler
+}
+
 func (s *System) Terminate() {
 	for _, t := range s.Textures {
 		t.Dispose()
 	}
 	s.Framebuffer.Dispose()
+	s.Overlay.Dispose()
 	glfw.Terminate()
 }
 
@@ -183,11 +193,23 @@ func (s *System) resize() (err error) {
 	if s.Framebuffer != nil {
 		s.Framebuffer.Dispose()
 	}
+	if s.Overlay != nil {
+		s.Overlay.Dispose()
+	}
 	var (
 		fbw = float64(s.Win.Width) / float64(s.Win.Scale)
 		fbh = float64(s.Win.Height) / float64(s.Win.Scale)
 	)
-	s.Framebuffer, err = NewFramebuffer(int(fbw), int(fbh))
+	if s.Framebuffer, err = NewFramebuffer(int(fbw), int(fbh)); err != nil {
+		return
+	}
+	if s.Overlay, err = NewFramebuffer(s.Win.Width, s.Win.Height); err != nil {
+		return
+	}
+	s.OverlayCamera = NewCamera(0, 0, float64(s.Win.Width), float64(s.Win.Height))
+	if s.resizeHandler != nil {
+		s.resizeHandler(s.Win.Width, s.Win.Height)
+	}
 	return
 }
 
@@ -196,10 +218,6 @@ func (s *System) Open(win *Window) (err error) {
 	if win.Scale < 1 {
 		win.Scale = 1
 	}
-	glfw.SetWindowSizeCallback(func(w, h int) {
-		fmt.Printf("Resizing window to %v, %v\n", w, h)
-		s.resize()
-	})
 	mode := glfw.Windowed
 	if win.Fullscreen {
 		mode = glfw.Fullscreen
@@ -211,7 +229,12 @@ func (s *System) Open(win *Window) (err error) {
 	v1, v2, v3 := glfw.GLVersion()
 	fmt.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fmt.Printf("Framebuffer supported: %v\n", glfw.ExtensionSupported("GL_EXT_framebuffer_object"))
+	glfw.SetSwapInterval(1) // Limit to refresh
 	glfw.SetWindowTitle(win.Title)
+	glfw.SetWindowSizeCallback(func(w, h int) {
+		fmt.Printf("Resizing window to %v, %v\n", w, h)
+		s.resize()
+	})
 	err = s.resize()
 	return
 }
@@ -240,14 +263,38 @@ func (s *System) LoadTexture(name string, path string, inter int, width int) (er
 }
 
 func (s *System) Paint(scene *Scene) {
+	var (
+		now time.Time
+		fps float64
+	)
+	now = time.Now()
+	if !s.LastPaint.IsZero() {
+		fps = 1 / now.Sub(s.LastPaint).Seconds()
+	}
+	s.LastPaint = now
+
 	s.Framebuffer.Bind()
 	scene.Camera.SetProjection()
 	gl.ClearColor(0.0, 0.0, 0.0, 0)
 	gl.ClearDepth(1.0)
-	gl.Enable(gl.TEXTURE_2D)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Draw()
 	gl.Flush()
+	s.Framebuffer.Unbind()
+	
+	s.Overlay.Bind()
+	s.OverlayCamera.SetProjection()
+	gl.ClearColor(0.0, 0.0, 0.0, 0)
+	gl.ClearDepth(1.0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	scene.Font.Printf(0, 0, "FPS %6.2f", fps)
+	gl.Flush()
+	s.Overlay.Unbind()
+
+	gl.ClearColor(0.0, 0.0, 0.0, 0)
+	gl.ClearDepth(1.0)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	s.Framebuffer.Draw(s.Win.Width, s.Win.Height)
+	s.Overlay.Draw(s.Win.Width, s.Win.Height)
 	glfw.SwapBuffers()
 }

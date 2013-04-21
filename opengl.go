@@ -86,16 +86,16 @@ func (fb *Framebuffer) Bind() {
 	gl.Enable(gl.BLEND)
 }
 
-func (fb *Framebuffer) Draw(w int, h int) {
+func (fb *Framebuffer) Unbind() {
 	fb.Buffer.Unbind()
+}
+
+func (fb *Framebuffer) Draw(w int, h int) {
 	gl.Viewport(0, 0, w, h)
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
 	gl.Ortho(0, 1, 1, 0, 1, -1)
-	gl.ClearColor(1.0, 0.0, 0.0, 0)
-	gl.ClearDepth(1.0)
 	gl.Enable(gl.TEXTURE_2D)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
 	fb.Texture.Bind(gl.TEXTURE_2D)
 	gl.MatrixMode(gl.MODELVIEW)
 	gl.LoadIdentity()
