@@ -84,11 +84,11 @@ func main() {
 		}
 	}
 
-	camera := twodee.NewCamera(0, 0, 128, 128)
+	camera := twodee.NewCamera(0, 0, 10, 10)
 	camera.MatchRatio(window)
 	scene := &twodee.Scene{Camera: camera}
-	parent := system.NewSprite("bricks", 16, 0, 32, 32, 4)
-	parent.AddChild(system.NewSprite("bricks", 32, 16, 32, 32, 4))
+	parent := system.NewSprite("bricks", 0, 0, 1, 1, 4)
+	parent.AddChild(system.NewSprite("bricks", 1, 0.5, 1, 1, 4))
 	scene.AddChild(parent)
 	parent.SetFrame(1)
 	exit := make(chan bool, 1)
