@@ -17,7 +17,7 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl"
-	"github.com/go-gl/gltext"
+	"github.com/kurrik/gltext"
 	"os"
 )
 

@@ -37,12 +37,25 @@ OSX:
   Unzip the source and cd to the base of the package.  Run (OSX):
 
     make cocoa-dist-install
+	
+  Need Mercurial
+  
+    brew install hg
 
-Then (both):
+Win:
+  * Install Mercurial from http://mercurial.selenic.com/
+  * Download binaries for GLFW http://sourceforge.net/projects/glfw/files/glfw/2.7.8/glfw-2.7.8.bin.WIN64.zip/download
+  * Copy glfw-2.7.6.bin.WIN32/lib-mingw/x64 stuff to C:\MinGW64\lib
+  * Copy dist include to gcc include
+  * Copy glfw.dll to C:\Windows\System32
+  
+Then (all):
 
     go get github.com/go-gl/gl
     go get github.com/go-gl/glfw
-    go get github.com/go-gl/gltext
+	go get code.google.com/p/freetype-go/freetype
+	go get code.google.com/p/freetype-go/freetype/truetype
+    go get github.com/kurrik/gltext
 
 Old instructions
 ----------------
