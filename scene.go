@@ -24,13 +24,13 @@ import (
 	"sort"
 )
 
-func Round(a float32) float32 {
+func Round(a float64) float64 {
 	if a > 0 {
 		a += 0.5
 	} else {
 		a -= 0.5
 	}
-	return float32(math.Floor(float64(a)))
+	return float64(math.Floor(float64(a)))
 }
 
 type Node interface {
@@ -44,14 +44,14 @@ type Node interface {
 	GlobalBounds() Rectangle
 	Bounds() Rectangle
 	RelativeBounds(Node) Rectangle
-	Width() float32
-	Height() float32
-	SetWidth(float32)
-	SetHeight(float32)
-	SetZ(float32)
-	X() float32
-	Y() float32
-	Z() float32
+	Width() float64
+	Height() float64
+	SetWidth(float64)
+	SetHeight(float64)
+	SetZ(float64)
+	X() float64
+	Y() float64
+	Z() float64
 }
 
 type ByDepth []Node
@@ -71,7 +71,7 @@ func (s ByDepth) Swap(i int, j int) {
 type Element struct {
 	Children []Node
 	parent   Node
-	z        float32
+	z        float64
 	bounds   Rectangle
 }
 
@@ -147,40 +147,41 @@ func (e *Element) MoveTo(p Point) {
 	e.bounds = Rectangle{Min: p, Max: Pt(x, y)}
 }
 
-func (e *Element) Width() float32 {
+func (e *Element) Width() float64 {
 	return e.bounds.Max.X - e.bounds.Min.X
 }
 
-func (e *Element) SetWidth(w float32) {
+func (e *Element) SetWidth(w float64) {
 	e.bounds.Max.X = e.bounds.Min.X + w
 }
 
-func (e *Element) Height() float32 {
+func (e *Element) Height() float64 {
 	return e.bounds.Max.Y - e.bounds.Min.Y
 }
 
-func (e *Element) SetHeight(h float32) {
+func (e *Element) SetHeight(h float64) {
 	e.bounds.Max.Y = e.bounds.Min.Y + h
 }
 
-func (e *Element) X() float32 {
+func (e *Element) X() float64 {
 	return e.bounds.Min.X
 }
 
-func (e *Element) Y() float32 {
+func (e *Element) Y() float64 {
 	return e.bounds.Min.Y
 }
 
-func (e *Element) Z() float32 {
+func (e *Element) Z() float64 {
 	return e.z
 }
 
-func (e *Element) SetZ(z float32) {
+func (e *Element) SetZ(z float64) {
 	e.z = z
 }
 
 type Scene struct {
 	Element
+	*Camera
 }
 
 func (s *Scene) Draw() {
@@ -198,30 +199,30 @@ type Sprite struct {
 	frame     int
 	texture1  float64
 	texture2  float64
-	VelocityX float32
-	VelocityY float32
+	VelocityX float64
+	VelocityY float64
 	Type      int
-	Ratio     float32
+	Ratio     float64
 	Collide   bool
 }
 
-func (s *System) NewSprite(name string, x float32, y float32, w int, h int, t int) *Sprite {
+func (s *System) NewSprite(name string, x float64, y float64, w int, h int, t int) *Sprite {
 	sprite := &Sprite{
 		system:  s,
 		texture: s.Textures[name],
 		Type:    t,
 		//TODO: Figure out texture scaling in a better way
-		Ratio:   float32(h) / float32(s.Textures[name].Height),
+		Ratio:   float64(h) / float64(s.Textures[name].Height),
 		Collide: true,
 	}
-	sprite.SetBounds(Rect(x, y, x+float32(w), y+float32(h)))
+	sprite.SetBounds(Rect(x, y, x+float64(w), y+float64(h)))
 	sprite.SetFrame(0)
 	return sprite
 }
 
-func (s *Sprite) TestMove(dx float32, dy float32, r *Sprite) bool {
+func (s *Sprite) TestMove(dx float64, dy float64, r *Sprite) bool {
 	var (
-		pad = float32(0.01)
+		pad = float64(0.01)
 		sb  = s.GlobalBounds()
 		rb  = r.GlobalBounds()
 		p   = Pt(dx, dy)
@@ -249,7 +250,7 @@ func (s *Sprite) SetFrame(frame int) {
 	s.texture1 = float64(tex[0]) / float64(s.texture.Width)
 	s.texture2 = float64(tex[1]) / float64(s.texture.Width)
 	if s.Ratio != 0 {
-		s.SetWidth(float32(width) * s.Ratio)
+		s.SetWidth(float64(width) * s.Ratio)
 	}
 }
 
@@ -262,13 +263,13 @@ func (s *Sprite) Draw() {
 	gl.MatrixMode(gl.TEXTURE)
 	gl.Begin(gl.QUADS)
 	gl.TexCoord2d(s.texture1, 1)
-	gl.Vertex3f(b.Min.X, b.Min.Y, z)
+	gl.Vertex3d(b.Min.X, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 1)
-	gl.Vertex3f(b.Max.X, b.Min.Y, z)
+	gl.Vertex3d(b.Max.X, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 0)
-	gl.Vertex3f(b.Max.X, b.Max.Y, z)
+	gl.Vertex3d(b.Max.X, b.Max.Y, z)
 	gl.TexCoord2d(s.texture1, 0)
-	gl.Vertex3f(b.Min.X, b.Max.Y, z)
+	gl.Vertex3d(b.Min.X, b.Max.Y, z)
 	gl.End()
 	gl.MatrixMode(gl.MODELVIEW)
 	s.texture.Unbind()
@@ -283,20 +284,20 @@ type Text struct {
 	ratio   int
 }
 
-func (s *System) NewText(name string, x float32, y float32, r int, text string) *Text {
+func (s *System) NewText(name string, x float64, y float64, r int, text string) *Text {
 	t := &Text{
 		system:  s,
 		ratio:   r,
 		texture: s.Textures[name],
 	}
-	t.SetBounds(Rect(x, y, x, y+float32(t.texture.Height*t.ratio)))
+	t.SetBounds(Rect(x, y, x, y+float64(t.texture.Height*t.ratio)))
 	t.SetText(text)
 	return t
 }
 
 func (t *Text) SetText(text string) {
 	t.Clear()
-	var x float32 = 0
+	var x float64 = 0
 	for _, c := range text {
 		frame := (int(c) - int(' ')) % len(t.texture.Frames)
 		width := t.ratio * (t.texture.Frames[frame][1] - t.texture.Frames[frame][0])
@@ -304,12 +305,12 @@ func (t *Text) SetText(text string) {
 			system:  t.system,
 			texture: t.texture,
 		}
-		sprite.SetBounds(Rect(x, 0, x+float32(width), t.Height()))
+		sprite.SetBounds(Rect(x, 0, x+float64(width), t.Height()))
 		sprite.SetFrame(frame)
-		x += float32(width + (1 * t.ratio))
+		x += float64(width + (1 * t.ratio))
 		t.AddChild(sprite)
 	}
-	t.SetWidth(float32(x))
+	t.SetWidth(float64(x))
 }
 
 type EnvOpts struct {
@@ -320,7 +321,7 @@ type EnvOpts struct {
 	BlockHeight int
 }
 
-type EnvBlockLoadedHandler func(block *EnvBlock, sprite *Sprite, x float32, y float32)
+type EnvBlockLoadedHandler func(block *EnvBlock, sprite *Sprite, x float64, y float64)
 
 type EnvBlock struct {
 	Type       int
@@ -357,15 +358,15 @@ func (e *Env) Load(system *System, opts EnvOpts) (err error) {
 		colors[GetIndex(block.Color)] = block
 	}
 	bounds = img.Bounds()
-	e.SetBounds(Rect(0, 0, float32(opts.BlockWidth*bounds.Dx()), float32(opts.BlockHeight*bounds.Dy())))
+	e.SetBounds(Rect(0, 0, float64(opts.BlockWidth*bounds.Dx()), float64(opts.BlockHeight*bounds.Dy())))
 	for y := 0; y < bounds.Dy(); y++ {
 		for x := 0; x < bounds.Dx(); x++ {
 			index := GetIndex(img.At(x, y))
 			var (
 				block  *EnvBlock
 				exists bool
-				gX     = float32(x * opts.BlockWidth)
-				gY     = float32(y * opts.BlockHeight)
+				gX     = float64(x * opts.BlockWidth)
+				gY     = float64(y * opts.BlockHeight)
 			)
 			if block, exists = colors[index]; exists == false {
 				// Unrecognized colors just get a pass

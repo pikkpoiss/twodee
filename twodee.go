@@ -15,8 +15,6 @@
 package twodee
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"github.com/go-gl/gl"
 	"github.com/go-gl/glfw"
@@ -26,70 +24,13 @@ import (
 	"os"
 )
 
-type Point struct {
-	X float32
-	Y float32
-}
-
-func Pt(x float32, y float32) Point {
-	return Point{X: x, Y: y}
-}
-
-type Rectangle struct {
-	Min Point
-	Max Point
-}
-
-func Rect(x1 float32, y1 float32, x2 float32, y2 float32) Rectangle {
-	if x1 > x2 {
-		x1, x2 = x2, x1
-	}
-	if y1 > y2 {
-		y1, y2 = y2, y1
-	}
-	return Rectangle{Min: Pt(x1, y1), Max: Pt(x2, y2)}
-}
-
-func (r Rectangle) Overlaps(s Rectangle) bool {
-	return r.Min.X < s.Max.X && s.Min.X < r.Max.X &&
-		r.Min.Y < s.Max.Y && s.Min.Y < r.Max.Y
-}
-
-func (r Rectangle) Dx() float32 {
-	return r.Max.X - r.Min.X
-}
-
-func (r Rectangle) Dy() float32 {
-	return r.Max.Y - r.Min.Y
-}
-
-func (r Rectangle) Size() Point {
-	return Point{
-		r.Max.X - r.Min.X,
-		r.Max.Y - r.Min.Y,
-	}
-}
-
-func (r Rectangle) Add(p Point) Rectangle {
-	return Rectangle{
-		Point{r.Min.X + p.X, r.Min.Y + p.Y},
-		Point{r.Max.X + p.X, r.Max.Y + p.Y},
-	}
-}
-
-func (r Rectangle) Sub(p Point) Rectangle {
-	return Rectangle{
-		Point{r.Min.X - p.X, r.Min.Y - p.Y},
-		Point{r.Max.X - p.X, r.Max.Y - p.Y},
-	}
-}
-
 type Window struct {
-	Width  int
-	Height int
-	Title  string
-	View   Rectangle
+	Width      int
+	Height     int
+	Title      string
+	View       Rectangle
 	Fullscreen bool
+	Scale      int
 }
 
 func (w *Window) Opened() bool {
@@ -199,13 +140,13 @@ func (t *Texture) Unbind() {
 }
 
 func (t *Texture) Dispose() {
-	t.texture.Delete();
+	t.texture.Delete()
 }
 
 type System struct {
-	Textures map[string]*Texture
+	Textures    map[string]*Texture
 	Framebuffer *Framebuffer
-	Win *Window
+	Win         *Window
 }
 
 func Init() (sys *System, err error) {
@@ -237,48 +178,46 @@ func (s *System) Terminate() {
 	glfw.Terminate()
 }
 
-func (s *System) setProjection(win *Window) {
-	gl.MatrixMode(gl.PROJECTION)
-	gl.LoadIdentity()
-	win.View = Rect(0, 0, float32(win.Width) / 2, float32(win.Height) / 2)
-	gl.Ortho(0, float64(win.View.Max.X), float64(win.View.Max.Y), 0, -1, 1)
-	gl.MatrixMode(gl.MODELVIEW)
+func (s *System) resize() (err error) {
+	s.Win.Width, s.Win.Height = glfw.WindowSize()
+	if s.Framebuffer != nil {
+		s.Framebuffer.Dispose()
+	}
+	var (
+		fbw = float64(s.Win.Width) / float64(s.Win.Scale)
+		fbh = float64(s.Win.Height) / float64(s.Win.Scale)
+	)
+	s.Framebuffer, err = NewFramebuffer(int(fbw), int(fbh))
+	return
 }
 
 func (s *System) Open(win *Window) (err error) {
 	s.Win = win
+	if win.Scale < 1 {
+		win.Scale = 1
+	}
 	glfw.SetWindowSizeCallback(func(w, h int) {
 		fmt.Printf("Resizing window to %v, %v\n", w, h)
-		win.Width = w
-		win.Height = h
-		s.setProjection(win)
+		s.resize()
 	})
 	mode := glfw.Windowed
 	if win.Fullscreen {
 		mode = glfw.Fullscreen
 	}
-	err = glfw.OpenWindow(
-		win.Width,
-		win.Height,
-		0, 0, 0, 0, 0, 0,
-		mode)
-	glfw.SetWindowTitle(win.Title)
-	win.Width, win.Height = glfw.WindowSize()
+	if err = glfw.OpenWindow(win.Width, win.Height, 0, 0, 0, 0, 0, 0, mode); err != nil {
+		return
+	}
 	gl.Init()
-	s.setProjection(win)
-	gl.Enable(gl.TEXTURE_2D)
-	gl.Disable(gl.DEPTH_TEST)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gl.Enable(gl.BLEND)
 	v1, v2, v3 := glfw.GLVersion()
 	fmt.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fmt.Printf("Framebuffer supported: %v\n", glfw.ExtensionSupported("GL_EXT_framebuffer_object"))
-	s.Framebuffer, err = NewFramebuffer(win.Width / 2, win.Height / 2)
+	glfw.SetWindowTitle(win.Title)
+	err = s.resize()
 	return
 }
 
 func (s *System) clamp(i int, max int) gl.GLclampf {
-	return gl.GLclampf(float32(i) / float32(max))
+	return gl.GLclampf(float64(i) / float64(max))
 }
 
 func (s *System) SetClearColor(r int, g int, b int, a int) {
@@ -300,71 +239,15 @@ func (s *System) LoadTexture(name string, path string, inter int, width int) (er
 	return
 }
 
-func EncodeTGA(name string, img image.Image) (buf *bytes.Buffer, err error) {
-	var (
-		bounds image.Rectangle = img.Bounds()
-		ident  []byte          = []byte(name)
-		width  []byte          = make([]byte, 2)
-		height []byte          = make([]byte, 2)
-		nrgba  *image.NRGBA
-		data   []byte
-	)
-	binary.LittleEndian.PutUint16(width, uint16(bounds.Dx()))
-	binary.LittleEndian.PutUint16(height, uint16(bounds.Dy()))
-
-	// See http://paulbourke.net/dataformats/tga/
-	buf = &bytes.Buffer{}
-	buf.WriteByte(byte(len(ident)))
-	buf.WriteByte(0)
-	buf.WriteByte(2) // uRGBI
-	buf.Write([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0})
-	buf.Write([]byte(width))
-	buf.Write([]byte(height))
-	buf.WriteByte(32) // Bits per pixel
-	buf.WriteByte(8)
-	if buf.Len() != 18 {
-		err = fmt.Errorf("TGA header is not 18 bytes: %v", buf.Len())
-		return
-	}
-
-	nrgba = image.NewNRGBA(bounds)
-	draw.Draw(nrgba, bounds, img, bounds.Min, draw.Src)
-	buf.Write(ident)
-	data = make([]byte, bounds.Dx()*bounds.Dy()*4)
-	var (
-		lineLength int = bounds.Dx() * 4
-		destOffset int = len(data) - lineLength
-	)
-	for srcOffset := 0; srcOffset < len(nrgba.Pix); {
-		var (
-			dest   = data[destOffset : destOffset+lineLength]
-			source = nrgba.Pix[srcOffset : srcOffset+nrgba.Stride]
-		)
-		copy(dest, source)
-		destOffset -= lineLength
-		srcOffset += nrgba.Stride
-	}
-	for x := 0; x < len(data); {
-		buf.WriteByte(data[x+2])
-		buf.WriteByte(data[x+1])
-		buf.WriteByte(data[x+0])
-		buf.WriteByte(data[x+3])
-		x += 4
-	}
-	return
-}
-
 func (s *System) Paint(scene *Scene) {
 	s.Framebuffer.Bind()
-	gl.MatrixMode(gl.PROJECTION)
-	gl.LoadIdentity()
-	gl.Ortho(0, 64, 0, 64, 1, -1)
-	gl.ClearColor(0.0, 0.0, 1.0, 0)
+	scene.Camera.SetProjection()
+	gl.ClearColor(0.0, 0.0, 0.0, 0)
 	gl.ClearDepth(1.0)
 	gl.Enable(gl.TEXTURE_2D)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Draw()
 	gl.Flush()
-	s.Framebuffer.Draw(int(s.Win.View.Max.X), int(s.Win.View.Max.Y))
+	s.Framebuffer.Draw(s.Win.Width, s.Win.Height)
 	glfw.SwapBuffers()
 }

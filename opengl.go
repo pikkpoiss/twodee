@@ -80,6 +80,10 @@ func (fb *Framebuffer) Dispose() {
 func (fb *Framebuffer) Bind() {
 	fb.Buffer.Bind()
 	gl.Viewport(0, 0, fb.Width, fb.Height)
+	gl.Enable(gl.TEXTURE_2D)
+	gl.Disable(gl.DEPTH_TEST)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gl.Enable(gl.BLEND)
 }
 
 func (fb *Framebuffer) Draw(w int, h int) {
@@ -88,7 +92,7 @@ func (fb *Framebuffer) Draw(w int, h int) {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
 	gl.Ortho(0, 1, 1, 0, 1, -1)
-	gl.ClearColor(0.0, 0.0, 0.0, 0)
+	gl.ClearColor(1.0, 0.0, 0.0, 0)
 	gl.ClearDepth(1.0)
 	gl.Enable(gl.TEXTURE_2D)
 	gl.Clear(gl.COLOR_BUFFER_BIT)

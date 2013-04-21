@@ -67,7 +67,7 @@ func main() {
 	}
 	defer system.Terminate()
 
-	window = &twodee.Window{Width: 640, Height: 480}
+	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
 	if err = system.Open(window); err != nil {
 		PrintError(err)
 		os.Exit(1)
@@ -83,7 +83,9 @@ func main() {
 		}
 	}
 
-	scene := &twodee.Scene{}
+	camera := twodee.NewCamera(0, 0, 128, 128);
+	camera.MatchRatio(window)
+	scene := &twodee.Scene{Camera:camera}
 	parent := system.NewSprite("bricks", 16, 0, 32, 32, 4)
 	parent.AddChild(system.NewSprite("bricks", 32, 16, 32, 32, 4))
 	scene.AddChild(parent)
