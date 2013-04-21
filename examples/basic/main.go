@@ -31,6 +31,11 @@ func PrintError(err error) {
 	fmt.Printf("[error]: %v\n", err)
 }
 
+func init() {
+	// See https://code.google.com/p/go/issues/detail?id=3527
+	runtime.LockOSThread()
+}
+
 func main() {
 	var (
 		system     *twodee.System
