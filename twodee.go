@@ -164,6 +164,7 @@ func Init() (sys *System, err error) {
 }
 
 type KeyHandler func(key int, state int)
+
 func (s *System) SetKeyCallback(handler KeyHandler) {
 	glfw.SetKeyCallback(glfw.KeyHandler(handler))
 }
@@ -173,21 +174,25 @@ func (s *System) Key(key int) int {
 }
 
 type CharHandler func(key int, state int)
+
 func (s *System) SetCharCallback(handler CharHandler) {
 	glfw.SetCharCallback(glfw.CharHandler(handler))
 }
 
 type SizeHandler func(w int, h int)
+
 func (s *System) SetSizeCallback(handler SizeHandler) {
 	s.resizeHandler = glfw.WindowSizeHandler(handler)
 }
 
 type CloseHandler func() int
+
 func (s *System) SetCloseCallback(handler CloseHandler) {
 	glfw.SetWindowCloseCallback(glfw.WindowCloseHandler(handler))
 }
 
 type ScrollHandler func(pos int)
+
 func (s *System) SetScrollCallback(handler ScrollHandler) {
 	glfw.SetMouseWheelCallback(glfw.MouseWheelHandler(handler))
 }
@@ -203,15 +208,11 @@ func (s *System) Terminate() {
 
 func (s *System) resize() (err error) {
 	s.Win.Width, s.Win.Height = glfw.WindowSize()
-	if s.Framebuffer != nil {
-		s.Framebuffer.Dispose()
-	}
-	if s.Overlay != nil {
-		s.Overlay.Dispose()
-	}
 	var (
-		fbw = float64(s.Win.Width) / float64(s.Win.Scale)
-		fbh = float64(s.Win.Height) / float64(s.Win.Scale)
+		oldframebuffer *Framebuffer = s.Framebuffer
+		oldoverlay     *Framebuffer = s.Overlay
+		fbw                         = float64(s.Win.Width) / float64(s.Win.Scale)
+		fbh                         = float64(s.Win.Height) / float64(s.Win.Scale)
 	)
 	if s.Framebuffer, err = NewFramebuffer(int(fbw), int(fbh)); err != nil {
 		return
@@ -222,6 +223,12 @@ func (s *System) resize() (err error) {
 	s.OverlayCamera = NewCamera(0, 0, float64(s.Win.Width), float64(s.Win.Height))
 	if s.resizeHandler != nil {
 		s.resizeHandler(s.Win.Width, s.Win.Height)
+	}
+	if oldframebuffer != nil {
+		oldframebuffer.Dispose()
+	}
+	if oldoverlay != nil {
+		oldoverlay.Dispose()
 	}
 	return
 }
@@ -293,7 +300,7 @@ func (s *System) Paint(scene *Scene) {
 	scene.Draw()
 	gl.Flush()
 	s.Framebuffer.Unbind()
-	
+
 	s.Overlay.Bind()
 	s.OverlayCamera.SetProjection()
 	gl.ClearColor(0.0, 0.0, 0.0, 0)
