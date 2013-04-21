@@ -24,6 +24,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/pprof"
+	"time"
 )
 
 func PrintError(err error) {
@@ -83,17 +84,31 @@ func main() {
 		}
 	}
 
-	camera := twodee.NewCamera(0, 0, 128, 128);
+	camera := twodee.NewCamera(0, 0, 128, 128)
 	camera.MatchRatio(window)
-	scene := &twodee.Scene{Camera:camera}
+	scene := &twodee.Scene{Camera: camera}
 	parent := system.NewSprite("bricks", 16, 0, 32, 32, 4)
 	parent.AddChild(system.NewSprite("bricks", 32, 16, 32, 32, 4))
 	scene.AddChild(parent)
 	parent.SetFrame(1)
+	exit := make(chan bool, 1)
+	go func() {
+		for {
+			parent.Move(twodee.Pt(0.1, 0))
+			if system.Key(twodee.KeyEsc) != 0 || !window.Opened() {
+				fmt.Println("Exiting")
+				exit <- true
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+	}()
 	for run {
 		system.Paint(scene)
-		parent.Move(twodee.Pt(0.1, 0))
-		run = system.Key(twodee.KeyEsc) == 0 && window.Opened()
+		select {
+		case <-exit:
+			run = false
+		default:
+		}
 	}
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
