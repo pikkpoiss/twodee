@@ -163,21 +163,30 @@ func Init() (sys *System, err error) {
 	return
 }
 
-func (s *System) SetKeyCallback(handler glfw.KeyHandler) {
-	glfw.SetKeyCallback(handler)
+type KeyHandler func(key int, state int)
+func (s *System) SetKeyCallback(handler KeyHandler) {
+	glfw.SetKeyCallback(glfw.KeyHandler(handler))
 }
 
 func (s *System) Key(key int) int {
 	return glfw.Key(key)
 }
 
-func (s *System) SetCharCallback(handler glfw.CharHandler) {
-	glfw.SetCharCallback(handler)
+type CharHandler func(key int, state int)
+func (s *System) SetCharCallback(handler CharHandler) {
+	glfw.SetCharCallback(glfw.CharHandler(handler))
 }
 
-func (s *System) SetSizeCallback(handler glfw.WindowSizeHandler) {
-	s.resizeHandler = handler
+type SizeHandler func(w int, h int)
+func (s *System) SetSizeCallback(handler SizeHandler) {
+	s.resizeHandler = glfw.WindowSizeHandler(handler)
 }
+
+type CloseHandler func() int
+func (s *System) SetCloseCallback(handler CloseHandler) {
+	glfw.SetWindowCloseCallback(glfw.WindowCloseHandler(handler))
+}
+
 
 func (s *System) Terminate() {
 	for _, t := range s.Textures {
@@ -229,7 +238,7 @@ func (s *System) Open(win *Window) (err error) {
 	v1, v2, v3 := glfw.GLVersion()
 	fmt.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fmt.Printf("Framebuffer supported: %v\n", glfw.ExtensionSupported("GL_EXT_framebuffer_object"))
-	glfw.SetSwapInterval(1) // Limit to refresh
+	//glfw.SetSwapInterval(1) // Limit to refresh
 	glfw.SetWindowTitle(win.Title)
 	glfw.SetWindowSizeCallback(func(w, h int) {
 		fmt.Printf("Resizing window to %v, %v\n", w, h)
@@ -269,9 +278,8 @@ func (s *System) Paint(scene *Scene) {
 	)
 	now = time.Now()
 	if !s.LastPaint.IsZero() {
-		fps = 1 / now.Sub(s.LastPaint).Seconds()
+		fps = 1.0 / now.Sub(s.LastPaint).Seconds()
 	}
-	s.LastPaint = now
 
 	s.Framebuffer.Bind()
 	scene.Camera.SetProjection()
@@ -297,4 +305,6 @@ func (s *System) Paint(scene *Scene) {
 	s.Framebuffer.Draw(s.Win.Width, s.Win.Height)
 	s.Overlay.Draw(s.Win.Width, s.Win.Height)
 	glfw.SwapBuffers()
+
+	s.LastPaint = now
 }

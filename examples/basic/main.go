@@ -73,7 +73,7 @@ func main() {
 	system.SetSizeCallback(func(w, h int) {
 		camera.MatchRatio(w, h)
 	})
-	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
+	window = &twodee.Window{Width: 640, Height: 480, Scale:4}
 	if err = system.Open(window); err != nil {
 		PrintError(err)
 		os.Exit(1)
@@ -98,26 +98,34 @@ func main() {
 	scene.AddChild(parent)
 	parent.SetFrame(1)
 	exit := make(chan bool, 1)
-	go func() {
-		for {
-			if system.Key(twodee.KeyEsc) != 0 || !window.Opened() {
-				exit <- true
+	ticker := time.Tick(time.Second / 60.0)
+	system.SetKeyCallback(func(key int, state int) {
+		switch {
+		case key == twodee.KeyEsc:
+			exit <- true
+		default:
+			fmt.Printf("Key: %v, State: %v\n", key, state)
+		}
+	})
+	system.SetCloseCallback(func() int {
+		exit <- true
+		return 0
+	})
+	for run {
+		worked := false
+		for worked == false {
+			select {
+			case <-exit:
+				run = false
+				worked = true
+			case <-ticker:
+				parent.Move(twodee.Pt(0.1, 0))
+				worked = true
+			default:
+				time.Sleep(1 * time.Microsecond)
 			}
 		}
-	}()
-	go func() {
-		for {
-			parent.Move(twodee.Pt(0.1, 0))
-			time.Sleep(100 * time.Millisecond)
-		}
-	}()
-	for run {
 		system.Paint(scene)
-		select {
-		case <-exit:
-			run = false
-		default:
-		}
 	}
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
