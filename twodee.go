@@ -242,7 +242,7 @@ func (s *System) Open(win *Window) (err error) {
 	v1, v2, v3 := glfw.GLVersion()
 	fmt.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fmt.Printf("Framebuffer supported: %v\n", glfw.ExtensionSupported("GL_EXT_framebuffer_object"))
-	glfw.SetSwapInterval(1) // Limit to refresh
+	//glfw.SetSwapInterval(1) // Limit to refresh
 	glfw.SetWindowTitle(win.Title)
 	glfw.SetWindowSizeCallback(func(w, h int) {
 		fmt.Printf("Resizing window to %v, %v\n", w, h)

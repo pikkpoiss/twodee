@@ -37,7 +37,6 @@ func main() {
 		window     *twodee.Window
 		font       *twodee.Font
 		err        error
-		run        bool = true
 		cpuprofile *string
 		memprofile *string
 		webprofile *bool
@@ -68,13 +67,13 @@ func main() {
 		os.Exit(1)
 	}
 	defer system.Terminate()
-	
+
 	camera := twodee.NewCamera(0, 0, 16, 16)
 	system.SetSizeCallback(func(w, h int) {
 		camera.MatchRatio(w, h)
 		camera.Top(0)
 	})
-	window = &twodee.Window{Width: 640, Height: 480, Scale:2}
+	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
 	if err = system.Open(window); err != nil {
 		PrintError(err)
 		os.Exit(1)
@@ -99,7 +98,6 @@ func main() {
 	scene.AddChild(parent)
 	parent.SetFrame(1)
 	exit := make(chan bool, 1)
-	ticker := time.Tick(time.Second / 120.0)
 	system.SetKeyCallback(func(key int, state int) {
 		switch {
 		case key == twodee.KeyEsc:
@@ -118,27 +116,30 @@ func main() {
 		camera.Top(0)
 	})
 	v := twodee.Pt(0.1, 0.05)
-	for run {
-		worked := false
-		for worked == false {
-			select {
-			case <-exit:
-				run = false
-				worked = true
-			case <-ticker:
-				b := parent.GlobalBounds()
-				if b.Max.X > 10 || b.Min.X < 0 {
-					v = twodee.Pt(-v.X, v.Y)
-				} else if b.Max.Y > 10 || b.Min.Y < 0 {
-					v = twodee.Pt(v.X, -v.Y)
-				}
-				parent.Move(v)
-				worked = true
-			default:
-				time.Sleep(1 * time.Microsecond)
+	go func() {
+		ticker := time.Tick(time.Second / 120.0)
+		for true {
+			<-ticker
+			b := parent.GlobalBounds()
+			if b.Max.X > 10 || b.Min.X < 0 {
+				v = twodee.Pt(-v.X, v.Y)
+			} else if b.Max.Y > 10 || b.Min.Y < 0 {
+				v = twodee.Pt(v.X, -v.Y)
 			}
+			parent.Move(v)
 		}
+	}()
+	ticker := time.NewTicker(time.Second / 60)
+	run := true
+	for run == true {
 		system.Paint(scene)
+		select {
+		case <-exit:
+			ticker.Stop()
+			run = false
+		default:
+		}
+		<-ticker.C
 	}
 	if *memprofile != "" {
 		f, err := os.Create(*memprofile)
