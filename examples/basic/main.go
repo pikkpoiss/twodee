@@ -69,7 +69,7 @@ func main() {
 	}
 	defer system.Terminate()
 	
-	camera := twodee.NewCamera(0, 0, 10, 10)
+	camera := twodee.NewCamera(0, 0, 16, 16)
 	system.SetSizeCallback(func(w, h int) {
 		camera.MatchRatio(w, h)
 		camera.Top(0)
@@ -95,11 +95,11 @@ func main() {
 	}
 	scene := &twodee.Scene{Camera: camera, Font: font}
 	parent := system.NewSprite("bricks", 0, 0, 1, 1, 4)
-	parent.AddChild(system.NewSprite("bricks", 1, 0.5, 1, 1, 4))
+	parent.AddChild(system.NewSprite("bricks", 1, 1, 1, 1, 4))
 	scene.AddChild(parent)
 	parent.SetFrame(1)
 	exit := make(chan bool, 1)
-	ticker := time.Tick(time.Second / 60.0)
+	ticker := time.Tick(time.Second / 120.0)
 	system.SetKeyCallback(func(key int, state int) {
 		switch {
 		case key == twodee.KeyEsc:
@@ -117,7 +117,7 @@ func main() {
 		camera.Zoom(float64(pos) / 50.0)
 		camera.Top(0)
 	})
-	v := twodee.Pt(0.08, 0.1)
+	v := twodee.Pt(0.1, 0.05)
 	for run {
 		worked := false
 		for worked == false {
