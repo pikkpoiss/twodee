@@ -15,7 +15,7 @@
 package twodee
 
 import (
-	"github.com/banthar/gl"
+	"github.com/go-gl/gl"
 )
 
 const (
