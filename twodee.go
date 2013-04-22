@@ -249,6 +249,7 @@ func (s *System) Open(win *Window) (err error) {
 	v1, v2, v3 := glfw.GLVersion()
 	fmt.Printf("OpenGL version: %v %v %v\n", v1, v2, v3)
 	fmt.Printf("Framebuffer supported: %v\n", glfw.ExtensionSupported("GL_EXT_framebuffer_object"))
+	s.SetClearColor(0, 0, 0, 0)
 	//glfw.SetSwapInterval(1) // Limit to refresh
 	glfw.SetWindowTitle(win.Title)
 	glfw.SetWindowSizeCallback(func(w, h int) {
@@ -265,6 +266,7 @@ func (s *System) clamp(i int, max int) gl.GLclampf {
 
 func (s *System) SetClearColor(r int, g int, b int, a int) {
 	gl.ClearColor(s.clamp(r, 255), s.clamp(g, 255), s.clamp(b, 255), s.clamp(a, 255))
+	gl.ClearDepth(1.0)
 }
 
 func (s *System) LoadTexture(name string, path string, inter int, width int) (err error) {
@@ -294,8 +296,6 @@ func (s *System) Paint(scene *Scene) {
 
 	s.Framebuffer.Bind()
 	scene.Camera.SetProjection()
-	gl.ClearColor(0.0, 0.0, 0.0, 0)
-	gl.ClearDepth(1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Draw()
 	gl.Flush()
@@ -303,15 +303,11 @@ func (s *System) Paint(scene *Scene) {
 
 	s.Overlay.Bind()
 	s.OverlayCamera.SetProjection()
-	gl.ClearColor(0.0, 0.0, 0.0, 0)
-	gl.ClearDepth(1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Font.Printf(0, 0, "FPS %6.2f", fps)
 	gl.Flush()
 	s.Overlay.Unbind()
 
-	gl.ClearColor(0.0, 0.0, 0.0, 0)
-	gl.ClearDepth(1.0)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	s.Framebuffer.Draw(s.Win.Width, s.Win.Height)
 	s.Overlay.Draw(s.Win.Width, s.Win.Height)

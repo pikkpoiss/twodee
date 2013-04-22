@@ -16,6 +16,7 @@ package twodee
 
 import (
 	"github.com/go-gl/gl"
+	"fmt"
 )
 
 type Sprite struct {
@@ -33,6 +34,7 @@ type Sprite struct {
 }
 
 func (s *System) NewSprite(name string, x float64, y float64, w int, h int, t int) *Sprite {
+	fmt.Printf("Textures: %v\n", s.Textures)
 	sprite := &Sprite{
 		system:  s,
 		texture: s.Textures[name],
@@ -88,13 +90,13 @@ func (s *Sprite) Draw() {
 	s.texture.Bind()
 	gl.MatrixMode(gl.TEXTURE)
 	gl.Begin(gl.QUADS)
-	gl.TexCoord2d(s.texture1, 1)
-	gl.Vertex3d(b.Min.X, b.Min.Y, z)
-	gl.TexCoord2d(s.texture2, 1)
-	gl.Vertex3d(b.Max.X, b.Min.Y, z)
-	gl.TexCoord2d(s.texture2, 0)
-	gl.Vertex3d(b.Max.X, b.Max.Y, z)
 	gl.TexCoord2d(s.texture1, 0)
+	gl.Vertex3d(b.Min.X, b.Min.Y, z)
+	gl.TexCoord2d(s.texture2, 0)
+	gl.Vertex3d(b.Max.X, b.Min.Y, z)
+	gl.TexCoord2d(s.texture2, 1)
+	gl.Vertex3d(b.Max.X, b.Max.Y, z)
+	gl.TexCoord2d(s.texture1, 1)
 	gl.Vertex3d(b.Min.X, b.Max.Y, z)
 	gl.End()
 	gl.MatrixMode(gl.MODELVIEW)

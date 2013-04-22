@@ -76,7 +76,7 @@ func main() {
 	camera := twodee.NewCamera(0, 0, 16, 16)
 	system.SetSizeCallback(func(w, h int) {
 		camera.MatchRatio(w, h)
-		camera.Top(0)
+		camera.Bottom(0)
 	})
 	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
 	if err = system.Open(window); err != nil {
@@ -118,7 +118,7 @@ func main() {
 	system.SetScrollCallback(func(pos int) {
 		fmt.Printf("Scroll: %v\n", pos)
 		camera.Zoom(float64(pos) / 50.0)
-		camera.Top(0)
+		camera.Bottom(0)
 	})
 	v := twodee.Pt(0.1, 0.05)
 	go func() {

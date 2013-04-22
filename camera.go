@@ -57,7 +57,7 @@ func (c *Camera) MatchRatio(width int, height int) {
 	c.calcView()
 }
 
-func (c *Camera) Top(y float64) {
+func (c *Camera) Bottom(y float64) {
 	var (
 		dy = y - c.view.Min.Y
 	)
@@ -83,5 +83,5 @@ func (c *Camera) Bounds() Rectangle {
 func (c *Camera) SetProjection() {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()
-	gl.Ortho(c.view.Min.X, c.view.Max.X, c.view.Max.Y, c.view.Min.Y, -1, 1)
+	gl.Ortho(c.view.Min.X, c.view.Max.X, c.view.Min.Y, c.view.Max.Y, 1, -1)
 }
