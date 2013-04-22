@@ -16,7 +16,6 @@ package twodee
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -24,7 +23,7 @@ import (
 type Map struct {
 	Element
 	Texture *Texture
-	Blocks []*Sprite
+	Blocks  []*Sprite
 }
 
 func (m *Map) Draw() {
@@ -93,6 +92,9 @@ func LoadTiledMap(system *System, path string) (m *Map, err error) {
 	}
 	var numblocks = 0
 	for _, l := range tm.Layers {
+		if l.Type != "tilelayer" {
+			continue
+		}
 		for _, f := range l.Data {
 			if f == 0 {
 				continue
@@ -103,21 +105,22 @@ func LoadTiledMap(system *System, path string) (m *Map, err error) {
 	m.Blocks = make([]*Sprite, numblocks)
 	var bi = 0
 	for j, l := range tm.Layers {
+		if l.Type != "tilelayer" {
+			continue
+		}
 		var row, col int
 		var name = tm.Tilesets[j].Name
 		for i, f := range l.Data {
 			if f == 0 {
 				continue
 			}
-			row = tm.Height - 1 - i / tm.Width
+			row = tm.Height - 1 - i/tm.Width
 			col = i % tm.Width
-			fmt.Printf("Name: %v Row: %v Col: %v\n", name, row, col)
 			sprite := system.NewSprite(name, float64(col), float64(row), 1, 1, 0)
 			m.Blocks[bi] = sprite
-			m.Blocks[bi].SetFrame(f-1)
+			m.Blocks[bi].SetFrame(f - 1)
 			bi += 1
 		}
 	}
-	fmt.Printf("%v\n", tm)
 	return
 }

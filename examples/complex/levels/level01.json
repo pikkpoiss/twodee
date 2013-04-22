@@ -10,6 +10,29 @@
          "width":50,
          "x":0,
          "y":0
+        }, 
+        {
+         "height":20,
+         "name":"Object Layer 1",
+         "objects":[
+                {
+                 "height":192,
+                 "name":"",
+                 "properties":
+                    {
+
+                    },
+                 "type":"",
+                 "width":256,
+                 "x":16,
+                 "y":128
+                }],
+         "opacity":1,
+         "type":"objectgroup",
+         "visible":true,
+         "width":50,
+         "x":0,
+         "y":0
         }],
  "orientation":"orthogonal",
  "properties":
@@ -20,7 +43,7 @@
  "tilesets":[
         {
          "firstgid":1,
-         "image":"..\/textures\/level-textures.png",
+         "image":"..\/..\/..\/..\/misc\/experiments\/tilegame\/src\/res\/level-textures.png",
          "imageheight":16,
          "imagewidth":256,
          "margin":0,
