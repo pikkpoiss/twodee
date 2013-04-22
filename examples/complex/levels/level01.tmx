@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="50" height="20" tilewidth="16" tileheight="16">
+ <tileset firstgid="1" name="tilegame" tilewidth="16" tileheight="16">
+  <image source="../level-textures.png" width="256" height="16"/>
+ </tileset>
+ <layer name="Tile Layer 1" width="50" height="20">
+  <data encoding="base64" compression="zlib">
+   eJztklsKwCAMwDr3kG33v+/qXynCULqJkEC+LGKDIgAAAADwB5d6Ou+Xudp5D6u6Bd01kl09Rj+ig9I/GbPMuUfpvzhb90gfa/+57x6p7xCt7VrrPovs0eYDGN8Bpg==
+  </data>
+ </layer>
+</map>
