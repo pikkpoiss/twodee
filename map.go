@@ -122,5 +122,6 @@ func LoadTiledMap(system *System, path string) (m *Map, err error) {
 			bi += 1
 		}
 	}
+	m.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
 	return
 }

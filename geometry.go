@@ -45,6 +45,11 @@ func (r Rectangle) Overlaps(s Rectangle) bool {
 		r.Min.Y < s.Max.Y && s.Min.Y < r.Max.Y
 }
 
+func (r Rectangle) In(s Rectangle) bool {
+	return r.Min.X >= s.Min.X && r.Max.X <= s.Max.X &&
+		r.Min.Y >= s.Min.Y && r.Max.Y <= s.Max.Y
+}
+
 func (r Rectangle) Dx() float64 {
 	return r.Max.X - r.Min.X
 }

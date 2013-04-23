@@ -54,26 +54,29 @@ func main() {
 	if level, err = twodee.LoadTiledMap(system, "examples/complex/levels/level01.json"); err != nil {
 		log.Fatalf("Couldn't load map: %v\n", err)
 	}
+	log.Printf("Bounds: %v\n", level.Bounds())
+	
 
 	if font, err = twodee.LoadFont("examples/complex/slkscr.ttf", 24); err != nil {
 		log.Fatalf("Couldn't load font: %v\n", err)
 	}
 
-	log.Printf("%v\n", font)
-	log.Printf("%v\n", level)
 	scene := &twodee.Scene{Camera: camera, Font: font}
 	scene.AddChild(level)
+	camera.SetLimits(level.Bounds())
 
 	exit := make(chan bool, 1)
 	system.SetKeyCallback(func(key int, state int) {
 		switch {
-		case key == twodee.KeyUp && state == 1:
+		case state == 0:
+			return
+		case key == twodee.KeyUp:
 			camera.Pan(0, 1)
-		case key == twodee.KeyDown && state == 1:
+		case key == twodee.KeyDown:
 			camera.Pan(0, -1)
-		case key == twodee.KeyLeft && state == 1:
+		case key == twodee.KeyLeft:
 			camera.Pan(-1, 0)
-		case key == twodee.KeyRight && state == 1:
+		case key == twodee.KeyRight:
 			camera.Pan(1, 0)
 		case key == twodee.KeyEsc:
 			exit <- true
@@ -85,9 +88,15 @@ func main() {
 		exit <- true
 		return 0
 	})
+	lastpos := 0
 	system.SetScrollCallback(func(pos int) {
 		log.Printf("Scroll: %v\n", pos)
-		camera.Zoom(float64(pos) / 50.0)
+		if pos > lastpos {
+			camera.Zoom(1.0 / 32.0)
+		} else if pos < lastpos {
+			camera.Zoom(-1.0 / 32.0)
+		}
+		lastpos = pos
 	})
 	go func() {
 		ticker := time.Tick(time.Second / 120.0)

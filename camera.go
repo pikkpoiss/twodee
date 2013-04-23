@@ -19,42 +19,58 @@ import (
 )
 
 type Camera struct {
-	view   Rectangle
-	focus  Point
-	width  float64
-	height float64
-	zoom   float64
+	view    Rectangle
+	focus   Point
+	width   float64
+	height  float64
+	zoom    float64
+	limits  Rectangle
+	limited bool
 }
 
 func NewCamera(x float64, y float64, w float64, h float64) (c *Camera) {
 	c = &Camera{
-		width:  w,
-		height: h,
-		focus:  Pt(x+w/2.0, y+h/2.0),
-		zoom:   0,
+		width:   w,
+		height:  h,
+		focus:   Pt(x+w/2.0, y+h/2.0),
+		zoom:    0,
+		limited: false,
 	}
 	c.calcView()
 	return
 }
 
-func (c *Camera) calcView() {
+func (c *Camera) calcView() bool {
 	var (
 		ratio = c.height / c.width
-		hw = c.width / 2.0
-		hh = hw * ratio
-		zw = hw * c.zoom
-		zh = zw * ratio
+		hw    = c.width / 2.0
+		hh    = hw * ratio
+		zw    = hw * c.zoom
+		zh    = zw * ratio
+		view  = c.view
 	)
 	c.view.Min.X = c.focus.X - hw - zw
 	c.view.Min.Y = c.focus.Y - hh - zh
 	c.view.Max.X = c.focus.X + hw + zw
 	c.view.Max.Y = c.focus.Y + hh + zh
+
+	if c.limited {
+		if !c.view.In(c.limits) {
+			c.view = view
+			return false
+		}
+		return true
+	}
+	return true
 }
 
 func (c *Camera) MatchRatio(width int, height int) {
+	h := c.height
 	ratio := float64(height) / float64(width)
 	c.height = c.width * ratio
-	c.calcView()
+	if !c.calcView() {
+		c.height = h
+	}
 }
 
 func (c *Camera) Bottom(y float64) {
@@ -62,22 +78,39 @@ func (c *Camera) Bottom(y float64) {
 		dy = y - c.view.Min.Y
 	)
 	c.focus.Y += dy
-	c.calcView()
+	if !c.calcView() {
+		c.focus.Y -= dy
+	}
 }
 
 func (c *Camera) Pan(x float64, y float64) {
 	c.focus.X += x
 	c.focus.Y += y
-	c.calcView()
+	if !c.calcView() {
+		c.focus.X -= x
+		c.focus.Y -= y
+	}
 }
 
-func (c *Camera) Zoom(z float64) {
-	c.zoom = z
-	c.calcView()
+func (c *Camera) Zoom(incr float64) {
+	z := c.zoom
+	c.zoom += incr
+	if c.zoom < -0.9 {
+		c.zoom = z
+		return
+	}
+	if !c.calcView() {
+		c.zoom = z
+	}
 }
 
 func (c *Camera) Bounds() Rectangle {
 	return c.view
+}
+
+func (c *Camera) SetLimits(limits Rectangle) {
+	c.limits = limits
+	c.limited = true
 }
 
 func (c *Camera) SetProjection() {
