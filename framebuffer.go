@@ -15,28 +15,9 @@
 package twodee
 
 import (
-	"bytes"
-	"fmt"
 	"github.com/go-gl/gl"
-	"github.com/go-gl/glfw"
-	"image"
+	"fmt"
 )
-
-func GetGLTexture(img image.Image, smoothing int) (gltexture gl.Texture, err error) {
-	var data *bytes.Buffer
-	if data, err = EncodeTGA("texture", img); err != nil {
-		return
-	}
-	gltexture = gl.GenTexture()
-	gltexture.Bind(gl.TEXTURE_2D)
-	if !glfw.LoadMemoryTexture2D(data.Bytes(), 0) {
-		err = fmt.Errorf("Failed to load texture")
-		return
-	}
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, smoothing)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, smoothing)
-	return
-}
 
 type Framebuffer struct {
 	Buffer  gl.Framebuffer
