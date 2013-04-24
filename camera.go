@@ -48,6 +48,7 @@ func (c *Camera) calcView() bool {
 		zw    = hw * c.zoom
 		zh    = zw * ratio
 		view  = c.view
+		focus = c.focus
 	)
 	c.view.Min.X = c.focus.X - hw - zw
 	c.view.Min.Y = c.focus.Y - hh - zh
@@ -56,8 +57,29 @@ func (c *Camera) calcView() bool {
 
 	if c.limited {
 		if !c.view.In(c.limits) {
-			c.view = view
-			return false
+			if c.view.Max.X > c.limits.Max.X {
+				c.focus.X -= c.view.Max.X - c.limits.Max.X
+			}
+			if c.view.Min.X < c.limits.Min.X {
+				c.focus.X -= c.view.Min.X - c.limits.Min.X
+			}
+			if c.view.Max.Y > c.limits.Max.Y {
+				c.focus.Y -= c.view.Max.Y - c.limits.Max.Y
+			}
+			if c.view.Min.Y < c.limits.Min.Y {
+				c.focus.Y -= c.view.Min.Y - c.limits.Min.Y
+			}
+			if c.view.In(c.limits) {
+				c.view = view
+				c.focus = focus
+				return false
+			}
+			//TODO: Terrible hack for keeping the camera from freezing
+			//TODO: Fix zooming with real maths
+			c.limited = false
+			c.calcView()
+			c.limited = true
+			return true
 		}
 		return true
 	}
@@ -89,6 +111,23 @@ func (c *Camera) Pan(x float64, y float64) {
 	if !c.calcView() {
 		c.focus.X -= x
 		c.focus.Y -= y
+	}
+}
+
+func (c *Camera) Focus() Point {
+	return c.focus
+}
+
+func (c *Camera) SetFocus(x float64, y float64) {
+	var (
+		ox = c.focus.X
+		oy = c.focus.Y
+	)
+	c.focus.X = x
+	c.focus.Y = y
+	if !c.calcView() {
+		c.focus.X = ox
+		c.focus.Y = oy
 	}
 }
 

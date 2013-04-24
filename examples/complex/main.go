@@ -64,6 +64,7 @@ func main() {
 	scene := &twodee.Scene{Camera: camera, Font: font}
 	scene.AddChild(level)
 	camera.SetLimits(level.Bounds())
+	cameradest := twodee.Pt(0,0)
 
 	exit := make(chan bool, 1)
 	system.SetKeyCallback(func(key int, state int) {
@@ -71,13 +72,13 @@ func main() {
 		case state == 0:
 			return
 		case key == twodee.KeyUp:
-			camera.Pan(0, 1)
+			cameradest.Y += 10
 		case key == twodee.KeyDown:
-			camera.Pan(0, -1)
+			cameradest.Y -= 10
 		case key == twodee.KeyLeft:
-			camera.Pan(-1, 0)
+			cameradest.X -= 10
 		case key == twodee.KeyRight:
-			camera.Pan(1, 0)
+			cameradest.X += 10
 		case key == twodee.KeyEsc:
 			exit <- true
 		default:
@@ -102,11 +103,16 @@ func main() {
 		log.Printf("Mouse: %v %v\n", x ,y)
 		gx, gy := camera.ResolveScreenCoords(x, y, window.Width, window.Height)
 		log.Printf("Game: %v %v\n", gx, gy)
+		cameradest = twodee.Pt(gx, gy)
 	})
 	go func() {
 		ticker := time.Tick(time.Second / 120.0)
 		for true {
 			<-ticker
+			focus := camera.Focus()
+			camera.Pan(
+				(cameradest.X - focus.X) / 20,
+				(cameradest.Y - focus.Y) / 20)
 		}
 	}()
 	ticker := time.NewTicker(time.Second / 60)
