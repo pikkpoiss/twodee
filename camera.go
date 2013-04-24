@@ -113,6 +113,12 @@ func (c *Camera) SetLimits(limits Rectangle) {
 	c.limited = true
 }
 
+func (c *Camera) ResolveScreenCoords(x, y, w, h int) (gx, gy float64) {
+	gx = c.view.Min.X + (float64(x) / float64(w)) * (c.view.Max.X - c.view.Min.X)
+	gy = c.view.Min.Y + (float64(h - y) / float64(h)) * (c.view.Max.Y - c.view.Min.Y)
+	return
+}
+
 func (c *Camera) SetProjection() {
 	gl.MatrixMode(gl.PROJECTION)
 	gl.LoadIdentity()

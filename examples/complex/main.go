@@ -98,6 +98,11 @@ func main() {
 		}
 		lastpos = pos
 	})
+	system.SetMouseMoveCallback(func(x int, y int) {
+		log.Printf("Mouse: %v %v\n", x ,y)
+		gx, gy := camera.ResolveScreenCoords(x, y, window.Width, window.Height)
+		log.Printf("Game: %v %v\n", gx, gy)
+	})
 	go func() {
 		ticker := time.Tick(time.Second / 120.0)
 		for true {

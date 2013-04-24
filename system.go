@@ -40,6 +40,12 @@ func Init() (sys *System, err error) {
 	return
 }
 
+type MouseMoveHandler func(x int, y int)
+
+func (s *System) SetMouseMoveCallback(handler MouseMoveHandler) {
+	glfw.SetMousePosCallback(glfw.MousePosHandler(handler))
+}
+
 type KeyHandler func(key int, state int)
 
 func (s *System) SetKeyCallback(handler KeyHandler) {
