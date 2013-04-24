@@ -15,8 +15,8 @@
 package twodee
 
 import (
-	"github.com/go-gl/gl"
 	"fmt"
+	"github.com/go-gl/gl"
 )
 
 type Sprite struct {

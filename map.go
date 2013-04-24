@@ -69,7 +69,7 @@ type TiledMap struct {
 	Width       int
 }
 
-func LoadTiledMap(system *System, path string) (m *Map, err error) {
+func LoadTiledMap(system *System, factory SpriteFactory, path string) (m *Map, err error) {
 	var (
 		f       *os.File
 		decoder *json.Decoder
@@ -108,15 +108,15 @@ func LoadTiledMap(system *System, path string) (m *Map, err error) {
 		if l.Type != "tilelayer" {
 			continue
 		}
-		var row, col int
+		var row, col float64
 		var name = tm.Tilesets[j].Name
 		for i, f := range l.Data {
 			if f == 0 {
 				continue
 			}
-			row = tm.Height - 1 - i/tm.Width
-			col = i % tm.Width
-			sprite := system.NewSprite(name, float64(col), float64(row), 1, 1, 0)
+			row = float64(tm.Height - 1 - i/tm.Width)
+			col = float64(i % tm.Width)
+			sprite := factory.Create(name, f-1, col, row, 1, 1)
 			m.Blocks[bi] = sprite
 			m.Blocks[bi].SetFrame(f - 1)
 			bi += 1

@@ -26,14 +26,29 @@ func init() {
 	runtime.LockOSThread()
 }
 
+type Factory struct {
+	system *twodee.System
+}
+
+func NewFactory(system *twodee.System) *Factory {
+	return &Factory{system: system}
+}
+
+func (f *Factory) Create(tileset string, index int, x, y, w, h float64) *twodee.Sprite {
+	var sprite = f.system.NewSprite(tileset, x, y, int(w), int(h), index)
+	sprite.SetFrame(index)
+	return sprite
+}
+
 func main() {
 	var (
-		system *twodee.System
-		camera *twodee.Camera
-		window *twodee.Window
-		level  *twodee.Map
-		font   *twodee.Font
-		err    error
+		system  *twodee.System
+		camera  *twodee.Camera
+		window  *twodee.Window
+		factory *Factory
+		level   *twodee.Map
+		font    *twodee.Font
+		err     error
 	)
 	if system, err = twodee.Init(); err != nil {
 		log.Fatalf("Couldn't init system: %v\n", err)
@@ -51,11 +66,11 @@ func main() {
 		log.Fatalf("Couldn't open window: %v\n", err)
 	}
 	system.SetClearColor(38, 147, 255, 0)
-	if level, err = twodee.LoadTiledMap(system, "examples/complex/levels/level01.json"); err != nil {
+	factory = NewFactory(system)
+	if level, err = twodee.LoadTiledMap(system, factory, "examples/complex/levels/level01.json"); err != nil {
 		log.Fatalf("Couldn't load map: %v\n", err)
 	}
 	log.Printf("Bounds: %v\n", level.Bounds())
-	
 
 	if font, err = twodee.LoadFont("examples/complex/slkscr.ttf", 24); err != nil {
 		log.Fatalf("Couldn't load font: %v\n", err)
@@ -64,7 +79,7 @@ func main() {
 	scene := &twodee.Scene{Camera: camera, Font: font}
 	scene.AddChild(level)
 	camera.SetLimits(level.Bounds())
-	cameradest := twodee.Pt(0,0)
+	cameradest := twodee.Pt(0, 0)
 
 	exit := make(chan bool, 1)
 	system.SetKeyCallback(func(key int, state int) {
@@ -100,9 +115,7 @@ func main() {
 		lastpos = pos
 	})
 	system.SetMouseMoveCallback(func(x int, y int) {
-		log.Printf("Mouse: %v %v\n", x ,y)
 		gx, gy := camera.ResolveScreenCoords(x, y, window.Width, window.Height)
-		log.Printf("Game: %v %v\n", gx, gy)
 		cameradest = twodee.Pt(gx, gy)
 	})
 	go func() {
@@ -111,8 +124,8 @@ func main() {
 			<-ticker
 			focus := camera.Focus()
 			camera.Pan(
-				(cameradest.X - focus.X) / 20,
-				(cameradest.Y - focus.Y) / 20)
+				(cameradest.X-focus.X)/20,
+				(cameradest.Y-focus.Y)/20)
 		}
 	}()
 	ticker := time.NewTicker(time.Second / 60)
