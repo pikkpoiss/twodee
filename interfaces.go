@@ -24,10 +24,35 @@ type Positionable interface {
 	SetHeight(h float64)
 }
 
-type Updateable interface {
+type Drawable interface {
+	Draw()
+}
+
+type Animatable interface {
 	Update()
 }
 
 type SpriteFactory interface {
 	Create(tileset string, index int, x, y, w, h float64) *Sprite
+}
+
+type Node interface {
+	AddChild(node Node)
+	RemoveChild(node Node)
+	GetAllChildren() []Node
+	Parent() Node
+	SetParent(Node)
+	Draw()
+	SetBounds(Rectangle)
+	GlobalBounds() Rectangle
+	Bounds() Rectangle
+	RelativeBounds(Node) Rectangle
+	Width() float64
+	Height() float64
+	SetWidth(float64)
+	SetHeight(float64)
+	SetZ(float64)
+	X() float64
+	Y() float64
+	Z() float64
 }

@@ -1,4 +1,4 @@
-// Copyright 2012 Arne Roomann-Kurrik
+// Copyright 2013 Arne Roomann-Kurrik
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,33 +15,14 @@
 package twodee
 
 import (
-	"sort"
+	"math"
 )
 
-type ByDepth []Node
-
-func (s ByDepth) Len() int {
-	return len(s)
-}
-
-func (s ByDepth) Less(i int, j int) bool {
-	return s[i].Z() < s[j].Z()
-}
-
-func (s ByDepth) Swap(i int, j int) {
-	s[i], s[j] = s[j], s[i]
-}
-
-type Scene struct {
-	Element
-	*Camera
-	*Font
-}
-
-func (s *Scene) Draw() {
-	l := s.GetAllChildren()
-	sort.Sort(ByDepth(l))
-	for _, c := range l {
-		c.Draw()
+func Round(a float64) float64 {
+	if a > 0 {
+		a += 0.5
+	} else {
+		a -= 0.5
 	}
+	return float64(math.Floor(float64(a)))
 }
