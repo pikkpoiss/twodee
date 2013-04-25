@@ -100,7 +100,7 @@ func main() {
 	scene := &twodee.Scene{Camera: camera, Font: font}
 	parent := system.NewSprite("bricks", 0, 0, 1, 1, 4)
 	parent.AddChild(system.NewSprite("bricks", 1, 1, 1, 1, 4))
-	scene.AddChild(parent)
+	scene.Dynamic = append(scene.Dynamic, parent)
 	parent.SetFrame(1)
 	exit := make(chan bool, 1)
 	system.SetKeyCallback(func(key int, state int) {
