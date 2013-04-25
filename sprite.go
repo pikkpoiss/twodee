@@ -15,7 +15,6 @@
 package twodee
 
 import (
-	"fmt"
 	"github.com/go-gl/gl"
 )
 
@@ -29,21 +28,17 @@ type Sprite struct {
 	VelocityX float64
 	VelocityY float64
 	Type      int
-	Ratio     float64
 	Collide   bool
 }
 
-func (s *System) NewSprite(name string, x float64, y float64, w int, h int, t int) *Sprite {
-	fmt.Printf("Textures: %v\n", s.Textures)
+func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 	sprite := &Sprite{
 		system:  s,
 		texture: s.Textures[name],
 		Type:    t,
-		//TODO: Figure out texture scaling in a better way
-		Ratio:   float64(h) / float64(s.Textures[name].Height),
 		Collide: true,
 	}
-	sprite.SetBounds(Rect(x, y, x+float64(w), y+float64(h)))
+	sprite.SetBounds(Rect(x, y, x+w, y+h))
 	sprite.SetFrame(0)
 	return sprite
 }
@@ -72,14 +67,10 @@ func (s *Sprite) CollidesWith(sprite *Sprite) bool {
 func (s *Sprite) SetFrame(frame int) {
 	s.frame = frame % len(s.texture.Frames)
 	var (
-		tex   = s.texture.Frames[s.frame]
-		width = tex[1] - tex[0]
+		tex = s.texture.Frames[s.frame]
 	)
 	s.texture1 = float64(tex[0]) / float64(s.texture.Width)
 	s.texture2 = float64(tex[1]) / float64(s.texture.Width)
-	if s.Ratio != 0 {
-		s.SetWidth(float64(width) * s.Ratio)
-	}
 }
 
 func (s *Sprite) Draw() {
@@ -102,4 +93,9 @@ func (s *Sprite) Draw() {
 	gl.MatrixMode(gl.MODELVIEW)
 	s.texture.Unbind()
 	s.Element.Draw()
+}
+
+func (s *Sprite) Update() {
+	s.SetFrame(s.frame + 1)
+	s.MoveTo(Pt(s.X() + s.VelocityX, s.Y() + s.VelocityY))
 }

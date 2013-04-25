@@ -14,9 +14,7 @@
 
 package twodee
 
-import (
-	"sort"
-)
+import ()
 
 type ByDepth []Node
 
@@ -33,15 +31,27 @@ func (s ByDepth) Swap(i int, j int) {
 }
 
 type Scene struct {
-	Element
 	*Camera
 	*Font
+	Static  []SpatialVisible
+	Dynamic []SpatialVisibleChanging
+}
+
+func (s *Scene) SetBounds(rect Rectangle) {
+	s.Camera.SetLimits(rect)
 }
 
 func (s *Scene) Draw() {
-	l := s.GetAllChildren()
-	sort.Sort(ByDepth(l))
-	for _, c := range l {
-		c.Draw()
+	for _, e := range s.Static {
+		e.Draw()
+	}
+	for _, e := range s.Dynamic {
+		e.Draw()
+	}
+}
+
+func (s *Scene) Update(u Updater) {
+	for _, e := range s.Dynamic {
+		u.Update(e)
 	}
 }

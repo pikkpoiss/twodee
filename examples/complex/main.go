@@ -26,18 +26,44 @@ func init() {
 	runtime.LockOSThread()
 }
 
+type Updater struct {
+}
+
+func NewUpdater() *Updater {
+	return &Updater{}
+}
+
+func (u *Updater) Update(e twodee.SpatialChanging) {
+	e.Update()
+}
+
 type Factory struct {
 	system *twodee.System
+	scene  *twodee.Scene
 }
 
-func NewFactory(system *twodee.System) *Factory {
-	return &Factory{system: system}
+func NewFactory(system *twodee.System, scene *twodee.Scene) *Factory {
+	return &Factory{system: system, scene: scene}
 }
 
-func (f *Factory) Create(tileset string, index int, x, y, w, h float64) *twodee.Sprite {
-	var sprite = f.system.NewSprite(tileset, x, y, int(w), int(h), index)
-	sprite.SetFrame(index)
-	return sprite
+func (f *Factory) SetBounds(rect twodee.Rectangle) {
+	f.scene.SetBounds(rect)
+}
+
+func (f *Factory) Create(tileset string, index int, x, y, w, h float64) {
+	switch tileset {
+	case "tilegame":
+		var sprite = f.system.NewSprite(tileset, x, y, w, h, index)
+		sprite.SetFrame(index)
+		f.scene.Static = append(f.scene.Static, sprite)
+	default:
+		var sprite = f.system.NewSprite(tileset, x, y, w, h, index)
+		sprite.SetFrame(index)
+		sprite.VelocityX = 0.01
+		f.scene.Dynamic = append(f.scene.Dynamic, sprite)
+		log.Printf("Tileset: %v %v\n", tileset, index)
+		log.Printf("Dim: %v %v %v %v\n", x, y, w, h)
+	}
 }
 
 func main() {
@@ -46,7 +72,7 @@ func main() {
 		camera  *twodee.Camera
 		window  *twodee.Window
 		factory *Factory
-		level   *twodee.Map
+		updater *Updater
 		font    *twodee.Font
 		err     error
 	)
@@ -56,6 +82,7 @@ func main() {
 	defer system.Terminate()
 
 	camera = twodee.NewCamera(0, 0, 20, 20)
+	cameradest := twodee.Pt(0, 0)
 	system.SetSizeCallback(func(w, h int) {
 		camera.MatchRatio(w, h)
 		camera.Bottom(0)
@@ -66,20 +93,15 @@ func main() {
 		log.Fatalf("Couldn't open window: %v\n", err)
 	}
 	system.SetClearColor(38, 147, 255, 0)
-	factory = NewFactory(system)
-	if level, err = twodee.LoadTiledMap(system, factory, "examples/complex/levels/level01.json"); err != nil {
-		log.Fatalf("Couldn't load map: %v\n", err)
-	}
-	log.Printf("Bounds: %v\n", level.Bounds())
-
 	if font, err = twodee.LoadFont("examples/complex/slkscr.ttf", 24); err != nil {
 		log.Fatalf("Couldn't load font: %v\n", err)
 	}
-
 	scene := &twodee.Scene{Camera: camera, Font: font}
-	scene.AddChild(level)
-	camera.SetLimits(level.Bounds())
-	cameradest := twodee.Pt(0, 0)
+	factory = NewFactory(system, scene)
+	if err = twodee.LoadTiledMap(system, factory, "examples/complex/levels/level01.json"); err != nil {
+		log.Fatalf("Couldn't load map: %v\n", err)
+	}
+	updater = NewUpdater()
 
 	exit := make(chan bool, 1)
 	system.SetKeyCallback(func(key int, state int) {
@@ -126,6 +148,7 @@ func main() {
 			camera.Pan(
 				(cameradest.X-focus.X)/20,
 				(cameradest.Y-focus.Y)/20)
+			scene.Update(updater)
 		}
 	}()
 	ticker := time.NewTicker(time.Second / 60)

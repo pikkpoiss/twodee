@@ -20,18 +20,6 @@ import (
 	"path/filepath"
 )
 
-type Map struct {
-	Element
-	Texture *Texture
-	Blocks  []*Sprite
-}
-
-func (m *Map) Draw() {
-	for _, s := range m.Blocks {
-		s.Draw()
-	}
-}
-
 type TiledLayer struct {
 	Data    []int
 	Height  int
@@ -45,16 +33,17 @@ type TiledLayer struct {
 }
 
 type TiledTileset struct {
-	Firstgid    int
-	Image       string
-	Imageheight int
-	Imagewidth  int
-	Margin      int
-	Name        string
-	Properties  map[string]interface{}
-	Spacing     int
-	Tileheight  int
-	Tilewidth   int
+	Firstgid         int
+	Image            string
+	Imageheight      int
+	Imagewidth       int
+	Margin           int
+	Name             string
+	Properties       map[string]interface{}
+	Spacing          int
+	Tileheight       int
+	Tilewidth        int
+	Transparentcolor string
 }
 
 type TiledMap struct {
@@ -69,7 +58,7 @@ type TiledMap struct {
 	Width       int
 }
 
-func LoadTiledMap(system *System, factory SpriteFactory, path string) (m *Map, err error) {
+func LoadTiledMap(system *System, factory SpriteFactory, path string) (err error) {
 	var (
 		f       *os.File
 		decoder *json.Decoder
@@ -83,45 +72,37 @@ func LoadTiledMap(system *System, factory SpriteFactory, path string) (m *Map, e
 	if err = decoder.Decode(&tm); err != nil {
 		return
 	}
-	m = &Map{}
-	for _, ts := range tm.Tilesets {
+	var gids = make([]int, len(tm.Tilesets))
+	for i, ts := range tm.Tilesets {
 		tspath := filepath.Join(filepath.Dir(path), ts.Image)
 		if err = system.LoadTexture(ts.Name, tspath, IntNearest, ts.Tilewidth); err != nil {
 			return
 		}
+		gids[i] = ts.Firstgid
 	}
-	var numblocks = 0
 	for _, l := range tm.Layers {
 		if l.Type != "tilelayer" {
 			continue
 		}
-		for _, f := range l.Data {
-			if f == 0 {
-				continue
-			}
-			numblocks += 1
-		}
-	}
-	m.Blocks = make([]*Sprite, numblocks)
-	var bi = 0
-	for j, l := range tm.Layers {
-		if l.Type != "tilelayer" {
-			continue
-		}
-		var row, col float64
-		var name = tm.Tilesets[j].Name
+		var row, col, width, height float64
+		var ts TiledTileset
 		for i, f := range l.Data {
 			if f == 0 {
 				continue
 			}
+			var tsi = len(gids) - 1
+			for gids[tsi] > f {
+				tsi -= 1
+			}
+			f = f - gids[tsi]
 			row = float64(tm.Height - 1 - i/tm.Width)
 			col = float64(i % tm.Width)
-			sprite := factory.Create(name, f-1, col, row, 1, 1)
-			m.Blocks[bi] = sprite
-			m.Blocks[bi].SetFrame(f - 1)
-			bi += 1
+			ts = tm.Tilesets[tsi]
+			height = float64(ts.Tileheight) / float64(tm.Tileheight)
+			width = float64(ts.Tilewidth) / float64(tm.Tilewidth)
+			factory.Create(ts.Name, f, col, row, width, height)
 		}
 	}
-	m.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
+	factory.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
 	return
 }

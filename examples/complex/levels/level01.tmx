@@ -3,12 +3,20 @@
  <tileset firstgid="1" name="tilegame" tilewidth="16" tileheight="16">
   <image source="../textures/level-textures.png" width="256" height="16"/>
  </tileset>
- <layer name="Tile Layer 1" width="450" height="20">
+ <tileset firstgid="17" name="character-textures" tilewidth="18" tileheight="32">
+  <image source="../textures/character-textures.png" trans="ff00ff" width="96" height="32"/>
+ </tileset>
+ <layer name="Level" width="450" height="20">
   <data encoding="base64" compression="zlib">
-   eJzt2csKgzAQQFH7bu3//2/jTkRICNMYyTlwF9JiUhcNg9MEAAAAAAAAAAAAAAAAAHCcOfXJ9P3z/UvXmYO+AwAAAAAAAC3svSvbe5c1Zz6vcUvdg+4FAGfzSD2P3gQANLLMf9dVr2nsc3D7PGozUwOcwzL/XTaNfA7uPY+aRn6GAKUi5o7SmSRqzqlZN3fdal8lLfNwxDn47uC3SFLvRfzfls4kUXNOzbq561b7kiSNlXNQkjRyzkFJUs/9AJUOCuc=
+   eJzt2csKwjAQQNH6tnUl/v+/moILKYXEMKaFnAMXKYqJXRiGDgMAAAAAAAAAAAAAAAAAwHam1Jjp8efvL11nCvoMAAAAAAAAtLD2rGztWdaUeb/GKXUO+i4A+MW49QaSS+q69SYAoJF5/jt+dRv6PgeX96M2MzXA756f11fDNef577Co53Nw7X7U1PM9BCgVMXeUziRRc07NurnrVvsqaZ6HI87B+w5+iyTtvYj/29KZJGrOqVk3d91qX5KkvnIOSpJ6zjkoSdpzbz6nCxQ=
   </data>
  </layer>
  <objectgroup name="Object Layer 1" width="450" height="20">
   <object x="16" y="128" width="256" height="192"/>
  </objectgroup>
+ <layer name="Entities" width="450" height="20">
+  <data encoding="base64" compression="zlib">
+   eJztwTEBAAAAwqD1T20ND6AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgBcDjKAAAQ==
+  </data>
+ </layer>
 </map>

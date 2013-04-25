@@ -14,26 +14,46 @@
 
 package twodee
 
-type Positionable interface {
+type Spatial interface {
 	X() float64
 	Y() float64
-	SetX(x float64)
-	SetY(y float64)
+	MoveTo(p Point)
 	Bounds() Rectangle
 	SetWidth(w float64)
 	SetHeight(h float64)
 }
 
-type Drawable interface {
+type Visible interface {
 	Draw()
 }
 
-type Animatable interface {
+type Changing interface {
 	Update()
 }
 
+type SpatialChanging interface {
+	Spatial
+	Changing
+}
+
+type SpatialVisible interface {
+	Spatial
+	Visible
+}
+
+type SpatialVisibleChanging interface {
+	Spatial
+	Visible
+	Changing
+}
+
+type Updater interface {
+	Update(e SpatialChanging)
+}
+
 type SpriteFactory interface {
-	Create(tileset string, index int, x, y, w, h float64) *Sprite
+	Create(tileset string, index int, x, y, w, h float64)
+	SetBounds(rect Rectangle)
 }
 
 type Node interface {
