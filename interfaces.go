@@ -47,11 +47,7 @@ type SpatialVisibleChanging interface {
 	Changing
 }
 
-type Updater interface {
-	Update(e SpatialChanging)
-}
-
-type SpriteFactory interface {
+type MapLoader interface {
 	Create(tileset string, index int, x, y, w, h float64)
 	SetBounds(rect Rectangle)
 }

@@ -58,7 +58,7 @@ type TiledMap struct {
 	Width       int
 }
 
-func LoadTiledMap(system *System, factory SpriteFactory, path string) (err error) {
+func LoadTiledMap(system *System, loader MapLoader, path string) (err error) {
 	var (
 		f       *os.File
 		decoder *json.Decoder
@@ -100,9 +100,9 @@ func LoadTiledMap(system *System, factory SpriteFactory, path string) (err error
 			ts = tm.Tilesets[tsi]
 			height = float64(ts.Tileheight) / float64(tm.Tileheight)
 			width = float64(ts.Tilewidth) / float64(tm.Tilewidth)
-			factory.Create(ts.Name, f, col, row, width, height)
+			loader.Create(ts.Name, f, col, row, width, height)
 		}
 	}
-	factory.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
+	loader.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
 	return
 }

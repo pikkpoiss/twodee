@@ -28,6 +28,7 @@ type System struct {
 	OverlayCamera *Camera
 	Win           *Window
 	LastPaint     time.Time
+	Font          *Font
 	resizeHandler glfw.WindowSizeHandler
 }
 
@@ -167,7 +168,11 @@ func (s *System) LoadTexture(name string, path string, inter int, width int) (er
 	return
 }
 
-func (s *System) Paint(scene *Scene) {
+func (s *System) SetFont(font *Font) {
+	s.Font = font
+}
+
+func (s *System) Paint(scene Visible) {
 	var (
 		now time.Time
 		fps float64
@@ -178,18 +183,19 @@ func (s *System) Paint(scene *Scene) {
 	}
 
 	s.Framebuffer.Bind()
-	scene.Camera.SetProjection()
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	scene.Draw()
 	gl.Flush()
 	s.Framebuffer.Unbind()
 
-	s.Overlay.Bind()
-	s.OverlayCamera.SetProjection()
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	scene.Font.Printf(0, 0, "FPS %6.2f", fps)
-	gl.Flush()
-	s.Overlay.Unbind()
+	if s.Font != nil {
+		s.Overlay.Bind()
+		s.OverlayCamera.SetProjection()
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+		s.Font.Printf(0, 0, "FPS %6.2f", fps)
+		gl.Flush()
+		s.Overlay.Unbind()
+	}
 
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	s.Framebuffer.Draw(s.Win.Width, s.Win.Height)

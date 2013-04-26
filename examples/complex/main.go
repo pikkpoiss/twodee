@@ -18,6 +18,7 @@ import (
 	"../.." // Use "github.com/kurrik/twodee"
 	"log"
 	"runtime"
+	"fmt"
 	"time"
 )
 
@@ -26,141 +27,179 @@ func init() {
 	runtime.LockOSThread()
 }
 
-type Updater struct {
+type Game struct {
+	*twodee.Camera
+	*twodee.Font
+	System  *twodee.System
+	Window  *twodee.Window
+	Static  []twodee.SpatialVisible
+	Dynamic []twodee.SpatialVisibleChanging
+	exit    chan bool
+	ctarget twodee.Point
+	scroll  int
 }
 
-func NewUpdater() *Updater {
-	return &Updater{}
+func NewGame(system *twodee.System, window *twodee.Window, font *twodee.Font) (game *Game, err error) {
+	game = &Game{
+		System:  system,
+		Camera:  twodee.NewCamera(0, 0, 20, 20),
+		Window:  window,
+		Font:    font,
+		exit:    make(chan bool, 1),
+		scroll:  0,
+		ctarget: twodee.Pt(0, 0),
+	}
+	game.handleResize()
+	if err = system.Open(window); err != nil {
+		err = fmt.Errorf("Couldn't open window: %v", err)
+		return
+	}
+	game.handleKeys()
+	game.handleClose()
+	game.handleScroll()
+	game.handleMouse()
+	if font, err = twodee.LoadFont("examples/complex/slkscr.ttf", 24); err != nil {
+		err = fmt.Errorf("Couldn't load font: %v", err)
+		return
+	}
+	system.SetFont(font)
+	system.SetClearColor(38, 147, 255, 0)
+	if err = twodee.LoadTiledMap(system, game, "examples/complex/levels/level01.json"); err != nil {
+		err = fmt.Errorf("Couldn't load map: %v", err)
+		return
+	}
+	return
 }
 
-func (u *Updater) Update(e twodee.SpatialChanging) {
-	e.Update()
+func (g *Game) handleResize() {
+	g.System.SetSizeCallback(func(w, h int) {
+		g.Camera.MatchRatio(w, h)
+		g.Camera.Bottom(0)
+	})
 }
 
-type Factory struct {
-	system *twodee.System
-	scene  *twodee.Scene
+func (g *Game) handleClose() {
+	g.System.SetCloseCallback(func() int {
+		g.exit <- true
+		return 0
+	})
 }
 
-func NewFactory(system *twodee.System, scene *twodee.Scene) *Factory {
-	return &Factory{system: system, scene: scene}
+func (g *Game) handleMouse() {
+	g.System.SetMouseMoveCallback(func(x int, y int) {
+		gx, gy := g.Camera.ResolveScreenCoords(x, y, g.Window.Width, g.Window.Height)
+		g.ctarget = twodee.Pt(gx, gy)
+	})
 }
 
-func (f *Factory) SetBounds(rect twodee.Rectangle) {
-	f.scene.SetBounds(rect)
+func (g *Game) handleScroll() {
+	g.System.SetScrollCallback(func(pos int) {
+		log.Printf("Scroll: %v\n", pos)
+		if pos > g.scroll {
+			g.Camera.Zoom(1.0 / 32.0)
+		} else if pos < g.scroll {
+			g.Camera.Zoom(-1.0 / 32.0)
+		}
+		g.scroll = pos
+	})
 }
 
-func (f *Factory) Create(tileset string, index int, x, y, w, h float64) {
+func (g *Game) handleKeys() {
+	g.System.SetKeyCallback(func(key int, state int) {
+		switch {
+		case state == 0:
+			return
+		case key == twodee.KeyUp:
+			g.ctarget.Y += 10
+		case key == twodee.KeyDown:
+			g.ctarget.Y -= 10
+		case key == twodee.KeyLeft:
+			g.ctarget.X -= 10
+		case key == twodee.KeyRight:
+			g.ctarget.X += 10
+		case key == twodee.KeyEsc:
+			g.exit <- true
+		default:
+			log.Printf("Key: %v, State: %v\n", key, state)
+		}
+	})
+}
+
+func (g *Game) SetBounds(rect twodee.Rectangle) {
+	g.Camera.SetLimits(rect)
+}
+
+func (g *Game) Draw() {
+	g.Camera.SetProjection()
+	for _, e := range g.Static {
+		e.Draw()
+	}
+	for _, e := range g.Dynamic {
+		e.Draw()
+	}
+}
+
+func (g *Game) Update() {
+	focus := g.Camera.Focus()
+	g.Camera.Pan((g.ctarget.X-focus.X)/20, (g.ctarget.Y-focus.Y)/20)
+	for _, _ = range g.Dynamic {
+		//e.Update()
+	}
+}
+
+func (g *Game) Create(tileset string, index int, x, y, w, h float64) {
 	switch tileset {
 	case "tilegame":
-		var sprite = f.system.NewSprite(tileset, x, y, w, h, index)
+		var sprite = g.System.NewSprite(tileset, x, y, w, h, index)
 		sprite.SetFrame(index)
-		f.scene.Static = append(f.scene.Static, sprite)
+		g.Static = append(g.Static, sprite)
 	default:
-		var sprite = f.system.NewSprite(tileset, x, y, w, h, index)
+		var sprite = g.System.NewSprite(tileset, x, y, w, h, index)
 		sprite.SetFrame(index)
 		sprite.VelocityX = 0.01
-		f.scene.Dynamic = append(f.scene.Dynamic, sprite)
+		g.Dynamic = append(g.Dynamic, sprite)
 		log.Printf("Tileset: %v %v\n", tileset, index)
 		log.Printf("Dim: %v %v %v %v\n", x, y, w, h)
 	}
 }
 
-func main() {
-	var (
-		system  *twodee.System
-		camera  *twodee.Camera
-		window  *twodee.Window
-		factory *Factory
-		updater *Updater
-		font    *twodee.Font
-		err     error
-	)
-	if system, err = twodee.Init(); err != nil {
-		log.Fatalf("Couldn't init system: %v\n", err)
-	}
-	defer system.Terminate()
-
-	camera = twodee.NewCamera(0, 0, 20, 20)
-	cameradest := twodee.Pt(0, 0)
-	system.SetSizeCallback(func(w, h int) {
-		camera.MatchRatio(w, h)
-		camera.Bottom(0)
-	})
-
-	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
-	if err = system.Open(window); err != nil {
-		log.Fatalf("Couldn't open window: %v\n", err)
-	}
-	system.SetClearColor(38, 147, 255, 0)
-	if font, err = twodee.LoadFont("examples/complex/slkscr.ttf", 24); err != nil {
-		log.Fatalf("Couldn't load font: %v\n", err)
-	}
-	scene := &twodee.Scene{Camera: camera, Font: font}
-	factory = NewFactory(system, scene)
-	if err = twodee.LoadTiledMap(system, factory, "examples/complex/levels/level01.json"); err != nil {
-		log.Fatalf("Couldn't load map: %v\n", err)
-	}
-	updater = NewUpdater()
-
-	exit := make(chan bool, 1)
-	system.SetKeyCallback(func(key int, state int) {
-		switch {
-		case state == 0:
-			return
-		case key == twodee.KeyUp:
-			cameradest.Y += 10
-		case key == twodee.KeyDown:
-			cameradest.Y -= 10
-		case key == twodee.KeyLeft:
-			cameradest.X -= 10
-		case key == twodee.KeyRight:
-			cameradest.X += 10
-		case key == twodee.KeyEsc:
-			exit <- true
-		default:
-			log.Printf("Key: %v, State: %v\n", key, state)
-		}
-	})
-	system.SetCloseCallback(func() int {
-		exit <- true
-		return 0
-	})
-	lastpos := 0
-	system.SetScrollCallback(func(pos int) {
-		log.Printf("Scroll: %v\n", pos)
-		if pos > lastpos {
-			camera.Zoom(1.0 / 32.0)
-		} else if pos < lastpos {
-			camera.Zoom(-1.0 / 32.0)
-		}
-		lastpos = pos
-	})
-	system.SetMouseMoveCallback(func(x int, y int) {
-		gx, gy := camera.ResolveScreenCoords(x, y, window.Width, window.Height)
-		cameradest = twodee.Pt(gx, gy)
-	})
+func (g *Game) Run() {
 	go func() {
 		ticker := time.Tick(time.Second / 120.0)
 		for true {
 			<-ticker
-			focus := camera.Focus()
-			camera.Pan(
-				(cameradest.X-focus.X)/20,
-				(cameradest.Y-focus.Y)/20)
-			scene.Update(updater)
+			g.Update()
 		}
 	}()
 	ticker := time.NewTicker(time.Second / 60)
 	run := true
 	for run == true {
 		<-ticker.C
-		system.Paint(scene)
+		g.System.Paint(g)
 		select {
-		case <-exit:
+		case <-g.exit:
 			ticker.Stop()
 			run = false
 		default:
 		}
 	}
+}
+
+func main() {
+	var (
+		system *twodee.System
+		window *twodee.Window
+		game   *Game
+		font   *twodee.Font
+		err    error
+	)
+	if system, err = twodee.Init(); err != nil {
+		log.Fatalf("Couldn't init system: %v\n", err)
+	}
+	defer system.Terminate()
+	window = &twodee.Window{Width: 640, Height: 480, Scale: 2}
+	if game, err = NewGame(system, window, font); err != nil {
+		log.Fatalf("Couldn't run game: %v\n", err)
+	}
+	game.Run()
 }
