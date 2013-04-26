@@ -75,7 +75,7 @@ func NewGame(system *twodee.System, window *twodee.Window, font *twodee.Font) (g
 func (g *Game) addGravity() {
 	for _, e := range g.Dynamic {
 		v := e.Velocity()
-		e.SetVelocity(twodee.Pt(v.X, v.Y-0.001))
+		e.SetVelocity(twodee.Pt(v.X, v.Y-0.008))
 	}
 }
 
@@ -137,11 +137,11 @@ func (g *Game) checkKeys() {
 	switch {
 	case g.System.Key(twodee.KeyLeft) == 1 && g.System.Key(twodee.KeyRight) == 0:
 		v := g.player.Velocity()
-		v.X = -0.05
+		v.X = -0.1
 		g.player.SetVelocity(v)
 	case g.System.Key(twodee.KeyLeft) == 0 && g.System.Key(twodee.KeyRight) == 1:
 		v := g.player.Velocity()
-		v.X = 0.05
+		v.X = 0.1
 		g.player.SetVelocity(v)
 	}
 }
@@ -153,7 +153,7 @@ func (g *Game) handleKeys() {
 			return
 		case key == twodee.KeyUp:
 			v := g.player.Velocity()
-			v.Y = 0.1
+			v.Y = 0.2
 			g.player.SetVelocity(v)
 			g.ctarget.Y += 1
 		case key == twodee.KeyDown:
@@ -219,7 +219,7 @@ func (g *Game) Create(tileset string, index int, x, y, w, h float64) {
 
 func (g *Game) Run() {
 	go func() {
-		ticker := time.Tick(time.Second / 120.0)
+		ticker := time.Tick(time.Second / 60.0)
 		for true {
 			<-ticker
 			g.Update()
@@ -256,7 +256,7 @@ func NewCreature(sprite *twodee.Sprite) (c *Creature) {
 		Sprite: sprite,
 		Animations: map[int]*twodee.Animation{
 			STATE_STANDING: twodee.Anim([]int{0, 1}, 16),
-			STATE_WALKING:  twodee.Anim([]int{0, 2}, 16),
+			STATE_WALKING:  twodee.Anim([]int{2, 0}, 8),
 		},
 	}
 	c.SetState(STATE_STANDING)
@@ -264,6 +264,9 @@ func NewCreature(sprite *twodee.Sprite) (c *Creature) {
 }
 
 func (c *Creature) SetState(state int) {
+	if c.state == state {
+		return
+	}
 	c.state = state
 	if a, ok := c.Animations[state]; ok {
 		c.Animation = a
@@ -273,10 +276,19 @@ func (c *Creature) SetState(state int) {
 }
 
 func (c *Creature) Update() {
-	if c.Sprite.VelocityX > 0 {
-		c.Sprite.VelocityX -= 0.001
-	} else if c.Sprite.VelocityX < 0 {
-		c.Sprite.VelocityX += 0.001
+	if c.Sprite.VelocityX > 0.002 {
+		c.Sprite.VelocityX -= 0.002
+		c.Sprite.FlipX = false
+	} else if c.Sprite.VelocityX < -0.002 {
+		c.Sprite.VelocityX += 0.002
+		c.Sprite.FlipX = true
+	} else {
+		c.Sprite.VelocityX = 0
+	}
+	if c.Sprite.VelocityX == 0 {
+		c.SetState(STATE_STANDING)
+	} else {
+		c.SetState(STATE_WALKING)
 	}
 	c.Sprite.SetFrame(c.Animation.Next())
 	c.Sprite.Update()

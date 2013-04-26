@@ -29,6 +29,7 @@ type Sprite struct {
 	VelocityY float64
 	Type      int
 	Collide   bool
+	FlipX     bool
 }
 
 func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
@@ -37,6 +38,7 @@ func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 		system:  s,
 		texture: s.Textures[name],
 		Type:    t,
+		FlipX:   false,
 		Collide: true,
 	}
 	sprite.SetBounds(Rect(x, y, x+w, y+h))
@@ -88,20 +90,26 @@ func (s *Sprite) SetFrame(frame int) {
 
 func (s *Sprite) Draw() {
 	var (
-		b = s.GlobalBounds()
-		z = s.Z()
+		b    = s.GlobalBounds()
+		z    = s.Z()
+		minx = b.Min.X
+		maxx = b.Max.X
 	)
+	if s.FlipX {
+		minx = b.Max.X
+		maxx = b.Min.X
+	}
 	s.texture.Bind()
 	gl.MatrixMode(gl.TEXTURE)
 	gl.Begin(gl.QUADS)
 	gl.TexCoord2d(s.texture1, 0)
-	gl.Vertex3d(b.Min.X, b.Min.Y, z)
+	gl.Vertex3d(minx, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 0)
-	gl.Vertex3d(b.Max.X, b.Min.Y, z)
+	gl.Vertex3d(maxx, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 1)
-	gl.Vertex3d(b.Max.X, b.Max.Y, z)
+	gl.Vertex3d(maxx, b.Max.Y, z)
 	gl.TexCoord2d(s.texture1, 1)
-	gl.Vertex3d(b.Min.X, b.Max.Y, z)
+	gl.Vertex3d(minx, b.Max.Y, z)
 	gl.End()
 	gl.MatrixMode(gl.MODELVIEW)
 	s.texture.Unbind()
