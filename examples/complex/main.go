@@ -16,9 +16,9 @@ package main
 
 import (
 	"../.." // Use "github.com/kurrik/twodee"
+	"fmt"
 	"log"
 	"runtime"
-	"fmt"
 	"time"
 )
 
@@ -37,6 +37,7 @@ type Game struct {
 	exit    chan bool
 	ctarget twodee.Point
 	scroll  int
+	player  *Creature
 }
 
 func NewGame(system *twodee.System, window *twodee.Window, font *twodee.Font) (game *Game, err error) {
@@ -69,6 +70,34 @@ func NewGame(system *twodee.System, window *twodee.Window, font *twodee.Font) (g
 		return
 	}
 	return
+}
+
+func (g *Game) addGravity() {
+	for _, e := range g.Dynamic {
+		v := e.Velocity()
+		e.SetVelocity(twodee.Pt(v.X, v.Y-0.001))
+	}
+}
+
+func (g *Game) checkCollisions(subject twodee.Spatial) twodee.Spatial {
+	b := subject.Bounds()
+	for _, e := range g.Static {
+		if subject == e {
+			continue
+		}
+		if b.Overlaps(e.Bounds()) {
+			return e
+		}
+	}
+	for _, e := range g.Dynamic {
+		if subject == e {
+			continue
+		}
+		if b.Overlaps(e.Bounds()) {
+			return e
+		}
+	}
+	return nil
 }
 
 func (g *Game) handleResize() {
@@ -104,19 +133,31 @@ func (g *Game) handleScroll() {
 	})
 }
 
+func (g *Game) checkKeys() {
+	switch {
+	case g.System.Key(twodee.KeyLeft) == 1 && g.System.Key(twodee.KeyRight) == 0:
+		v := g.player.Velocity()
+		v.X = -0.05
+		g.player.SetVelocity(v)
+	case g.System.Key(twodee.KeyLeft) == 0 && g.System.Key(twodee.KeyRight) == 1:
+		v := g.player.Velocity()
+		v.X = 0.05
+		g.player.SetVelocity(v)
+	}
+}
+
 func (g *Game) handleKeys() {
 	g.System.SetKeyCallback(func(key int, state int) {
 		switch {
 		case state == 0:
 			return
 		case key == twodee.KeyUp:
-			g.ctarget.Y += 10
+			v := g.player.Velocity()
+			v.Y = 0.1
+			g.player.SetVelocity(v)
+			g.ctarget.Y += 1
 		case key == twodee.KeyDown:
-			g.ctarget.Y -= 10
-		case key == twodee.KeyLeft:
-			g.ctarget.X -= 10
-		case key == twodee.KeyRight:
-			g.ctarget.X += 10
+			g.ctarget.Y -= 1
 		case key == twodee.KeyEsc:
 			g.exit <- true
 		default:
@@ -140,10 +181,21 @@ func (g *Game) Draw() {
 }
 
 func (g *Game) Update() {
+	g.checkKeys()
 	focus := g.Camera.Focus()
 	g.Camera.Pan((g.ctarget.X-focus.X)/20, (g.ctarget.Y-focus.Y)/20)
-	for _, _ = range g.Dynamic {
-		//e.Update()
+	g.addGravity()
+	for _, e := range g.Dynamic {
+		e.Update()
+	}
+	for _, e := range g.Dynamic {
+		if t := g.checkCollisions(e); t != nil {
+			v := e.Velocity()
+			if v.Y < 0 {
+				e.MoveTo(twodee.Pt(e.Bounds().Min.X, t.Bounds().Max.Y))
+				e.SetVelocity(twodee.Pt(v.X, 0))
+			}
+		}
 	}
 }
 
@@ -153,11 +205,13 @@ func (g *Game) Create(tileset string, index int, x, y, w, h float64) {
 		var sprite = g.System.NewSprite(tileset, x, y, w, h, index)
 		sprite.SetFrame(index)
 		g.Static = append(g.Static, sprite)
-	default:
+	case "character-textures":
 		var sprite = g.System.NewSprite(tileset, x, y, w, h, index)
-		sprite.SetFrame(index)
-		sprite.VelocityX = 0.01
-		g.Dynamic = append(g.Dynamic, sprite)
+		var creature = NewCreature(sprite)
+		creature.SetFrame(index)
+		g.Dynamic = append(g.Dynamic, creature)
+		g.player = creature
+	default:
 		log.Printf("Tileset: %v %v\n", tileset, index)
 		log.Printf("Dim: %v %v %v %v\n", x, y, w, h)
 	}
@@ -183,6 +237,49 @@ func (g *Game) Run() {
 		default:
 		}
 	}
+}
+
+const (
+	STATE_STANDING = 1 << iota
+	STATE_WALKING  = 1 << iota
+)
+
+type Creature struct {
+	*twodee.Sprite
+	Animations map[int]*twodee.Animation
+	Animation  *twodee.Animation
+	state      int
+}
+
+func NewCreature(sprite *twodee.Sprite) (c *Creature) {
+	c = &Creature{
+		Sprite: sprite,
+		Animations: map[int]*twodee.Animation{
+			STATE_STANDING: twodee.Anim([]int{0, 1}, 16),
+			STATE_WALKING:  twodee.Anim([]int{0, 2}, 16),
+		},
+	}
+	c.SetState(STATE_STANDING)
+	return
+}
+
+func (c *Creature) SetState(state int) {
+	c.state = state
+	if a, ok := c.Animations[state]; ok {
+		c.Animation = a
+	} else {
+		c.Animation = c.Animations[STATE_STANDING]
+	}
+}
+
+func (c *Creature) Update() {
+	if c.Sprite.VelocityX > 0 {
+		c.Sprite.VelocityX -= 0.001
+	} else if c.Sprite.VelocityX < 0 {
+		c.Sprite.VelocityX += 0.001
+	}
+	c.Sprite.SetFrame(c.Animation.Next())
+	c.Sprite.Update()
 }
 
 func main() {

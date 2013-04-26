@@ -33,6 +33,7 @@ type Sprite struct {
 
 func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 	sprite := &Sprite{
+		frame:   -1,
 		system:  s,
 		texture: s.Textures[name],
 		Type:    t,
@@ -41,6 +42,15 @@ func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 	sprite.SetBounds(Rect(x, y, x+w, y+h))
 	sprite.SetFrame(0)
 	return sprite
+}
+
+func (s *Sprite) SetVelocity(pt Point) {
+	s.VelocityX = pt.X
+	s.VelocityY = pt.Y
+}
+
+func (s *Sprite) Velocity() Point {
+	return Pt(s.VelocityX, s.VelocityY)
 }
 
 func (s *Sprite) TestMove(dx float64, dy float64, r *Sprite) bool {
@@ -65,6 +75,9 @@ func (s *Sprite) CollidesWith(sprite *Sprite) bool {
 }
 
 func (s *Sprite) SetFrame(frame int) {
+	if frame == s.frame {
+		return
+	}
 	s.frame = frame % len(s.texture.Frames)
 	var (
 		tex = s.texture.Frames[s.frame]
@@ -96,6 +109,5 @@ func (s *Sprite) Draw() {
 }
 
 func (s *Sprite) Update() {
-	s.SetFrame(s.frame + 1)
-	s.MoveTo(Pt(s.X() + s.VelocityX, s.Y() + s.VelocityY))
+	s.MoveTo(Pt(s.X()+s.VelocityX, s.Y()+s.VelocityY))
 }

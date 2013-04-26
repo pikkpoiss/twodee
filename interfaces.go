@@ -17,10 +17,14 @@ package twodee
 type Spatial interface {
 	X() float64
 	Y() float64
+	Height() float64
+	Width() float64
 	MoveTo(p Point)
 	Bounds() Rectangle
 	SetWidth(w float64)
 	SetHeight(h float64)
+	SetVelocity(p Point)
+	Velocity() Point
 }
 
 type Visible interface {
