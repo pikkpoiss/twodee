@@ -41,6 +41,7 @@ func LoadTexture(path string, smoothing int, framewidth int) (texture *Texture, 
 	if img, err = LoadPNG(path); err != nil {
 		return
 	}
+	img = GetPow2Image(img)
 	bounds = img.Bounds()
 	if gltex, err = GetGLTexture(img, smoothing); err != nil {
 		return
@@ -119,6 +120,28 @@ func (t *Texture) Unbind() {
 
 func (t *Texture) Dispose() {
 	t.texture.Delete()
+}
+
+func getPow2(i int) int {
+	p2 := 1
+	for p2 < i {
+		p2 = p2 << 1
+	}
+	return p2
+}
+
+func GetPow2Image(img image.Image) image.Image {
+	var (
+		b   = img.Bounds()
+		p2w = getPow2(b.Max.X)
+		p2h = getPow2(b.Max.Y)
+	)
+	if p2w == b.Max.X && p2h == b.Max.Y {
+		return img
+	}
+	out := image.NewRGBA(image.Rect(0, 0, p2w, p2h))
+	draw.Draw(out, b, img, image.ZP, draw.Src)
+	return out
 }
 
 func LoadPNG(path string) (img image.Image, err error) {
