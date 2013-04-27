@@ -25,6 +25,7 @@ type Sprite struct {
 	frame     int
 	texture1  float64
 	texture2  float64
+	textureB  float64
 	VelocityX float64
 	VelocityY float64
 	Type      int
@@ -37,6 +38,7 @@ func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 		frame:   -1,
 		system:  s,
 		texture: s.Textures[name],
+		textureB: 0.0,
 		Type:    t,
 		FlipX:   false,
 		Collide: true,
@@ -44,6 +46,10 @@ func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 	sprite.SetBounds(Rect(x, y, x+w, y+h))
 	sprite.SetFrame(0)
 	return sprite
+}
+
+func (s *Sprite) SetTextureHeight(h float64) {
+	s.textureB = 1 - (h / float64(s.texture.Height))
 }
 
 func (s *Sprite) SetVelocity(pt Point) {
@@ -102,9 +108,9 @@ func (s *Sprite) Draw() {
 	s.texture.Bind()
 	gl.MatrixMode(gl.TEXTURE)
 	gl.Begin(gl.QUADS)
-	gl.TexCoord2d(s.texture1, 0)
+	gl.TexCoord2d(s.texture1, s.textureB)
 	gl.Vertex3d(minx, b.Min.Y, z)
-	gl.TexCoord2d(s.texture2, 0)
+	gl.TexCoord2d(s.texture2, s.textureB)
 	gl.Vertex3d(maxx, b.Min.Y, z)
 	gl.TexCoord2d(s.texture2, 1)
 	gl.Vertex3d(maxx, b.Max.Y, z)
