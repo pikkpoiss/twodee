@@ -199,7 +199,9 @@ func (s *System) Paint(scene Visible) {
 
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	s.Framebuffer.Draw(s.Win.Width, s.Win.Height)
-	s.Overlay.Draw(s.Win.Width, s.Win.Height)
+	if s.Font != nil {
+		s.Overlay.Draw(s.Win.Width, s.Win.Height)
+	}
 	glfw.SwapBuffers()
 
 	s.LastPaint = now
