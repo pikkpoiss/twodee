@@ -20,6 +20,16 @@ import (
 	"path/filepath"
 )
 
+type TiledObject struct {
+	Height     int
+	Name       string
+	Properties map[string]interface{}
+	Type       string
+	Width      int
+	X          int
+	Y          int
+}
+
 type TiledLayer struct {
 	Data    []int
 	Height  int
@@ -30,6 +40,7 @@ type TiledLayer struct {
 	Width   int
 	X       int
 	Y       int
+	Objects []TiledObject
 }
 
 type TiledTileset struct {
@@ -81,26 +92,34 @@ func LoadTiledMap(system *System, loader MapLoader, path string) (err error) {
 		gids[i] = ts.Firstgid
 	}
 	for _, l := range tm.Layers {
-		if l.Type != "tilelayer" {
-			continue
-		}
 		var row, col, width, height float64
-		var ts TiledTileset
-		for i, f := range l.Data {
-			if f == 0 {
-				continue
+		switch l.Type {
+		case "objectgroup":
+			for _, o := range l.Objects {
+				col = float64(o.X) / float64(tm.Tilewidth)
+				row = float64(o.Y) / float64(tm.Tileheight)
+				width = float64(o.Width) / float64(tm.Tilewidth)
+				height = float64(o.Height) / float64(tm.Tileheight)
+				loader.Create(o.Name, -1, col, row, width, height)
 			}
-			var tsi = len(gids) - 1
-			for gids[tsi] > f {
-				tsi -= 1
+		case "tilelayer":
+			var ts TiledTileset
+			for i, f := range l.Data {
+				if f == 0 {
+					continue
+				}
+				var tsi = len(gids) - 1
+				for gids[tsi] > f {
+					tsi -= 1
+				}
+				f = f - gids[tsi]
+				row = float64(tm.Height - 1 - i/tm.Width)
+				col = float64(i % tm.Width)
+				ts = tm.Tilesets[tsi]
+				height = float64(ts.Tileheight) / float64(tm.Tileheight)
+				width = float64(ts.Tilewidth) / float64(tm.Tilewidth)
+				loader.Create(ts.Name, f, col, row, width, height)
 			}
-			f = f - gids[tsi]
-			row = float64(tm.Height - 1 - i/tm.Width)
-			col = float64(i % tm.Width)
-			ts = tm.Tilesets[tsi]
-			height = float64(ts.Tileheight) / float64(tm.Tileheight)
-			width = float64(ts.Tilewidth) / float64(tm.Tilewidth)
-			loader.Create(ts.Name, f, col, row, width, height)
 		}
 	}
 	loader.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
