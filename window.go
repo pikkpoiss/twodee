@@ -25,6 +25,7 @@ type Window struct {
 	View       Rectangle
 	Fullscreen bool
 	Scale      int
+	Resize   bool
 }
 
 func (w *Window) Opened() bool {

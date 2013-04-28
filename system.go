@@ -126,6 +126,9 @@ func (s *System) Open(win *Window) (err error) {
 	if win.Fullscreen {
 		mode = glfw.Fullscreen
 	}
+	if win.Resize == false {
+		glfw.OpenWindowHint(glfw.WindowNoResize, 1)
+	}
 	if err = glfw.OpenWindow(win.Width, win.Height, 0, 0, 0, 0, 0, 0, mode); err != nil {
 		return
 	}
