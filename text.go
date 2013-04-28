@@ -55,7 +55,7 @@ func (f *Font) Printf(x float64, y float64, format string, a ...interface{}) (er
 		//sh  int
 	)
 	str = fmt.Sprintf(format, a...)
-	//sw, sh = f.font.Metrics(str)
+	//sw, sh := f.font.Metrics(str)
 	//gl.Color4f(1.0, 0.1, 0.1, 1)
 	//gl.Rectd(x, y, x+float64(sw), y+float64(sh))
 	gl.Color4f(1, 1, 1, 1)
