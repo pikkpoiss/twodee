@@ -53,7 +53,7 @@ type SpatialVisibleChanging interface {
 
 type MapLoader interface {
 	Create(tileset string, index int, x, y, w, h float64)
-	SetBounds(rect Rectangle)
+	Loaded(bounds Rectangle, properties map[string]string)
 }
 
 type Node interface {

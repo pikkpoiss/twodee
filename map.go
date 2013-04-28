@@ -23,7 +23,7 @@ import (
 type TiledObject struct {
 	Height     int
 	Name       string
-	Properties map[string]interface{}
+	Properties map[string]string
 	Type       string
 	Width      int
 	X          int
@@ -50,7 +50,7 @@ type TiledTileset struct {
 	Imagewidth       int
 	Margin           int
 	Name             string
-	Properties       map[string]interface{}
+	Properties       map[string]string
 	Spacing          int
 	Tileheight       int
 	Tilewidth        int
@@ -61,7 +61,7 @@ type TiledMap struct {
 	Height      int
 	Layers      []TiledLayer
 	Orientation string
-	Properties  map[string]interface{}
+	Properties  map[string]string
 	Tileheight  int
 	Tilesets    []TiledTileset
 	Tilewidth   int
@@ -122,6 +122,6 @@ func LoadTiledMap(system *System, loader MapLoader, path string) (err error) {
 			}
 		}
 	}
-	loader.SetBounds(Rect(0, 0, float64(tm.Width), float64(tm.Height)))
+	loader.Loaded(Rect(0, 0, float64(tm.Width), float64(tm.Height)), tm.Properties)
 	return
 }
