@@ -35,13 +35,13 @@ type Sprite struct {
 
 func (s *System) NewSprite(name string, x, y, w, h float64, t int) *Sprite {
 	sprite := &Sprite{
-		frame:   -1,
-		system:  s,
-		texture: s.Textures[name],
+		frame:    -1,
+		system:   s,
+		texture:  s.Textures[name],
 		textureB: 0.0,
-		Type:    t,
-		FlipX:   false,
-		Collide: true,
+		Type:     t,
+		FlipX:    false,
+		Collide:  true,
 	}
 	sprite.SetBounds(Rect(x, y, x+w, y+h))
 	sprite.SetFrame(0)
@@ -92,6 +92,10 @@ func (s *Sprite) SetFrame(frame int) {
 	)
 	s.texture1 = float64(tex[0]) / float64(s.texture.Width)
 	s.texture2 = float64(tex[1]) / float64(s.texture.Width)
+}
+
+func (s *Sprite) Frame() int {
+	return s.frame
 }
 
 func (s *Sprite) Draw() {
