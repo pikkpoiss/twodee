@@ -41,6 +41,10 @@ OSX:
   Need Mercurial
   
     brew install hg
+    
+  Make sure to use gcc for compiling go-gl/gl:
+  
+    CC=gcc go get -u github.com/go-gl/gl
 
 Win:
   * Install Mercurial from http://mercurial.selenic.com/
@@ -53,8 +57,8 @@ Then (all):
 
     go get github.com/go-gl/gl
     go get github.com/go-gl/glfw
-	go get code.google.com/p/freetype-go/freetype
-	go get code.google.com/p/freetype-go/freetype/truetype
+    go get code.google.com/p/freetype-go/freetype
+    go get code.google.com/p/freetype-go/freetype/truetype
     go get github.com/kurrik/gltext
 
 Old instructions
