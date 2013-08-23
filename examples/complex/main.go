@@ -239,6 +239,9 @@ func (g *Game) Run() {
 	}
 }
 
+func (g *Game) Loaded(bounds twodee.Rectangle, properties map[string]string) {
+}
+
 const (
 	STATE_STANDING = 1 << iota
 	STATE_WALKING  = 1 << iota
