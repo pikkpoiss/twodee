@@ -1,18 +1,92 @@
-twodee
-======
+#twodee
 
-A library for doing 2d game stuff.  I'm not sure what format it will take, 
+
+A library for doing 2d game stuff.  I'm not sure what format it will take,
 except that it will use OpenGL and be basically sprite based.
-
-I'm planning on including a scene graph implementation and high level
-functions for handling events and input, so this should be suitable for
-making quick games in Go.
 
 My expectation is to use this for Ludum Dare competitions as I go.
 
 
-Dependencies
-------------
+##Building (OSX)
+
+Make sure Clang is your default compiler.
+
+    export CC=clang
+    export CXX=clang++
+
+Install deps:
+
+    go get code.google.com/p/freetype-go/freetype
+    go get github.com/Agon/googlmath
+    go get github.com/go-gl/gl
+    go get github.com/go-gl/glfw3
+
+##Troubleshooting (OSX)
+
+
+### Installing go-gl/gl.
+Before Go 1.2, you may need to run with:
+
+    CC=gcc CGO_CFLAGS=-ftrack-macro-expansion=0 \
+    go get github.com/go-gl/gl
+
+See http://stackoverflow.com/questions/16412644/using-opengl-from-go for background.
+
+### Installing glfw
+Maybe you need to install glfw's shared lib (TODO: see if there's a simple brew for this):
+
+    git clone https://github.com/glfw/glfw
+    mkdir glfw/build
+    cd glfw/build
+    cmake -DBUILD_SHARED_LIBS=1 ..
+    make
+    sudo make install
+
+### Installing go-gl/glfw3
+Might need to specify CFLAGS and LDFLAGS for deps:
+
+    CGO_CFLAGS="-I/usr/include" \
+    CGO_LDFLAGS="`pkg-config --libs glu x11 glfw3 xrandr xxf86vm xi xcursor` -lm" \
+    go get github.com/go-gl/glfw3
+
+### Running programs
+Sometimes installed library paths are not in LD_LIBRARY_PATH. Try:
+
+    LD_LIBRARY_PATH=/usr/local/lib go run *.go
+
+## Building (Ubuntu Trusty)
+
+Install deps:
+
+    sudo apt-get install cmake libglu1-mesa-dev libxrandr-dev libxi-dev libxcursor-dev clang libglew-dev mercurial
+
+Build glfw:
+
+    git clone https://github.com/glfw/glfw
+    mkdir glfw/build
+    cd glfw/build
+    cmake -DBUILD_SHARED_LIBS=1 ..
+    make
+    sudo make install
+    cd /usr/local/lib
+    sudo ln -s libglfw3.a libglfw.a
+
+ Install go-gl/glfw3:
+
+    CGO_CFLAGS="-I/usr/include" \
+    CGO_LDFLAGS="`pkg-config --libs glu x11 glfw3 xrandr xxf86vm xi xcursor` -lm" \
+    go get github.com/go-gl/glfw3
+
+Install other deps:
+
+    go get github.com/go-gl/gl
+    go get code.google.com/p/freetype-go/freetype
+    go get github.com/Agon/googlmath
+
+-------------------------------------
+
+##Old, old instructions
+
 Ubuntu:
 
     sudo apt-get install freeglut3-dev
@@ -37,13 +111,13 @@ OSX:
   Unzip the source and cd to the base of the package.  Run (OSX):
 
     make cocoa-dist-install
-	
+
   Need Mercurial
-  
+
     brew install hg
-    
+
   Make sure to use gcc for compiling go-gl/gl:
-  
+
     CC=gcc go get -u github.com/go-gl/gl
 
 Win:
@@ -52,7 +126,7 @@ Win:
   * Copy glfw-2.7.6.bin.WIN32/lib-mingw/x64 stuff to C:\MinGW64\lib
   * Copy dist include to gcc include
   * Copy glfw.dll to C:\Windows\System32
-  
+
 Then (all):
 
     go get github.com/go-gl/gl
@@ -61,8 +135,6 @@ Then (all):
     go get code.google.com/p/freetype-go/freetype/truetype
     go get github.com/kurrik/gltext
 
-Old instructions
-----------------
 I think cocoa-dist-install works now, but previously you had to explicitly
 build the dylib using something like the following:
 
@@ -74,7 +146,3 @@ following (OSX):
     make -f Makefile.cocoa libglfw.dylib
     install -c -m 644 libglfw.dylib /usr/local/lib/
 
-Thanks
-------
-Silkscreen font by Jason Kottke
-http://kottke.org/plus/type/silkscreen/
