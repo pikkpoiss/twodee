@@ -111,7 +111,7 @@ type TextRenderer struct {
 	TransLoc       gl.UniformLocation
 	ProjectionLoc  gl.UniformLocation
 	TextureUnitLoc gl.UniformLocation
-	projection     *[16]float32
+	projection     *Matrix4
 }
 
 const TEXT_FRAGMENT = `#version 150
@@ -218,7 +218,7 @@ func (tr *TextRenderer) Bind() error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ProjectionLoc.UniformMatrix4f(false, tr.projection)
+	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.projection))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -280,7 +280,8 @@ type TileRenderer struct {
 	VBO            gl.Buffer
 	xframes        int
 	yframes        int
-	projection     *[16]float32
+	projection     *Matrix4
+	invProjection  *Matrix4
 }
 
 const TILE_FRAGMENT = `#version 150
@@ -318,10 +319,12 @@ void main()
 
 func NewTileRenderer(path string, xframes, yframes int) (tr *TileRenderer, err error) {
 	var (
-		rect    []float32
-		program gl.Program
-		texture *Texture
-		vbo     gl.Buffer
+		rect       []float32
+		program    gl.Program
+		texture    *Texture
+		vbo        gl.Buffer
+		projection *Matrix4
+		invprojection *Matrix4
 	)
 	rect = []float32{
 		-1, -1, 0.0, 0.0, 0.0,
@@ -338,6 +341,10 @@ func NewTileRenderer(path string, xframes, yframes int) (tr *TileRenderer, err e
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
 	}
+	projection = GetOrthoMatrix(-10, 10, -10, 10, 1, 0)
+	if invprojection, err = GetInverseMatrix(projection); err != nil {
+		return
+	}
 	tr = &TileRenderer{
 		VBO:            vbo,
 		Program:        program,
@@ -351,7 +358,8 @@ func NewTileRenderer(path string, xframes, yframes int) (tr *TileRenderer, err e
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
 		xframes:        xframes,
 		yframes:        yframes,
-		projection:     GetOrthoMatrix(-10, 10, -10, 10, 1, 0),
+		projection:     projection,
+		invProjection:  invprojection,
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -396,11 +404,20 @@ func (tr *TileRenderer) Bind() error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ProjectionLoc.UniformMatrix4f(false, tr.projection)
+	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.projection))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
 	return nil
+}
+
+func (tr *TileRenderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
+	// http://stackoverflow.com/questions/7692988/opengl-math-projecting-screen-space-to-world-space-coords-solved
+	var (
+		xpct = (x - 320.0) / 320.0
+		ypct = (240.0 - y) / 240.0
+	)
+	return Unproject(tr.invProjection, xpct, ypct)
 }
 
 func (tr *TileRenderer) Draw(frame int, x, y, r float32) error {
@@ -412,7 +429,7 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32) error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ModelViewLoc.UniformMatrix4f(false, GetRotTransMatrix(x, y, 0, r))
+	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(GetRotTransMatrix(x, y, 0, r)))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}

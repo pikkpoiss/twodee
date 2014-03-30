@@ -18,8 +18,10 @@ import (
 	gmath "github.com/Agon/googlmath"
 )
 
-func GetMatrix(m *gmath.Matrix4) *[16]float32 {
-	return &[16]float32{
+type Matrix4 [16]float32
+
+func getMatrix(m *gmath.Matrix4) *Matrix4 {
+	return &Matrix4{
 		m.M11, m.M12, m.M13, m.M14,
 		m.M21, m.M22, m.M23, m.M24,
 		m.M31, m.M32, m.M33, m.M34,
@@ -27,26 +29,35 @@ func GetMatrix(m *gmath.Matrix4) *[16]float32 {
 	}
 }
 
-func GetTranslationMatrix(x, y, z float32) *[16]float32 {
-	return GetMatrix(gmath.NewTranslationMatrix4(x, y, z))
+func getGMathMatrix(m *Matrix4) *gmath.Matrix4 {
+	return &gmath.Matrix4{
+		m[0], m[1], m[2], m[3],
+		m[4], m[5], m[6], m[7],
+		m[8], m[9], m[10], m[11],
+		m[12], m[13], m[14], m[15],
+	}
 }
 
-func GetRotationMatrix(x, y, z, a float32) *[16]float32 {
+func GetTranslationMatrix(x, y, z float32) *Matrix4 {
+	return getMatrix(gmath.NewTranslationMatrix4(x, y, z))
+}
+
+func GetRotationMatrix(x, y, z, a float32) *Matrix4 {
 	axis := gmath.Vector3{x, y, z}
-	return GetMatrix(gmath.NewRotationMatrix4(axis, a))
+	return getMatrix(gmath.NewRotationMatrix4(axis, a))
 }
 
-func GetRotTransMatrix(x, y, z, a float32) *[16]float32 {
+func GetRotTransMatrix(x, y, z, a float32) *Matrix4 {
 	var (
 		axis  = gmath.Vector3{0, 0, 1}
 		trans = gmath.NewTranslationMatrix4(x, y, z)
 		rot   = gmath.NewRotationMatrix4(axis, a)
 	)
-	return GetMatrix(trans.Mul(rot))
+	return getMatrix(trans.Mul(rot))
 }
 
-func GetScaleMatrix(x, y, z float32) *[16]float32 {
-	return &[16]float32{
+func GetScaleMatrix(x, y, z float32) *Matrix4 {
+	return &Matrix4{
 		x, 0, 0, 0,
 		0, y, 0, 0,
 		0, 0, z, 0,
@@ -54,9 +65,9 @@ func GetScaleMatrix(x, y, z float32) *[16]float32 {
 	}
 }
 
-func GetOrthoMatrix(x1, x2, y1, y2, n, f float32) *[16]float32 {
+func GetOrthoMatrix(x1, x2, y1, y2, n, f float32) *Matrix4 {
 	// http://www.songho.ca/opengl/gl_projectionmatrix.html
-	return &[16]float32{
+	return &Matrix4{
 		2.0 / (x2 - x1), 0, 0, 0,
 		0, 2.0 / (y2 - y1), 0, 0,
 		0, 0, -2.0 / (f - n), 0,
@@ -64,4 +75,25 @@ func GetOrthoMatrix(x1, x2, y1, y2, n, f float32) *[16]float32 {
 	}
 }
 
+func GetInverseMatrix(m *Matrix4) (out *Matrix4, err error) {
+	var (
+		inv *gmath.Matrix4
+	)
+	if inv, err = getGMathMatrix(m).Invert(); err != nil {
+		return
+	}
+	out = getMatrix(inv)
+	return
+}
 
+func Unproject(invproj *Matrix4, x float32, y float32) (wx, wy float32) {
+	var (
+		screen = gmath.Vector4{x, y, 1, 1}
+		out    gmath.Vector4
+	)
+	out = getGMathMatrix(invproj).MulVec4(screen)
+	out.Scale(1.0 / out.W)
+	wx = out.X
+	wy = out.Y
+	return
+}

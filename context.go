@@ -22,6 +22,7 @@ import (
 
 type Context struct {
 	Window        *glfw.Window
+	Events        *EventHandler
 	OpenGLVersion string
 	ShaderVersion string
 	VAO           gl.VertexArray
@@ -75,6 +76,7 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 		return
 	}
 	c.VAO.Bind()
+	c.Events = NewEventHandler(c.Window)
 	return
 }
 
