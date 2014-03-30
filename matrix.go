@@ -14,6 +14,10 @@
 
 package twodee
 
+import (
+	gmath "github.com/Agon/googlmath"
+)
+
 func GetMatrix(m *gmath.Matrix4) *[16]float32 {
 	return &[16]float32{
 		m.M11, m.M12, m.M13, m.M14,

@@ -14,6 +14,11 @@
 
 package twodee
 
+import (
+	glfw "github.com/go-gl/glfw3"
+	"math"
+)
+
 type Counter struct {
 	Count int64
 	Total float64

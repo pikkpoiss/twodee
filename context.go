@@ -42,13 +42,8 @@ func NewContext() (context *Context, err error) {
 	glfw.WindowHint(glfw.ClientApi, glfw.OpenglApi)
 	glfw.WindowHint(glfw.OpenglProfile, glfw.OpenglCoreProfile)
 	glfw.WindowHint(glfw.OpenglForwardCompatible, gl.TRUE)
-	var vao gl.VertexArray
-	if vao, err = CreateVAO(); err != nil {
-		return
-	}
-	return &Context{
-		VAO: vao,
-	}
+	context = &Context{}
+	return
 }
 
 func (c *Context) CreateWindow(w, h int, name string) (err error) {
@@ -57,21 +52,33 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 	}
 	c.Window.MakeContextCurrent()
 	if e := gl.GetError(); e != 0 {
-		err = fmt.Errorf("OpenGL error: %X\n", e)
+		err = fmt.Errorf("OpenGL MakeContextCurrent error: %X\n", e)
+		return
 	}
 	gl.Init()
 	if e := gl.GetError(); e != 0 {
-		err = fmt.Errorf("OpenGL error: %X\n", e)
+		if e == gl.INVALID_ENUM {
+			fmt.Printf("GL_INVALID_ENUM when calling glInit\n")
+		} else {
+			err = fmt.Errorf("OpenGL glInit error: %X\n", e)
+			return
+		}
 	}
-	c.OpenGlVersion = glfw.GetVersionString()
+	c.OpenGLVersion = glfw.GetVersionString()
 	c.ShaderVersion = gl.GetString(gl.SHADING_LANGUAGE_VERSION)
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 	gl.Disable(gl.CULL_FACE)
 	glfw.SwapInterval(1)
+	if c.VAO, err = CreateVAO(); err != nil {
+		return
+	}
+	c.VAO.Bind()
+	return
 }
 
 func (c *Context) Delete() {
+	c.VAO.Delete()
 	glfw.Terminate()
 }
