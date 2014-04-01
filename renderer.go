@@ -270,6 +270,13 @@ func (tr *TextRenderer) Delete() error {
 	return nil
 }
 
+type TileMetadata struct {
+	Path       string
+	PxPerUnit  int
+	TileWidth  int
+	TileHeight int
+}
+
 type TileRenderer struct {
 	Renderer
 	Program        gl.Program
@@ -323,7 +330,7 @@ void main()
     gl_Position = m_ProjectionMatrix * m_ModelViewMatrix * a_Position;
 }`
 
-func NewTileRenderer(bounds, screen Rectangle, path string, xframes, yframes int) (tr *TileRenderer, err error) {
+func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileRenderer, err error) {
 	var (
 		rect          []float32
 		program       gl.Program
@@ -331,18 +338,20 @@ func NewTileRenderer(bounds, screen Rectangle, path string, xframes, yframes int
 		vbo           gl.Buffer
 		projection    *Matrix4
 		invprojection *Matrix4
+		halfWidth     = float32(metadata.TileWidth/metadata.PxPerUnit) / 2.0
+		halfHeight    = float32(metadata.TileHeight/metadata.PxPerUnit) / 2.0
 	)
-	rect = []float32{
-		-1, -1, 0.0, 0.0, 0.0,
-		-1, 1, 0.0, 0.0, 1.0,
-		1, -1, 0.0, 1.0, 0.0,
-		1, 1, 0.0, 1.0, 1.0,
-	}
 	if program, err = BuildProgram(TILE_VERTEX, TILE_FRAGMENT); err != nil {
 		return
 	}
-	if texture, err = LoadTexture(path, gl.NEAREST); err != nil {
+	if texture, err = LoadTexture(metadata.Path, gl.NEAREST); err != nil {
 		return
+	}
+	rect = []float32{
+		-halfWidth, -halfHeight, 0.0, 0.0, 0.0,
+		-halfWidth, halfHeight, 0.0, 0.0, 1.0,
+		halfWidth, -halfHeight, 0.0, 1.0, 0.0,
+		halfWidth, halfHeight, 0.0, 1.0, 1.0,
 	}
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
@@ -362,8 +371,8 @@ func NewTileRenderer(bounds, screen Rectangle, path string, xframes, yframes int
 		FramesLoc:      program.GetUniformLocation("u_Frames"),
 		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
-		xframes:        xframes,
-		yframes:        yframes,
+		xframes:        texture.Width / metadata.TileWidth,
+		yframes:        texture.Height / metadata.TileHeight,
 		projection:     projection,
 		invProjection:  invprojection,
 		ScreenBounds:   screen,
