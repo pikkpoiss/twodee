@@ -17,6 +17,7 @@ package twodee
 type MenuItem interface {
 	Key() int32
 	Value() int32
+	Label() string
 	IsHighlighted() bool
 }
 
@@ -26,4 +27,5 @@ type Menu interface {
 	HighlightPrevious()
 	Highlight(item MenuItem)
 	Select() (menu Menu, item MenuItem)
+	Parent() MenuItem
 }
