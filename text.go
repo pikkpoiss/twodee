@@ -18,7 +18,6 @@ import (
 	"code.google.com/p/freetype-go/freetype"
 	"code.google.com/p/freetype-go/freetype/raster"
 	"code.google.com/p/freetype-go/freetype/truetype"
-	"fmt"
 	"github.com/go-gl/gl"
 	"image"
 	"image/color"
@@ -87,8 +86,6 @@ func NewFontFace(path string, size float64, fg, bg color.Color) (fontface *FontF
 	context.SetFontSize(size)
 	context.SetDPI(72)
 	scale = float32(context.PointToFix32(size) >> 8)
-	fmt.Printf("Scale: %v\n", scale)
-	fmt.Printf("Bounds: %v\n", bounds)
 
 	fontface = &FontFace{
 		font:    font,
@@ -107,8 +104,8 @@ func (ff *FontFace) GetText(text string) (t *Texture, err error) {
 		bg  image.Image
 		dst draw.Image
 		pt  raster.Point
-		w int
-		h int
+		w   int
+		h   int
 	)
 	src = image.NewUniform(ff.fg)
 	bg = image.NewUniform(ff.bg)
