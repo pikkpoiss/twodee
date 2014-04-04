@@ -14,18 +14,61 @@
 
 package twodee
 
-type MenuItem interface {
-	Key() int32
-	Value() int32
-	Label() string
-	IsHighlighted() bool
+import (
+	"fmt"
+)
+
+type MenuItemData struct {
+	Key   int32
+	Value int32
 }
 
-type Menu interface {
-	Items() []MenuItem
-	HighlightNext()
-	HighlightPrevious()
-	Highlight(item MenuItem)
-	Select() (menu Menu, item MenuItem)
-	Parent() MenuItem
+type menuNode struct {
+	data     *MenuItemData
+	label    string
+	parent   *MenuNode
+	children []*MenuNode
+}
+
+type Menu struct {
+	items       []*MenuNode
+	highlighted int
+}
+
+func NewMenu(items []*MenuNode) (menu *Menu, err error) {
+	if len(items) == 0 {
+		err = fmt.Errorf("No items in menu")
+		return
+	}
+	menu = &Menu{
+		items:       items,
+		highlighted: 0,
+	}
+	return
+}
+
+func (m *Menu) getHighlighted() *MenuNode {
+	return m.items[m.highlighted%len(m.items)]
+}
+
+func (m *Menu) Select() *MenuItemData {
+	h := m.getHighlighted()
+	if len(h.Children) != 0 {
+		if h.parent != nil {
+			m.items = append([]*MenuNode{h.parent}, h.children)
+		} else {
+			m.items = h.children
+		}
+		m.highlighted = 0
+		return nil
+	}
+	return h.data
+}
+
+func (m *Menu) Next() {
+	m.highlighted = (m.highlighted + 1) % len(m.items)
+}
+
+func (m *Menu) Prev() {
+	m.highlighted = (m.highlighted + len(items) - 1) % len(m.items)
 }
