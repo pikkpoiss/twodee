@@ -54,6 +54,11 @@ Sometimes installed library paths are not in LD_LIBRARY_PATH. Try:
 
     LD_LIBRARY_PATH=/usr/local/lib go run *.go
 
+### Issue with getting glfw3
+If the go get github.com/go-gl/glfw3 command is throwing an error then you can go to your /usr/local/lib directory and create a symbolic link:
+
+    ln -s libglfw.dylib libglfw3.dylib    
+
 ## Building (Ubuntu Trusty)
 
 Install deps:
