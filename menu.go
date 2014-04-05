@@ -23,7 +23,7 @@ type MenuItemData struct {
 	Value int32
 }
 
-type menuNode struct {
+type MenuNode struct {
 	data     *MenuItemData
 	label    string
 	parent   *MenuNode
@@ -33,6 +33,17 @@ type menuNode struct {
 type Menu struct {
 	items       []*MenuNode
 	highlighted int
+}
+
+func NewMenuNode(key int32, val int32, label string, children []*MenuNode) *MenuNode {
+	var node = &MenuNode{
+		data:  &MenuItemData{Key: key, Value: val},
+		label: label,
+	}
+	for _, child := range children {
+		child.parent = node
+	}
+	return node
 }
 
 func NewMenu(items []*MenuNode) (menu *Menu, err error) {
@@ -53,9 +64,9 @@ func (m *Menu) getHighlighted() *MenuNode {
 
 func (m *Menu) Select() *MenuItemData {
 	h := m.getHighlighted()
-	if len(h.Children) != 0 {
+	if len(h.children) != 0 {
 		if h.parent != nil {
-			m.items = append([]*MenuNode{h.parent}, h.children)
+			m.items = append([]*MenuNode{h.parent}, h.children...)
 		} else {
 			m.items = h.children
 		}
@@ -70,5 +81,5 @@ func (m *Menu) Next() {
 }
 
 func (m *Menu) Prev() {
-	m.highlighted = (m.highlighted + len(items) - 1) % len(m.items)
+	m.highlighted = (m.highlighted + len(m.items) - 1) % len(m.items)
 }
