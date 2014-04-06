@@ -19,14 +19,15 @@ import (
 )
 
 type EventHandler struct {
-	MouseEvents chan *MouseEvent
+	Events chan Event
 }
 
 func NewEventHandler(w *glfw.Window) (e *EventHandler) {
 	e = &EventHandler{
-		MouseEvents: make(chan *MouseEvent, 20),
+		Events: make(chan Event, 100),
 	}
 	w.SetCursorPositionCallback(e.onMouseMove)
+	w.SetKeyCallback(e.onKey)
 	return
 }
 
@@ -34,22 +35,59 @@ func (e *EventHandler) Poll() {
 	glfw.PollEvents()
 }
 
+func (e *EventHandler) onKey(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+	event := &KeyEvent{
+		Code: KeyCode(key),
+		Type: Action(action),
+	}
+	e.enqueue(event)
+}
+
 func (e *EventHandler) onMouseMove(w *glfw.Window, xoff float64, yoff float64) {
 	event := &MouseEvent{
 		X: float32(xoff),
 		Y: float32(yoff),
 	}
+	e.enqueue(event)
+}
+
+func (e *EventHandler) enqueue(event Event) {
 	select {
-	case e.MouseEvents <- event:
-		// Added to mouse events
+	case e.Events <- event:
+		// Added to events
 	default:
-		// Mouse events buffer is too full, not being read.
+		// Events buffer is too full, not being read.
 		// Drop the event on the floor.
 		// TODO: Warn?
 	}
 }
 
+type Event interface{}
+
 type MouseEvent struct {
 	X float32
 	Y float32
 }
+
+type KeyEvent struct {
+	Code KeyCode
+	Type Action
+}
+
+type KeyCode int
+
+const (
+	KeyUp    = KeyCode(glfw.KeyUp)
+	KeyDown  = KeyCode(glfw.KeyDown)
+	KeyLeft  = KeyCode(glfw.KeyLeft)
+	KeyRight = KeyCode(glfw.KeyRight)
+	KeyEnter = KeyCode(glfw.KeyEnter)
+)
+
+type Action int
+
+const (
+	Release = Action(glfw.Release)
+	Press   = Action(glfw.Press)
+	Repeat  = Action(glfw.Repeat)
+)

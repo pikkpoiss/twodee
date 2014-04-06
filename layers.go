@@ -18,7 +18,7 @@ type Layer interface {
 	Render()
 	Update()
 	Delete()
-	HandleMouseEvent(evt *MouseEvent) bool
+	HandleEvent(evt Event) bool
 }
 
 type Layers struct {
@@ -60,9 +60,9 @@ func (l *Layers) Delete() {
 	}
 }
 
-func (l *Layers) HandleMouseEvent(evt *MouseEvent) bool {
+func (l *Layers) HandleEvent(evt Event) bool {
 	for _, layer := range l.layers {
-		if layer.HandleMouseEvent(evt) == false {
+		if layer.HandleEvent(evt) == false {
 			return false
 		}
 	}
