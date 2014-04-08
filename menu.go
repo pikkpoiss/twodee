@@ -29,6 +29,7 @@ type MenuNode struct {
 	parent      *MenuNode
 	children    []*MenuNode
 	highlighted bool
+	back        bool
 }
 
 func (mn *MenuNode) IsHighlighted() bool {
@@ -40,19 +41,33 @@ func (mn *MenuNode) Label() string {
 }
 
 type Menu struct {
-	items       []*MenuNode
+	root        *MenuNode
 	highlighted int
 }
 
 func NewMenuNode(key int32, val int32, label string, children []*MenuNode) *MenuNode {
 	var node = &MenuNode{
-		data:  &MenuItemData{Key: key, Value: val},
-		label: label,
+		data:        &MenuItemData{Key: key, Value: val},
+		label:       label,
+		children:    children,
+		back:        false,
+		highlighted: false,
 	}
 	for _, child := range children {
 		child.parent = node
 	}
 	return node
+}
+
+func BackMenuNode(label string) *MenuNode {
+	return &MenuNode{
+		data:        nil,
+		label:       label,
+		parent:      nil,
+		children:    nil,
+		highlighted: false,
+		back:        true,
+	}
 }
 
 func NewMenu(items []*MenuNode) (menu *Menu, err error) {
@@ -61,28 +76,28 @@ func NewMenu(items []*MenuNode) (menu *Menu, err error) {
 		return
 	}
 	menu = &Menu{
-		items: items,
+		root: NewMenuNode(0, 0, "", items),
 	}
 	menu.updateHighlighted(0)
 	return
 }
 
 func (m *Menu) getHighlighted() *MenuNode {
-	return m.items[m.highlighted%len(m.items)]
+	return m.root.children[m.highlighted%len(m.root.children)]
 }
 
 func (m *Menu) Items() []*MenuNode {
-	return m.items
+	return m.root.children
 }
 
 func (m *Menu) Select() *MenuItemData {
 	h := m.getHighlighted()
 	if len(h.children) != 0 {
-		if h.parent != nil {
-			m.items = append([]*MenuNode{h.parent}, h.children...)
-		} else {
-			m.items = h.children
-		}
+		m.root = h
+		m.updateHighlighted(0)
+		return nil
+	} else if h.back == true && h.parent.parent != nil {
+		m.root = h.parent.parent
 		m.updateHighlighted(0)
 		return nil
 	}
@@ -90,18 +105,19 @@ func (m *Menu) Select() *MenuItemData {
 }
 
 func (m *Menu) Next() {
-	m.updateHighlighted((m.highlighted + 1) % len(m.items))
+	m.updateHighlighted((m.highlighted + 1) % len(m.root.children))
 }
 
 func (m *Menu) Prev() {
-	m.updateHighlighted((m.highlighted + len(m.items) - 1) % len(m.items))
+	count := len(m.root.children)
+	m.updateHighlighted((m.highlighted + count - 1) % count)
 }
 
 func (m *Menu) updateHighlighted(i int) {
-	if len(m.items) <= i {
+	if len(m.root.children) <= i {
 		return
 	}
-	m.items[m.highlighted].highlighted = false
+	m.root.children[m.highlighted].highlighted = false
 	m.highlighted = i
-	m.items[i].highlighted = true
+	m.root.children[i].highlighted = true
 }
