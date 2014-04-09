@@ -140,7 +140,7 @@ func (mi *BoundValueMenuItem) SetDest() {
 }
 
 type Menu struct {
-	root        MenuItem
+	root        *ParentMenuItem
 	items       []MenuItem
 	highlighted int
 }
@@ -166,13 +166,18 @@ func (m *Menu) Items() []MenuItem {
 	return m.items
 }
 
-func (m *Menu) selectItem(item MenuItem) *MenuItemData {
+func (m *Menu) Reset() {
+	m.items = m.root.Children()
+	m.updateHighlighted(0)
+}
+
+func (m *Menu) SelectItem(item MenuItem) *MenuItemData {
 	if item == nil {
 		return nil
 	}
 	switch selected := item.(type) {
 	case *BackMenuItem:
-		m.selectItem(selected.Parent().Parent())
+		m.SelectItem(selected.Parent().Parent())
 	case *ParentMenuItem:
 		m.items = selected.Children()
 		m.updateHighlighted(0)
@@ -185,8 +190,17 @@ func (m *Menu) selectItem(item MenuItem) *MenuItemData {
 	return nil
 }
 
+func (m *Menu) HighlightItem(h MenuItem) {
+	for i, item := range m.items {
+		if item == h {
+			m.updateHighlighted(i)
+			break
+		}
+	}
+}
+
 func (m *Menu) Select() *MenuItemData {
-	return m.selectItem(m.getHighlighted())
+	return m.SelectItem(m.getHighlighted())
 }
 
 func (m *Menu) Next() {
@@ -208,7 +222,9 @@ func (m *Menu) updateHighlighted(i int) {
 	if len(m.items) <= i {
 		return
 	}
-	m.items[m.highlighted].setHighlighted(false)
+	if len(m.items) > m.highlighted {
+		m.items[m.highlighted].setHighlighted(false)
+	}
 	m.highlighted = i
 	m.items[i].setHighlighted(true)
 }

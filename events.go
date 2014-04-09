@@ -28,6 +28,7 @@ func NewEventHandler(w *glfw.Window) (e *EventHandler) {
 	}
 	w.SetCursorPositionCallback(e.onMouseMove)
 	w.SetKeyCallback(e.onKey)
+	w.SetMouseButtonCallback(e.onMouseButton)
 	return
 }
 
@@ -44,9 +45,17 @@ func (e *EventHandler) onKey(w *glfw.Window, key glfw.Key, scancode int, action 
 }
 
 func (e *EventHandler) onMouseMove(w *glfw.Window, xoff float64, yoff float64) {
-	event := &MouseEvent{
+	event := &MouseMoveEvent{
 		X: float32(xoff),
 		Y: float32(yoff),
+	}
+	e.enqueue(event)
+}
+
+func (e *EventHandler) onMouseButton(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+	event := &MouseButtonEvent{
+		Type:   Action(action),
+		Button: MouseButton(button),
 	}
 	e.enqueue(event)
 }
@@ -64,9 +73,14 @@ func (e *EventHandler) enqueue(event Event) {
 
 type Event interface{}
 
-type MouseEvent struct {
+type MouseMoveEvent struct {
 	X float32
 	Y float32
+}
+
+type MouseButtonEvent struct {
+	Button MouseButton
+	Type   Action
 }
 
 type KeyEvent struct {
@@ -77,11 +91,12 @@ type KeyEvent struct {
 type KeyCode int
 
 const (
-	KeyUp    = KeyCode(glfw.KeyUp)
-	KeyDown  = KeyCode(glfw.KeyDown)
-	KeyLeft  = KeyCode(glfw.KeyLeft)
-	KeyRight = KeyCode(glfw.KeyRight)
-	KeyEnter = KeyCode(glfw.KeyEnter)
+	KeyUp     = KeyCode(glfw.KeyUp)
+	KeyDown   = KeyCode(glfw.KeyDown)
+	KeyLeft   = KeyCode(glfw.KeyLeft)
+	KeyRight  = KeyCode(glfw.KeyRight)
+	KeyEnter  = KeyCode(glfw.KeyEnter)
+	KeyEscape = KeyCode(glfw.KeyEscape)
 )
 
 type Action int
@@ -90,4 +105,21 @@ const (
 	Release = Action(glfw.Release)
 	Press   = Action(glfw.Press)
 	Repeat  = Action(glfw.Repeat)
+)
+
+type MouseButton int
+
+const (
+	MouseButton1      = MouseButton(glfw.MouseButton1)
+	MouseButton2      = MouseButton(glfw.MouseButton2)
+	MouseButton3      = MouseButton(glfw.MouseButton3)
+	MouseButton4      = MouseButton(glfw.MouseButton4)
+	MouseButton5      = MouseButton(glfw.MouseButton5)
+	MouseButton6      = MouseButton(glfw.MouseButton6)
+	MouseButton7      = MouseButton(glfw.MouseButton7)
+	MouseButton8      = MouseButton(glfw.MouseButton8)
+	MouseButtonLast   = MouseButton(glfw.MouseButtonLast)
+	MouseButtonLeft   = MouseButton(glfw.MouseButtonLeft)
+	MouseButtonRight  = MouseButton(glfw.MouseButtonRight)
+	MouseButtonMiddle = MouseButton(glfw.MouseButtonMiddle)
 )
