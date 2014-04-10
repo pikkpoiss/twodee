@@ -59,13 +59,14 @@ Sometimes installed library paths are not in LD_LIBRARY_PATH. Try:
 ### Issue with getting glfw3
 If the go get github.com/go-gl/glfw3 command is throwing an error then you can go to your /usr/local/lib directory and create a symbolic link:
 
-    ln -s libglfw.dylib libglfw3.dylib    
+    ln -s libglfw.dylib libglfw3.dylib
 
 ## Building (Ubuntu Trusty)
 
 Install deps:
 
     sudo apt-get install cmake libglu1-mesa-dev libxrandr-dev libxi-dev libxcursor-dev clang libglew-dev mercurial
+    sudo apt-get install libsdl1.2-dev libsdl-mixer1.2-dev libsdl-image1.2-dev
 
 Build glfw:
 
@@ -78,7 +79,7 @@ Build glfw:
     cd /usr/local/lib
     sudo ln -s libglfw3.a libglfw.a
 
- Install go-gl/glfw3:
+Install go-gl/glfw3:
 
     CGO_CFLAGS="-I/usr/include" \
     CGO_LDFLAGS="`pkg-config --libs glu x11 glfw3 xrandr xxf86vm xi xcursor` -lm" \
@@ -89,8 +90,11 @@ Install other deps:
     go get github.com/go-gl/gl
     go get code.google.com/p/freetype-go/freetype
     go get github.com/Agon/googlmath
-    go get github.com/banthar/Go-SDL/mixer
-    go get github.com/banthar/Go-SDL/sdl
+
+Install SDL stuff:
+
+    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/banthar/Go-SDL/sdl
+    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/banthar/Go-SDL/mixer
 
 -------------------------------------
 
