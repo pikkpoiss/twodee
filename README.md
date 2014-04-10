@@ -20,6 +20,8 @@ Install deps:
     go get github.com/Agon/googlmath
     go get github.com/go-gl/gl
     go get github.com/go-gl/glfw3
+    go get github.com/banthar/Go-SDL/mixer
+    go get github.com/banthar/Go-SDL/sdl
 
 ##Troubleshooting (OSX)
 
@@ -87,6 +89,8 @@ Install other deps:
     go get github.com/go-gl/gl
     go get code.google.com/p/freetype-go/freetype
     go get github.com/Agon/googlmath
+    go get github.com/banthar/Go-SDL/mixer
+    go get github.com/banthar/Go-SDL/sdl
 
 -------------------------------------
 

@@ -38,6 +38,9 @@ func NewContext() (context *Context, err error) {
 		err = fmt.Errorf("Could not init glfw")
 		return
 	}
+	if err = initSound(); err != nil {
+		return
+	}
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
 	glfw.WindowHint(glfw.ContextVersionMinor, 2)
 	glfw.WindowHint(glfw.ClientApi, glfw.OpenglApi)
@@ -81,6 +84,7 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 }
 
 func (c *Context) Delete() {
+	cleanupSound()
 	c.VAO.Delete()
 	glfw.Terminate()
 }
