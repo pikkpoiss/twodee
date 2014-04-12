@@ -16,8 +16,8 @@ package twodee
 
 import (
 	"fmt"
-	"github.com/banthar/Go-SDL/mixer"
-	"github.com/banthar/Go-SDL/sdl"
+	"github.com/kurrik/Go-SDL/mixer"
+	"github.com/kurrik/Go-SDL/sdl"
 )
 
 func initSound() error {

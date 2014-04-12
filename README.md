@@ -20,8 +20,8 @@ Install deps:
     go get github.com/Agon/googlmath
     go get github.com/go-gl/gl
     go get github.com/go-gl/glfw3
-    go get github.com/banthar/Go-SDL/mixer
-    go get github.com/banthar/Go-SDL/sdl
+    go get github.com/kurrik/Go-SDL/mixer
+    go get github.com/kurrik/Go-SDL/sdl
 
 ##Troubleshooting (OSX)
 
@@ -93,69 +93,130 @@ Install other deps:
 
 Install SDL stuff:
 
-    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/banthar/Go-SDL/sdl
-    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/banthar/Go-SDL/mixer
+    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/kurrik/Go-SDL/sdl
+    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/kurrik/Go-SDL/mixer
 
--------------------------------------
+## Building (Windows 8.1)
 
-##Old, old instructions
+### Software Dependencies
 
-Ubuntu:
+#### Go 1.2.1
+  * [http://golang.org]()
+  * Download Windows MSI
+  * Install to `C:\Go\`
+  * Add environment variable for user: `GOPATH = %USERPROFILE%\AppData\Local\Go`
 
-    sudo apt-get install freeglut3-dev
-    sudo apt-get install libxmu-dev
-    sudo apt-get install libxi-dev
-    sudo apt-get install libxrandr-dev
-    sudo apt-get install libglew-dev
-    sudo apt-get install libglfw-dev
+#### MinGW-w64 4.8.2
+  * [http://mingw-w64.sourceforge.net/]()
+  * MinGW-builds project
+  * [http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/]()  
+  * Downloaded `/4.8.2/threads-win32/seh/x86_64-4.8.2-release-win32-seh-rt_v3-rev3.7z`
+  * Extract to `C:\mingw64`
+  * Add `C:\mingw64\bin` to PATH
 
-OSX:
-  GLEW - http://glew.sourceforge.net/
-  I used version 1.9.0
+#### Git 1.9.0
+  * Download [http://git-scm.com/download/win]()
+  * Install to `C:\git`
+  * Git on PATH in installer
 
-    tar xvzf glew-1.9.0.tgz
-    cd glew-1.9.0
-    make
-    sudo make install
+#### Mercurial 2.9.2
+  * [https://bitbucket.org/tortoisehg/files/downloads/]()
+  * Downloaded `mercurial-2.9.2-x64.msi`
 
-  I also needed
-  libglfw - http://www.glfw.org/download.html
-  I used version 2.7.6
-  Unzip the source and cd to the base of the package.  Run (OSX):
+#### GTK+ 2.24
+  * Contains pkg-config
+  * [http://ftp.acc.umu.se/pub/gnome/binaries/win32/gtk+/]()
+  * Downloaded `/2.24/gtk+-bundle_2.24.10-20120208_win32.zip`
+  * Extract to `C:\mingw64`
+  * Add a new system variable `PKG_CONFIG_PATH, set to C:\mingw64\lib\pkgconfig`
 
-    make cocoa-dist-install
+#### Make 3.82.90
+  * [http://sourceforge.net/projects/mingw-w64/files/External%20binary%20packages%20%28Win64%20hosted%29/make/]()
+  * Downloaded `make-3.82.90-20111115.zip`
+  * Extract `bin_amd64/*` to `C:\mingw64\bin`
 
-  Need Mercurial
+### Library Dependencies
 
-    brew install hg
+#### GLEW 1.10.0
+  * [https://sourceforge.net/projects/glew]()
+  * Downloaded `/files/glew/1.10.0/glew-1.10.0.zip`
+  * Extract to `C:\src`
+  * Git bash:
 
-  Make sure to use gcc for compiling go-gl/gl:
+        cd /c/src/glew-1.10.0
+        gcc -DGLEW_STATIC -DGLEW_NO_GLU -O2 -Wall -W -Iinclude -DGLEW_BUILD -o src/glew.o -c src/glew.c
+        gcc -shared -Wl,-soname,libglew32.dll -Wl,--out-implib,lib/libglew32.dll.a -o lib/glew32.dll src/glew.o -LC:\mingw64\lib -lglu32 -lopengl32 -lgdi32 -luser32 -lkernel32
+        # Create glew32.dll
+        ar cr lib/libglew32.a src/glew.o
+        cp lib/*.* ../../mingw64/lib
+        cp -r include/GL ../../mingw64/include/
 
-    CC=gcc go get -u github.com/go-gl/gl
+#### GLFW 3.0.4
+  * [http://www.glfw.org/download.html]()
+  * 64-bit windows binaries
+  * Downloaded `glfw-3.0.4.bin.WIN64.zip`
+  * Extract to `C:\src`
+  * Git bash:
 
-Win:
-  * Install Mercurial from http://mercurial.selenic.com/
-  * Download binaries for GLFW http://sourceforge.net/projects/glfw/files/glfw/2.7.8/glfw-2.7.8.bin.WIN64.zip/download
-  * Copy glfw-2.7.6.bin.WIN32/lib-mingw/x64 stuff to C:\MinGW64\lib
-  * Copy dist include to gcc include
-  * Copy glfw.dll to C:\Windows\System32
+        cd /c/src/glfw-3.0.4.bin.WIN64
+        cp -r include/GLFW ../../mingw64/include/
+        cp lib-mingw/*.* ../../mingw64/lib/
+        cp lib-mingw/glfw3dll.a ../../mingw64/lib/libglfw3dll.a
 
-Then (all):
+#### SDL 1.2.15
+  * [http://www.libsdl.org/release/]()
+  * Downloaded `SDL-1.2.15.zip`
+  * Extract to `C:\src`
+  * Git bash:
 
-    go get github.com/go-gl/gl
-    go get github.com/go-gl/glfw
+        cd /c/src/SDL-1.2.15
+        ./configure
+        make
+        cp sdl.pc ../../mingw64/lib/pkgconfig
+        mkdir ../../mingw64/include/SDL
+        cp include/*.h ../../mingw64/include/SDL
+        mkdir ../../mingw64/include/SDL/SDL
+        cp include/SDL.h ../../mingw64/include/SDL/SDL
+        cp build/.libs/* ../../mingw64/lib
+
+#### SDL_image 1.2.12
+  * [http://www.libsdl.org/projects/SDL_image/release/]()
+  * Downloaded `SDL_image-devel-1.2.12-VC.zip`
+  * Extract to `C:\src`
+  * Git bash:
+
+        cd /c/src/SDL_image-1.2.12
+        cp include/*.h ../../mingw64/include/
+        cp lib/x64/*.dll ../../mingw64/lib/
+        cp lib/x64/*.lib ../../mingw64/lib/
+
+#### SDL_mixer 1.2.12
+  * [http://www.libsdl.org/projects/SDL_mixer/release/]()
+  * Downloaded `SDL_mixer-devel-1.2.12-VC.zip`
+  * Extract to `C:\src`
+  * Git bash:
+
+        cd /c/src/SDL_mixer-1.2.12
+        cp include/*.h ../../mingw64/include/
+        cp lib/x64/*.dll ../../mingw64/lib/
+        cp lib/x64/*.lib ../../mingw64/lib/
+
+### Go Library Dependencies
+
+    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/go-gl/gl
+    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/go-gl/glfw3
+
+    go get github.com/Agon/googlmath
     go get code.google.com/p/freetype-go/freetype
-    go get code.google.com/p/freetype-go/freetype/truetype
-    go get github.com/kurrik/gltext
 
-I think cocoa-dist-install works now, but previously you had to explicitly
-build the dylib using something like the following:
+    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get github.com/kurrik/Go-SDL/sdl
+    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get github.com/kurrik/Go-SDL/mixer
 
-Unzip the source and cd to the base of the package.
-You need to build the project as a shared lib, so I used the
-following (OSX):
+### Twodee
 
-    cd lib/cocoa
-    make -f Makefile.cocoa libglfw.dylib
-    install -c -m 644 libglfw.dylib /usr/local/lib/
-
+    git clone git@github.com:kurrik/twodee-examples.git
+    cd twodee-examples
+    git submodule init
+    git submodule update
+    cd examples/basic
+    PATH="$PATH;C:\mingw64\lib" go run *.go
