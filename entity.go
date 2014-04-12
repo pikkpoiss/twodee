@@ -14,13 +14,76 @@
 
 package twodee
 
-type Entity struct {
-	X     float32
-	Y     float32
-	halfW float32
-	halfH float32
+import (
+	"time"
+)
+
+type Entity interface {
+	Pos() Point
+	Bounds() Rectangle
+	Frame() int
+	Rotation() float32
+	MoveTo(Point)
+	Update(elapsed time.Duration)
 }
 
-func (e *Entity) Bounds() Rectangle {
-	return Rect(e.X-e.halfW, e.Y-e.halfH, e.X+e.halfW, e.Y+e.halfH)
+type BaseEntity struct {
+	pos      Point
+	halfW    float32
+	halfH    float32
+	rotation float32
+	frame    int
+}
+
+func NewBaseEntity(x, y, w, h, r float32, frame int) *BaseEntity {
+	return &BaseEntity{
+		pos:      Pt(x, y),
+		halfW:    w / 2.0,
+		halfH:    h / 2.0,
+		rotation: r,
+		frame:    frame,
+	}
+}
+
+func (e *BaseEntity) Bounds() Rectangle {
+	return Rect(e.pos.X-e.halfW, e.pos.Y-e.halfH, e.pos.X+e.halfW, e.pos.Y+e.halfH)
+}
+
+func (e *BaseEntity) Pos() Point {
+	return e.pos
+}
+
+func (e *BaseEntity) MoveTo(pt Point) {
+	e.pos = pt
+}
+
+func (e *BaseEntity) Frame() int {
+	return e.frame
+}
+
+func (e *BaseEntity) Rotation() float32 {
+	return e.rotation
+}
+
+func (e *BaseEntity) Update(elapsed time.Duration) {
+}
+
+type AnimatingEntity struct {
+	animation *Animation
+	*BaseEntity
+}
+
+func NewAnimatingEntity(x, y, w, h, r float32, l time.Duration, f []int) *AnimatingEntity {
+	return &AnimatingEntity{
+		animation:  NewAnimation(l, f),
+		BaseEntity: NewBaseEntity(x, y, w, h, r, 0),
+	}
+}
+
+func (e *AnimatingEntity) Update(elapsed time.Duration) {
+	e.animation.Update(elapsed)
+}
+
+func (e *AnimatingEntity) Frame() int {
+	return e.animation.Current
 }

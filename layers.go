@@ -14,9 +14,13 @@
 
 package twodee
 
+import (
+	"time"
+)
+
 type Layer interface {
 	Render()
-	Update()
+	Update(elapsed time.Duration)
 	Delete()
 	HandleEvent(evt Event) bool
 }
@@ -48,9 +52,9 @@ func (l *Layers) Render() {
 	}
 }
 
-func (l *Layers) Update() {
+func (l *Layers) Update(elapsed time.Duration) {
 	for _, layer := range l.layers {
-		layer.Update()
+		layer.Update(elapsed)
 	}
 }
 

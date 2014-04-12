@@ -14,7 +14,32 @@
 
 package twodee
 
-type Frame struct {
-	Sequence []int32
-	Duration int32
+import (
+	"time"
+)
+
+const (
+	Step60Hz = time.Duration(16666) * time.Microsecond
+	Step30Hz = Step60Hz * 2
+)
+
+type Animation struct {
+	accumulated time.Duration
+	Current     int
+	FrameLength time.Duration
+	Sequence    []int
+}
+
+func NewAnimation(length time.Duration, frames []int) *Animation {
+	return &Animation{
+		FrameLength: length,
+		Sequence:    frames,
+		Current:     frames[0],
+	}
+}
+
+func (a *Animation) Update(elapsed time.Duration) {
+	a.accumulated += elapsed
+	index := int(a.accumulated/a.FrameLength) % len(a.Sequence)
+	a.Current = a.Sequence[index]
 }
