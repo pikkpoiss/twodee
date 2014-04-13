@@ -21,6 +21,9 @@ import (
 const (
 	Step60Hz = time.Duration(16666) * time.Microsecond
 	Step30Hz = Step60Hz * 2
+	Step20Hz = time.Duration(50000) * time.Microsecond
+	Step15Hz = Step30Hz * 2
+	Step10Hz = Step20Hz * 2
 )
 
 type Animation struct {

@@ -20,6 +20,10 @@ import (
 
 type Matrix4 [16]float32
 
+func (m *Matrix4) Mul(a *Matrix4) {
+	(*m) = *getMatrix(getGMathMatrix(m).Mul(getGMathMatrix(a)))
+}
+
 func getMatrix(m *gmath.Matrix4) *Matrix4 {
 	return &Matrix4{
 		m.M11, m.M12, m.M13, m.M14,

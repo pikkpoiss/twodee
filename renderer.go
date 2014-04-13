@@ -456,7 +456,7 @@ func (tr *TileRenderer) Bind() error {
 	return nil
 }
 
-func (tr *TileRenderer) Draw(frame int, x, y, r float32) error {
+func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) error {
 	tr.FrameLoc.Uniform1i(frame)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
@@ -465,7 +465,15 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32) error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(GetRotTransMatrix(x, y, 0, r)))
+	m := GetRotTransMatrix(x, y, 0, r)
+	if flipx && flipy {
+		m.Mul(GetScaleMatrix(-1, -1, 1))
+	} else if flipx && !flipy {
+		m.Mul(GetScaleMatrix(-1, 1, 1))
+	} else if !flipx && flipy {
+		m.Mul(GetScaleMatrix(1, -1, 1))
+	}
+	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
