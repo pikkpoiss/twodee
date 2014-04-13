@@ -29,8 +29,7 @@ Install deps:
 ### Installing go-gl/gl.
 Before Go 1.2, you may need to run with:
 
-    CC=gcc CGO_CFLAGS=-ftrack-macro-expansion=0 \
-    go get github.com/go-gl/gl
+    CC=gcc CGO_CFLAGS=-ftrack-macro-expansion=0 go get github.com/go-gl/gl
 
 See http://stackoverflow.com/questions/16412644/using-opengl-from-go for background.
 
@@ -60,6 +59,12 @@ Sometimes installed library paths are not in LD_LIBRARY_PATH. Try:
 If the go get github.com/go-gl/glfw3 command is throwing an error then you can go to your /usr/local/lib directory and create a symbolic link:
 
     ln -s libglfw.dylib libglfw3.dylib
+
+### Installing kurrik/Go-SDL/sdl and kurrik/Go-SDL/mixer
+
+    brew install gcc47
+    CC=gcc-4.7 go get -u -v github.com/kurrik/Go-SDL/sdl
+    CC=gcc-4.7 go get -u -v github.com/kurrik/Go-SDL/mixer
 
 ## Building (Ubuntu Trusty)
 
