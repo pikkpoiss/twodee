@@ -65,8 +65,8 @@ func (l *Layers) Delete() {
 }
 
 func (l *Layers) HandleEvent(evt Event) bool {
-	for _, layer := range l.layers {
-		if layer.HandleEvent(evt) == false {
+	for i := len(l.layers) - 1; i >= 0; i-- {
+		if l.layers[i].HandleEvent(evt) == false {
 			return false
 		}
 	}
