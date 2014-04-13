@@ -20,6 +20,39 @@ import (
 )
 
 type Renderer struct {
+	worldBounds  Rectangle
+	screenBounds Rectangle
+	projection   *Matrix4
+	inverse      *Matrix4
+}
+
+func NewRenderer(world, screen Rectangle) (r *Renderer, err error) {
+	r = &Renderer{}
+	r.SetScreenBounds(screen)
+	err = r.SetWorldBounds(world)
+	return
+}
+
+func (r *Renderer) SetScreenBounds(bounds Rectangle) {
+	r.screenBounds = bounds
+}
+
+func (r *Renderer) SetWorldBounds(bounds Rectangle) (err error) {
+	r.worldBounds = bounds
+	r.projection = GetOrthoMatrix(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
+	r.inverse, err = GetInverseMatrix(r.projection)
+	return
+}
+
+func (r *Renderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
+	// http://stackoverflow.com/questions/7692988/
+	var (
+		halfw = r.screenBounds.Max.X / 2.0
+		halfh = r.screenBounds.Max.Y / 2.0
+		xpct  = (x - halfw) / halfw
+		ypct  = (halfh - y) / halfh
+	)
+	return Unproject(r.inverse, xpct, ypct)
 }
 
 func CreateVAO() (array gl.VertexArray, err error) {
@@ -101,7 +134,7 @@ func BuildProgram(vsrc string, fsrc string) (program gl.Program, err error) {
 }
 
 type TextRenderer struct {
-	Renderer
+	*Renderer
 	VBO            gl.Buffer
 	Program        gl.Program
 	Texture        gl.Texture
@@ -156,11 +189,12 @@ void main()
     gl_Position = m_ProjectionMatrix * trans * scale * a_Position;
 }`
 
-func NewTextRenderer(b Rectangle) (tr *TextRenderer, err error) {
+func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
 	var (
 		rect    []float32
 		program gl.Program
 		vbo     gl.Buffer
+		r       *Renderer
 	)
 	rect = []float32{
 		0, 0, 0.0, 0.0, 0.0,
@@ -174,7 +208,11 @@ func NewTextRenderer(b Rectangle) (tr *TextRenderer, err error) {
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
 	}
+	if r, err = NewRenderer(screen, screen); err != nil {
+		return
+	}
 	tr = &TextRenderer{
+		Renderer:       r,
 		VBO:            vbo,
 		Program:        program,
 		PositionLoc:    program.GetAttribLocation("a_Position"),
@@ -183,9 +221,8 @@ func NewTextRenderer(b Rectangle) (tr *TextRenderer, err error) {
 		TransLoc:       program.GetUniformLocation("v_Trans"),
 		ScaleLoc:       program.GetUniformLocation("v_Scale"),
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
-		projection:     GetOrthoMatrix(b.Min.X, b.Max.X, b.Min.Y, b.Max.Y, 1, 0),
-		Width:          b.Max.X - b.Min.X,
-		Height:         b.Max.Y - b.Min.Y,
+		Width:          screen.Max.X - screen.Min.X,
+		Height:         screen.Max.Y - screen.Min.Y,
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -222,7 +259,7 @@ func (tr *TextRenderer) Bind() error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.projection))
+	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.Renderer.projection))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -278,7 +315,7 @@ type TileMetadata struct {
 }
 
 type TileRenderer struct {
-	Renderer
+	*Renderer
 	Program        gl.Program
 	Texture        gl.Texture
 	PositionLoc    gl.AttribLocation
@@ -291,10 +328,6 @@ type TileRenderer struct {
 	VBO            gl.Buffer
 	xframes        int
 	yframes        int
-	projection     *Matrix4
-	invProjection  *Matrix4
-	GameBounds     Rectangle
-	ScreenBounds   Rectangle
 }
 
 const TILE_FRAGMENT = `#version 150
@@ -332,14 +365,13 @@ void main()
 
 func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileRenderer, err error) {
 	var (
-		rect          []float32
-		program       gl.Program
-		texture       *Texture
-		vbo           gl.Buffer
-		projection    *Matrix4
-		invprojection *Matrix4
-		halfWidth     = float32(metadata.TileWidth/metadata.PxPerUnit) / 2.0
-		halfHeight    = float32(metadata.TileHeight/metadata.PxPerUnit) / 2.0
+		rect       []float32
+		program    gl.Program
+		texture    *Texture
+		vbo        gl.Buffer
+		halfWidth  = float32(metadata.TileWidth/metadata.PxPerUnit) / 2.0
+		halfHeight = float32(metadata.TileHeight/metadata.PxPerUnit) / 2.0
+		r          *Renderer
 	)
 	if program, err = BuildProgram(TILE_VERTEX, TILE_FRAGMENT); err != nil {
 		return
@@ -356,11 +388,11 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
 	}
-	projection = GetOrthoMatrix(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
-	if invprojection, err = GetInverseMatrix(projection); err != nil {
+	if r, err = NewRenderer(bounds, screen); err != nil {
 		return
 	}
 	tr = &TileRenderer{
+		Renderer:       r,
 		VBO:            vbo,
 		Program:        program,
 		Texture:        texture.Texture,
@@ -373,10 +405,6 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
 		xframes:        texture.Width / metadata.TileWidth,
 		yframes:        texture.Height / metadata.TileHeight,
-		projection:     projection,
-		invProjection:  invprojection,
-		ScreenBounds:   screen,
-		GameBounds:     bounds,
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -421,22 +449,11 @@ func (tr *TileRenderer) Bind() error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.projection))
+	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.Renderer.projection))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
 	return nil
-}
-
-func (tr *TileRenderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
-	// http://stackoverflow.com/questions/7692988/opengl-math-projecting-screen-space-to-world-space-coords-solved
-	var (
-		halfw = tr.ScreenBounds.Max.X / 2.0
-		halfh = tr.ScreenBounds.Max.Y / 2.0
-		xpct  = (x - halfw) / halfw
-		ypct  = (halfh - y) / halfh
-	)
-	return Unproject(tr.invProjection, xpct, ypct)
 }
 
 func (tr *TileRenderer) Draw(frame int, x, y, r float32) error {
