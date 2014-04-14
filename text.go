@@ -41,19 +41,26 @@ func (tc *TextCache) SetText(text string) (err error) {
 	if text == tc.Text {
 		return
 	}
-	if tc.Texture != nil {
-		tc.Texture.Delete()
+	var tex *Texture = tc.Texture
+	tc.Texture, err = tc.fontface.GetText(text)
+	if tex != nil {
+		tex.Delete()
 	}
-	if tc.Texture, err = tc.fontface.GetText(text); err != nil {
-		return
+	if err == nil {
+		tc.Text = text
 	}
-	tc.Text = text
 	return
+}
+
+func (tc *TextCache) Clear() {
+	tc.Delete()
+	tc.Text = ""
 }
 
 func (tc *TextCache) Delete() {
 	if tc.Texture != nil {
 		tc.Texture.Delete()
+		tc.Texture = nil
 	}
 }
 
@@ -120,9 +127,9 @@ func (ff *FontFace) GetText(text string) (t *Texture, err error) {
 	if _, err = ff.context.DrawString(text, pt); err != nil {
 		return
 	}
-	if err = WritePNG("hello.png", dst); err != nil {
-		return
-	}
+	// if err = WritePNG("hello.png", dst); err != nil {
+	// 	return
+	// }
 	t, err = GetTexture(dst, gl.NEAREST)
 	return
 }

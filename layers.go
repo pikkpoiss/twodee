@@ -23,6 +23,7 @@ type Layer interface {
 	Update(elapsed time.Duration)
 	Delete()
 	HandleEvent(evt Event) bool
+	Reset() error
 }
 
 type Layers struct {
@@ -43,6 +44,15 @@ func (l *Layers) Pop() (layer Layer) {
 	)
 	layer = l.layers[index]
 	l.layers = l.layers[:index]
+	return
+}
+
+func (l *Layers) Reset() (err error) {
+	for _, layer := range l.layers {
+		if err = layer.Reset(); err != nil {
+			return
+		}
+	}
 	return
 }
 

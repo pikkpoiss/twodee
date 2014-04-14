@@ -26,6 +26,12 @@ type Context struct {
 	OpenGLVersion string
 	ShaderVersion string
 	VAO           gl.VertexArray
+	cursor        bool
+	fullscreen    bool
+	w             int
+	h             int
+	name          string
+	initialized bool
 }
 
 func glfwErrorCallback(err glfw.ErrorCode, desc string) {
@@ -46,18 +52,53 @@ func NewContext() (context *Context, err error) {
 	glfw.WindowHint(glfw.ClientApi, glfw.OpenglApi)
 	glfw.WindowHint(glfw.OpenglProfile, glfw.OpenglCoreProfile)
 	glfw.WindowHint(glfw.OpenglForwardCompatible, gl.TRUE)
-	context = &Context{}
+	context = &Context{
+		cursor:     true,
+		fullscreen: false,
+	}
 	return
 }
 
-func (c *Context) CreateWindow(w, h int, name string) (err error) {
-	if c.Window, err = glfw.CreateWindow(w, h, name, nil, nil); err != nil {
+func (c *Context) SetCursor(val bool) {
+	c.cursor = val
+}
+
+func (c *Context) SetFullscreen(val bool) {
+	if c.fullscreen == val {
 		return
+	}
+	c.fullscreen = val
+	if c.Window != nil {
+		win := c.Window
+		c.Window = nil
+		win.Destroy()
+		c.CreateWindow(c.w, c.h, c.name)
+	}
+}
+
+func (c *Context) Fullscreen() bool {
+	return c.fullscreen
+}
+
+func (c *Context) CreateWindow(w, h int, name string) (err error) {
+	c.w = w
+	c.h = h
+	c.name = name
+	var monitor *glfw.Monitor
+	if c.fullscreen == true {
+		if monitor, err = glfw.GetPrimaryMonitor(); err != nil {
+			return
+		}
+	}
+	if c.Window, err = glfw.CreateWindow(c.w, c.h, c.name, monitor, nil); err != nil {
+		return
+	}
+	if c.cursor == false {
+		c.Window.SetInputMode(glfw.Cursor, glfw.CursorHidden)
 	}
 	c.Window.MakeContextCurrent()
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("OpenGL MakeContextCurrent error: %X\n", e)
-		return
 	}
 	gl.Init()
 	if e := gl.GetError(); e != 0 {
@@ -86,5 +127,8 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 func (c *Context) Delete() {
 	cleanupSound()
 	c.VAO.Delete()
+	if c.Window != nil {
+		c.Window.Destroy()
+	}
 	glfw.Terminate()
 }
