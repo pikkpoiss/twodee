@@ -6,6 +6,21 @@ except that it will use OpenGL and be basically sprite based.
 
 My expectation is to use this for Ludum Dare competitions as I go.
 
+## TODO
+
+ - [x] Menus
+ - [x] Sound
+ - [x] Animations
+ - [x] Flipping tiles vertically/horizontally
+ - [x] Fullscreen toggle
+ - [x] Keyboard / Mouse events
+ - [x] Building on OSX / Linux / Windows
+ - [ ] OSX / Windows packaging scripts
+ - [ ] Very simple cinematics scripting
+ - [ ] Import from Tiled native file format (http://www.mapeditor.org/)
+ - [ ] Glow shaders
+ - [ ] Collision detection
+ - [ ] Game grid + pathfinding
 
 ##Building (OSX)
 
