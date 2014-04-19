@@ -44,10 +44,14 @@ type Audio struct {
 	music *mixer.Music
 }
 
-func NewAudio(path string) *Audio {
-	return &Audio{
+func NewAudio(path string) (a *Audio, err error) {
+	a = &Audio{
 		music: mixer.LoadMUS(path),
 	}
+	if a.music == nil {
+		err = fmt.Errorf("Could not load audio: %v", sdl.GetError())
+	}
+	return
 }
 
 func (a *Audio) Delete() {
