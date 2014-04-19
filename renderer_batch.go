@@ -22,6 +22,7 @@ import (
 type BatchRenderer struct {
 	*Renderer
 	Program        gl.Program
+	PositionLoc    gl.AttribLocation
 	TextureLoc     gl.AttribLocation
 	TextureUnitLoc gl.UniformLocation
 	ModelViewLoc   gl.UniformLocation
@@ -62,7 +63,7 @@ func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
 		program gl.Program
 		r       *Renderer
 	)
-	if program, err = BuildProgram(TILE_VERTEX, TILE_FRAGMENT); err != nil {
+	if program, err = BuildProgram(BATCH_VERTEX, BATCH_FRAGMENT); err != nil {
 		return
 	}
 	if r, err = NewRenderer(bounds, screen); err != nil {
@@ -71,6 +72,7 @@ func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
 	tr = &BatchRenderer{
 		Renderer:       r,
 		Program:        program,
+		PositionLoc:    program.GetAttribLocation("a_Position"),
 		TextureLoc:     program.GetAttribLocation("a_TextureCoordinates"),
 		TextureUnitLoc: program.GetUniformLocation("u_TextureUnit"),
 		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
@@ -80,4 +82,89 @@ func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
 	}
 	return
+}
+
+func (r *BatchRenderer) Bind() error {
+	r.Program.Use()
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	gl.ActiveTexture(gl.TEXTURE0)
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	r.TextureUnitLoc.Uniform1i(0)
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	r.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(r.Renderer.projection))
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	return nil
+}
+
+func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
+	batch.Buffer.Bind(gl.ARRAY_BUFFER)
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	r.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	r.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	r.PositionLoc.EnableArray()
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	r.TextureLoc.EnableArray()
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	m := GetRotTransMatrix(x, y, 0, rot)
+	r.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	batch.Buffer.Unbind(gl.ARRAY_BUFFER)
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	return nil
+}
+
+func (tr *BatchRenderer) Unbind() error {
+	return nil
+}
+
+type Batch struct {
+	Buffer  gl.Buffer
+	Texture *Texture
+}
+
+func LoadBatch(vertices []float32, texture *Texture) (b *Batch, err error) {
+	var (
+		vbo gl.Buffer
+	)
+	if vbo, err = CreateVBO(len(vertices)*4, vertices, gl.STATIC_DRAW); err != nil {
+		return
+	}
+	b = &Batch{
+		Buffer:  vbo,
+		Texture: texture,
+	}
+	return
+}
+
+func (b *Batch) Delete() {
+	b.Texture.Delete()
+	b.Buffer.Delete()
 }
