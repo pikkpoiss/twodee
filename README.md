@@ -31,6 +31,8 @@ Make sure Clang is your default compiler.
 
 Install deps:
 
+    brew install libvorbis libogg sdl_mixer
+
     go get code.google.com/p/freetype-go/freetype
     go get github.com/Agon/googlmath
     go get github.com/go-gl/gl

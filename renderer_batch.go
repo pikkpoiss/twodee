@@ -40,6 +40,7 @@ void main()
 {
     vec2 texcoords = v_TextureCoordinates;
     v_FragData = texture(u_TextureUnit, texcoords);
+    //v_FragData = vec4(1.0,0.0,0.0,1.0);
 }`
 
 const BATCH_VERTEX = `#version 150
@@ -105,6 +106,10 @@ func (r *BatchRenderer) Bind() error {
 }
 
 func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
+	batch.Texture.Bind()
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
 	batch.Buffer.Bind(gl.ARRAY_BUFFER)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
@@ -130,7 +135,7 @@ func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	gl.DrawArrays(gl.TRIANGLES, 0, batch.Count)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -145,21 +150,31 @@ func (tr *BatchRenderer) Unbind() error {
 	return nil
 }
 
+func (tr *BatchRenderer) Delete() error {
+	return nil
+}
+
 type Batch struct {
 	Buffer  gl.Buffer
 	Texture *Texture
+	Count   int
 }
 
-func LoadBatch(vertices []float32, texture *Texture) (b *Batch, err error) {
+func LoadBatch(vertices []float32, path string) (b *Batch, err error) {
 	var (
-		vbo gl.Buffer
+		vbo     gl.Buffer
+		texture *Texture
 	)
 	if vbo, err = CreateVBO(len(vertices)*4, vertices, gl.STATIC_DRAW); err != nil {
+		return
+	}
+	if texture, err = LoadTexture(path, gl.NEAREST); err != nil {
 		return
 	}
 	b = &Batch{
 		Buffer:  vbo,
 		Texture: texture,
+		Count:   len(vertices) / 5,
 	}
 	return
 }
