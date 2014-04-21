@@ -97,6 +97,8 @@ const (
 	KeyRight  = KeyCode(glfw.KeyRight)
 	KeyEnter  = KeyCode(glfw.KeyEnter)
 	KeyEscape = KeyCode(glfw.KeyEscape)
+	KeyM      = KeyCode(glfw.KeyM)
+	KeyN      = KeyCode(glfw.KeyN)
 )
 
 type Action int
