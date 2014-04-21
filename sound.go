@@ -40,12 +40,12 @@ func cleanupSound() {
 	sdl.QuitSubSystem(sdl.INIT_AUDIO)
 }
 
-func IsPlaying() int {
-	return mixer.PlayingMusic()
+func IsPlaying() bool {
+	return mixer.PlayingMusic() == 1
 }
 
-func IsPaused() int {
-	return mixer.PausedMusic()
+func IsPaused() bool {
+	return mixer.PausedMusic() == 1
 }
 
 func Pause() {
@@ -77,5 +77,3 @@ func (a *Audio) Delete() {
 func (a *Audio) Play(times int) {
 	a.music.PlayMusic(times)
 }
-
-

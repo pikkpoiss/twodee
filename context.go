@@ -31,7 +31,7 @@ type Context struct {
 	w             int
 	h             int
 	name          string
-	initialized bool
+	initialized   bool
 }
 
 func glfwErrorCallback(err glfw.ErrorCode, desc string) {
