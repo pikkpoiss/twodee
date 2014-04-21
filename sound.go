@@ -40,6 +40,14 @@ func cleanupSound() {
 	sdl.QuitSubSystem(sdl.INIT_AUDIO)
 }
 
+func Pause() {
+	mixer.PauseMusic()
+}
+
+func Resume() {
+	mixer.ResumeMusic()
+}
+
 type Audio struct {
 	music *mixer.Music
 }
@@ -61,3 +69,5 @@ func (a *Audio) Delete() {
 func (a *Audio) Play(times int) {
 	a.music.PlayMusic(times)
 }
+
+
