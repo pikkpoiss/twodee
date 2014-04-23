@@ -2,40 +2,61 @@ package twodee
 
 type GameEventType int
 
-type GameEvent interface {
-	geType() GameEventType
+type GETyper interface {
+	GEType() GameEventType
 }
 
-type GameEventCallback func(GameEvent)
+type BasicGameEvent struct {
+	geType GameEventType
+}
+
+func (e *BasicGameEvent) GEType() GameEventType {
+	return e.geType
+}
+
+func NewBasicGameEvent(t GameEventType) *BasicGameEvent {
+	return &BasicGameEvent{
+		geType: t,
+	}
+}
+
+type GameEventCallback func(GETyper)
 
 type GameEventTypeObservers map[int]GameEventCallback
 
 type GameEventHandler struct {
-	gameEvents        chan GameEvent
-	eventObservers    []GameEventTypeObservers
-	nextObserverId    int
-	nextGameEventType GameEventType
+	gameEvents     chan GETyper
+	eventObservers []GameEventTypeObservers
+	nextObserverId int
 }
 
-func NewGameEventHandler() (h *GameEventHandler) {
+func NewGameEventHandler(numGameEventTypes int) (h *GameEventHandler) {
 	h = &GameEventHandler{
-		gameEvents:        make(chan GameEvent, 100),
-		eventObservers:    make([]GameEventTypeObservers),
-		nextObserverId:    0,
-		nextGameEventType: 0,
+		gameEvents:     make(chan GETyper, 100),
+		eventObservers: make([]GameEventTypeObservers, numGameEventTypes),
+		nextObserverId: 0,
 	}
 	return
 }
 
 func (h *GameEventHandler) Poll() {
-	for e := range h.gameEvents {
-		for _, observer := range h.eventObservers[e.geType()] {
-			observer(e)
+	var (
+		e    GETyper
+		loop = true
+	)
+	for loop {
+		select {
+		case e = <-h.gameEvents:
+			for _, observer := range h.eventObservers[e.GEType()] {
+				observer(e)
+			}
+		default:
+			loop = false
 		}
 	}
 }
 
-func (h *GameEventHandler) Enqueue(e GameEvent) {
+func (h *GameEventHandler) Enqueue(e GETyper) {
 	select {
 	case h.gameEvents <- e:
 		// Added to game events pool.
@@ -46,14 +67,10 @@ func (h *GameEventHandler) Enqueue(e GameEvent) {
 	}
 }
 
-func (h *GameEventHandler) RegisterNewEventType() (t GameEventType) {
-	t = nextGameEventType
-	h.eventObservers[t] = make(GameEventTypeObservers)
-	h.nextObserverId++
-	return
-}
-
 func (h *GameEventHandler) AddObserver(t GameEventType, c GameEventCallback) (id int) {
+	if h.eventObservers[t] == nil {
+		h.eventObservers[t] = make(GameEventTypeObservers)
+	}
 	id = h.nextObserverId
 	h.eventObservers[t][id] = c
 	h.nextObserverId++
