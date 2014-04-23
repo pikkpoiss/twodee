@@ -29,6 +29,18 @@ Make sure Clang is your default compiler.
     export CC=clang
     export CXX=clang++
 
+Get the environment set up:
+    brew install go
+    brew install hg
+    brew install glew
+    // Set up glfw3; see https://github.com/go-gl/glfw3.
+    brew tap homebrew/versions
+    brew install --build-bottle --static glfw3
+    // Set up SDL.
+    brew install sdl
+    brew install sdl_mixer
+    brew install sdl_image
+
 Install deps:
 
     brew install libvorbis libogg sdl_mixer
