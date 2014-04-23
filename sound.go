@@ -56,24 +56,24 @@ func ResumeMusic() {
 	mixer.ResumeMusic()
 }
 
-type Audio struct {
+type Music struct {
 	music *mixer.Music
 }
 
-func NewAudio(path string) (a *Audio, err error) {
-	a = &Audio{
+func NewMusic(path string) (m *Music, err error) {
+	m = &Music{
 		music: mixer.LoadMUS(path),
 	}
-	if a.music == nil {
-		err = fmt.Errorf("Could not load audio: %v", sdl.GetError())
+	if m.music == nil {
+		err = fmt.Errorf("Could not load music: %v", sdl.GetError())
 	}
 	return
 }
 
-func (a *Audio) Delete() {
-	a.music.Free()
+func (m *Music) Delete() {
+	m.music.Free()
 }
 
-func (a *Audio) Play(times int) {
-	a.music.PlayMusic(times)
+func (m *Music) Play(times int) {
+	m.music.PlayMusic(times)
 }
