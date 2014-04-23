@@ -209,7 +209,6 @@ func LoadBatch(tiles []TexturedTile, metadata TileMetadata) (b *Batch, err error
 		v := triangles(tiles[i], float32(metadata.PxPerUnit), float32(texture.Width), float32(texture.Height))
 		copy(vertices[step*i:], v[:])
 	}
-	fmt.Printf("VERTICES %v\n", vertices[:30])
 	if vbo, err = CreateVBO(len(vertices)*4, vertices, gl.STATIC_DRAW); err != nil {
 		return
 	}
