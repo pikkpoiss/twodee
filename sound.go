@@ -40,19 +40,19 @@ func cleanupSound() {
 	sdl.QuitSubSystem(sdl.INIT_AUDIO)
 }
 
-func IsPlaying() bool {
+func MusicIsPlaying() bool {
 	return mixer.PlayingMusic() == 1
 }
 
-func IsPaused() bool {
+func MusicIsPaused() bool {
 	return mixer.PausedMusic() == 1
 }
 
-func Pause() {
+func PauseMusic() {
 	mixer.PauseMusic()
 }
 
-func Resume() {
+func ResumeMusic() {
 	mixer.ResumeMusic()
 }
 
