@@ -160,15 +160,57 @@ type Batch struct {
 	Count   int
 }
 
-func LoadBatch(vertices []float32, path string) (b *Batch, err error) {
+type TexturedTile interface {
+	ScaledBounds(ratio float32) (x, y, w, h float32)
+	ScaledTextureBounds(rx float32, ry float32) (x, y, w, h float32)
+}
+
+func triangles(t TexturedTile, ratio, texw, texh float32) [30]float32 {
 	var (
-		vbo     gl.Buffer
-		texture *Texture
+		x, y, w, h     = t.ScaledBounds(ratio)
+		tx, ty, tw, th = t.ScaledTextureBounds(texw, texh)
 	)
-	if vbo, err = CreateVBO(len(vertices)*4, vertices, gl.STATIC_DRAW); err != nil {
+	return [30]float32{
+		x, y, 0.0,
+		tx, ty,
+
+		x + w, y + h, 0.0,
+		tx + tw, ty + th,
+
+		x, y + h, 0.0,
+		tx, ty + th,
+
+		x, y, 0.0,
+		tx, ty,
+
+		x + w, y, 0.0,
+		tx + tw, ty,
+
+		x + w, y + h, 0.0,
+		tx + tw, ty + th,
+	}
+}
+
+func LoadBatch(tiles []TexturedTile, metadata TileMetadata) (b *Batch, err error) {
+	var (
+		step     = 30
+		size     = len(tiles) * step
+		vertices = make([]float32, size)
+		vbo      gl.Buffer
+		texture  *Texture
+	)
+	if texture, err = LoadTexture(metadata.Path, gl.NEAREST); err != nil {
 		return
 	}
-	if texture, err = LoadTexture(path, gl.NEAREST); err != nil {
+	for i := 0; i < len(tiles); i++ {
+		if tiles[i] == nil {
+			continue
+		}
+		v := triangles(tiles[i], float32(metadata.PxPerUnit), float32(texture.Width), float32(texture.Height))
+		copy(vertices[step*i:], v[:])
+	}
+	fmt.Printf("VERTICES %v\n", vertices[:30])
+	if vbo, err = CreateVBO(len(vertices)*4, vertices, gl.STATIC_DRAW); err != nil {
 		return
 	}
 	b = &Batch{
