@@ -135,44 +135,44 @@ Install SDL stuff:
 ### Software Dependencies
 
 #### Go 1.2.1
-  * [http://golang.org]()
+  * http://golang.org
   * Download Windows MSI
   * Install to `C:\Go\`
   * Add environment variable for user: `GOPATH = %USERPROFILE%\AppData\Local\Go`
 
 #### MinGW-w64 4.8.2
-  * [http://mingw-w64.sourceforge.net/]()
+  * http://mingw-w64.sourceforge.net/
   * MinGW-builds project
-  * [http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/]()  
+  * http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/  
   * Downloaded `/4.8.2/threads-win32/seh/x86_64-4.8.2-release-win32-seh-rt_v3-rev3.7z`
   * Extract to `C:\mingw64`
   * Add `C:\mingw64\bin` to PATH
 
 #### Git 1.9.0
-  * Download [http://git-scm.com/download/win]()
+  * Download http://git-scm.com/download/win
   * Install to `C:\git`
   * Git on PATH in installer
 
 #### Mercurial 2.9.2
-  * [https://bitbucket.org/tortoisehg/files/downloads/]()
+  * https://bitbucket.org/tortoisehg/files/downloads/
   * Downloaded `mercurial-2.9.2-x64.msi`
 
 #### GTK+ 2.24
   * Contains pkg-config
-  * [http://ftp.acc.umu.se/pub/gnome/binaries/win32/gtk+/]()
+  * http://ftp.acc.umu.se/pub/gnome/binaries/win32/gtk+/
   * Downloaded `/2.24/gtk+-bundle_2.24.10-20120208_win32.zip`
   * Extract to `C:\mingw64`
   * Add a new system variable `PKG_CONFIG_PATH, set to C:\mingw64\lib\pkgconfig`
 
 #### Make 3.82.90
-  * [http://sourceforge.net/projects/mingw-w64/files/External%20binary%20packages%20%28Win64%20hosted%29/make/]()
+  * http://sourceforge.net/projects/mingw-w64/files/External%20binary%20packages%20%28Win64%20hosted%29/make/
   * Downloaded `make-3.82.90-20111115.zip`
   * Extract `bin_amd64/*` to `C:\mingw64\bin`
 
 ### Library Dependencies
 
 #### GLEW 1.10.0
-  * [https://sourceforge.net/projects/glew]()
+  * https://sourceforge.net/projects/glew
   * Downloaded `/files/glew/1.10.0/glew-1.10.0.zip`
   * Extract to `C:\src`
   * Git bash:
@@ -186,7 +186,7 @@ Install SDL stuff:
         cp -r include/GL ../../mingw64/include/
 
 #### GLFW 3.0.4
-  * [http://www.glfw.org/download.html]()
+  * http://www.glfw.org/download.html
   * 64-bit windows binaries
   * Downloaded `glfw-3.0.4.bin.WIN64.zip`
   * Extract to `C:\src`
@@ -198,7 +198,7 @@ Install SDL stuff:
         cp lib-mingw/glfw3dll.a ../../mingw64/lib/libglfw3dll.a
 
 #### SDL 1.2.15
-  * [http://www.libsdl.org/release/]()
+  * http://www.libsdl.org/release/
   * Downloaded `SDL-1.2.15.zip`
   * Extract to `C:\src`
   * Git bash:
@@ -214,7 +214,7 @@ Install SDL stuff:
         cp build/.libs/* ../../mingw64/lib
 
 #### SDL_image 1.2.12
-  * [http://www.libsdl.org/projects/SDL_image/release/]()
+  * http://www.libsdl.org/projects/SDL_image/release/
   * Downloaded `SDL_image-devel-1.2.12-VC.zip`
   * Extract to `C:\src`
   * Git bash:
@@ -225,7 +225,7 @@ Install SDL stuff:
         cp lib/x64/*.lib ../../mingw64/lib/
 
 #### SDL_mixer 1.2.12
-  * [http://www.libsdl.org/projects/SDL_mixer/release/]()
+  * http://www.libsdl.org/projects/SDL_mixer/release/
   * Downloaded `SDL_mixer-devel-1.2.12-VC.zip`
   * Extract to `C:\src`
   * Git bash:
