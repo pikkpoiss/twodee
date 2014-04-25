@@ -59,7 +59,7 @@ func (g *Grid) SetIndex(index int32, val bool) {
 	g.points[index] = val
 }
 
-func (g *Grid) GetImage(fg, bg color.Color) image.Image {
+func (g *Grid) GetImage(fg, bg color.Color) *image.NRGBA {
 	var img = image.NewNRGBA(image.Rect(0, 0, int(g.Width), int(g.Height)))
 	for x := 0; x < int(g.Width); x++ {
 		for y := 0; y < int(g.Height); y++ {
