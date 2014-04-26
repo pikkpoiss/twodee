@@ -1,3 +1,6 @@
 *.mprofile
 *.cprofile
 .DS_Store
+
+# VIM tmp files
+*.swp
