@@ -80,6 +80,10 @@ func NewAnimatingEntity(x, y, w, h, r float32, l time.Duration, f []int) *Animat
 	}
 }
 
+func (e *AnimatingEntity) SetFrames(f []int) {
+	e.animation.Sequence = f
+}
+
 func (e *AnimatingEntity) Update(elapsed time.Duration) {
 	e.animation.Update(elapsed)
 }
