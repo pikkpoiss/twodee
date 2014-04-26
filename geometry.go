@@ -14,8 +14,6 @@
 
 package twodee
 
-import ()
-
 type Point struct {
 	X float32
 	Y float32
@@ -35,4 +33,9 @@ func Rect(x1, y1, x2, y2 float32) Rectangle {
 		Min: Pt(x1, y1),
 		Max: Pt(x2, y2),
 	}
+}
+
+func (r Rectangle) Overlaps(s Rectangle) bool {
+	return s.Min.X < r.Max.X && s.Max.X > r.Min.X &&
+		s.Min.Y < r.Max.Y && s.Max.Y > r.Min.Y
 }
