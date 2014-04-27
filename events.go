@@ -97,6 +97,7 @@ const (
 	KeyRight  = KeyCode(glfw.KeyRight)
 	KeyEnter  = KeyCode(glfw.KeyEnter)
 	KeyEscape = KeyCode(glfw.KeyEscape)
+	KeySpace  = KeyCode(glfw.KeySpace)
 	KeyA      = KeyCode(glfw.KeyA)
 	KeyB      = KeyCode(glfw.KeyB)
 	KeyC      = KeyCode(glfw.KeyC)

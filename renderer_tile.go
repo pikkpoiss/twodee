@@ -37,11 +37,14 @@ type TileRenderer struct {
 	TextureUnitLoc gl.UniformLocation
 	FrameLoc       gl.UniformLocation
 	FramesLoc      gl.UniformLocation
+	RatioLoc       gl.UniformLocation
 	ModelViewLoc   gl.UniformLocation
 	ProjectionLoc  gl.UniformLocation
 	VBO            gl.Buffer
 	xframes        int
 	yframes        int
+	xratio         float32
+	yratio         float32
 }
 
 const TILE_FRAGMENT = `#version 150
@@ -50,14 +53,16 @@ precision mediump float;
 uniform sampler2D u_TextureUnit;
 uniform int u_Frame;
 uniform ivec2 u_Frames;
+uniform vec2 u_Ratio;
 in vec2 v_TextureCoordinates;
 out vec4 v_FragData;
 
 void main()
 {
-    vec2 scale = vec2(1.0 / float(u_Frames.x), 1.0 / float(u_Frames.y));
+    vec2 scale = vec2(u_Ratio.x / float(u_Frames.x), u_Ratio.y / float(u_Frames.y));
     vec2 texcoords = scale * v_TextureCoordinates;
     texcoords += scale * vec2(u_Frame % u_Frames.x, u_Frames.y - (u_Frame / u_Frames.x) - 1);
+    texcoords.y += (1 - u_Ratio.y);
     v_FragData = texture(u_TextureUnit, texcoords);
 }`
 
@@ -98,10 +103,10 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 	texRatioX = float32(texture.OriginalWidth) / float32(texture.Width)
 	texRatioY = float32(texture.OriginalHeight) / float32(texture.Height)
 	rect = []float32{
-		-halfWidth, -halfHeight, 0.0, 0.0, 1-texRatioY,
-		-halfWidth, halfHeight, 0.0, 0.0, 1,
-		halfWidth, -halfHeight, 0.0, texRatioX, 1-texRatioY,
-		halfWidth, halfHeight, 0.0, texRatioX, 1,
+		-halfWidth, -halfHeight, 0.0, 0, 0,
+		-halfWidth, halfHeight, 0.0, 0, 1,
+		halfWidth, -halfHeight, 0.0, 1, 0,
+		halfWidth, halfHeight, 0.0, 1, 1,
 	}
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
@@ -110,10 +115,10 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 		return
 	}
 	if metadata.FramesWide == 0 {
-		metadata.FramesWide = texture.Width / metadata.TileWidth
+		metadata.FramesWide = texture.OriginalWidth / metadata.TileWidth
 	}
 	if metadata.FramesHigh == 0 {
-		metadata.FramesHigh = texture.Height / metadata.TileHeight
+		metadata.FramesHigh = texture.OriginalHeight / metadata.TileHeight
 	}
 	tr = &TileRenderer{
 		Renderer:       r,
@@ -125,10 +130,13 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 		TextureUnitLoc: program.GetUniformLocation("u_TextureUnit"),
 		FrameLoc:       program.GetUniformLocation("u_Frame"),
 		FramesLoc:      program.GetUniformLocation("u_Frames"),
+		RatioLoc:       program.GetUniformLocation("u_Ratio"),
 		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
 		xframes:        metadata.FramesWide,
 		yframes:        metadata.FramesHigh,
+		xratio:         texRatioX,
+		yratio:         texRatioY,
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -186,6 +194,10 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) erro
 		return fmt.Errorf("ERROR: %X", e)
 	}
 	tr.FramesLoc.Uniform2i(tr.xframes, tr.yframes)
+	if e := gl.GetError(); e != 0 {
+		return fmt.Errorf("ERROR: %X", e)
+	}
+	tr.RatioLoc.Uniform2f(tr.xratio, tr.yratio)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
