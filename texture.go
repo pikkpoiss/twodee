@@ -22,9 +22,11 @@ import (
 )
 
 type Texture struct {
-	Texture gl.Texture
-	Width   int
-	Height  int
+	Texture        gl.Texture
+	Width          int
+	Height         int
+	OriginalWidth  int
+	OriginalHeight int
 }
 
 func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
@@ -39,18 +41,22 @@ func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
 
 func GetTexture(img image.Image, smoothing int) (texture *Texture, err error) {
 	var (
-		bounds image.Rectangle
-		gltex  gl.Texture
+		original image.Rectangle
+		bounds   image.Rectangle
+		gltex    gl.Texture
 	)
+	original = img.Bounds()
 	img = getPow2Image(img)
 	bounds = img.Bounds()
 	if gltex, err = GetGLTexture(img, smoothing); err != nil {
 		return
 	}
 	texture = &Texture{
-		Texture: gltex,
-		Width:   bounds.Dx(),
-		Height:  bounds.Dy(),
+		Texture:        gltex,
+		Width:          bounds.Dx(),
+		Height:         bounds.Dy(),
+		OriginalWidth:  original.Dx(),
+		OriginalHeight: original.Dy(),
 	}
 	return
 }

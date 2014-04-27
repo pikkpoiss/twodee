@@ -24,6 +24,8 @@ type TileMetadata struct {
 	PxPerUnit  int
 	TileWidth  int
 	TileHeight int
+	FramesWide int
+	FramesHigh int
 }
 
 type TileRenderer struct {
@@ -77,6 +79,8 @@ void main()
 
 func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileRenderer, err error) {
 	var (
+		texRatioX  float32
+		texRatioY  float32
 		rect       []float32
 		program    gl.Program
 		texture    *Texture
@@ -91,17 +95,25 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 	if texture, err = LoadTexture(metadata.Path, gl.NEAREST); err != nil {
 		return
 	}
+	texRatioX = float32(texture.OriginalWidth) / float32(texture.Width)
+	texRatioY = float32(texture.OriginalHeight) / float32(texture.Height)
 	rect = []float32{
-		-halfWidth, -halfHeight, 0.0, 0.0, 0.0,
-		-halfWidth, halfHeight, 0.0, 0.0, 1.0,
-		halfWidth, -halfHeight, 0.0, 1.0, 0.0,
-		halfWidth, halfHeight, 0.0, 1.0, 1.0,
+		-halfWidth, -halfHeight, 0.0, 0.0, 1-texRatioY,
+		-halfWidth, halfHeight, 0.0, 0.0, 1,
+		halfWidth, -halfHeight, 0.0, texRatioX, 1-texRatioY,
+		halfWidth, halfHeight, 0.0, texRatioX, 1,
 	}
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
 	}
 	if r, err = NewRenderer(bounds, screen); err != nil {
 		return
+	}
+	if metadata.FramesWide == 0 {
+		metadata.FramesWide = texture.Width / metadata.TileWidth
+	}
+	if metadata.FramesHigh == 0 {
+		metadata.FramesHigh = texture.Height / metadata.TileHeight
 	}
 	tr = &TileRenderer{
 		Renderer:       r,
@@ -115,8 +127,8 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 		FramesLoc:      program.GetUniformLocation("u_Frames"),
 		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
-		xframes:        texture.Width / metadata.TileWidth,
-		yframes:        texture.Height / metadata.TileHeight,
+		xframes:        metadata.FramesWide,
+		yframes:        metadata.FramesHigh,
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
