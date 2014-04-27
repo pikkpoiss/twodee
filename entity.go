@@ -81,7 +81,11 @@ func NewAnimatingEntity(x, y, w, h, r float32, l time.Duration, f []int) *Animat
 }
 
 func (e *AnimatingEntity) SetFrames(f []int) {
-	e.animation.Sequence = f
+	e.animation.SetSequence(f)
+}
+
+func (e *AnimatingEntity) SetCallback(callback AnimationCallback) {
+	e.animation.SetCallback(callback)
 }
 
 func (e *AnimatingEntity) Update(elapsed time.Duration) {

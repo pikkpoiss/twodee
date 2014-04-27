@@ -31,6 +31,7 @@ type Animation struct {
 	Current     int
 	FrameLength time.Duration
 	Sequence    []int
+	callback    AnimationCallback
 }
 
 func NewAnimation(length time.Duration, frames []int) *Animation {
@@ -45,4 +46,20 @@ func (a *Animation) Update(elapsed time.Duration) {
 	a.accumulated += elapsed
 	index := int(a.accumulated/a.FrameLength) % len(a.Sequence)
 	a.Current = a.Sequence[index]
+	if a.callback != nil && index == len(a.Sequence)-1 {
+		a.callback()
+		a.callback = nil
+	}
+}
+
+func (a *Animation) SetCallback(callback AnimationCallback) {
+	a.callback = callback
+}
+
+type AnimationCallback func()
+
+func (a *Animation) SetSequence(seq []int) {
+	a.Sequence = seq
+	a.Current = a.Sequence[0]
+	a.accumulated = time.Duration(0)
 }
