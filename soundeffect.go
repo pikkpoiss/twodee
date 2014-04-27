@@ -41,3 +41,7 @@ func (s *SoundEffect) Delete() {
 func (s *SoundEffect) Play(times int) {
 	s.chunk.PlayChannel(-1, times-1)
 }
+
+func (s *SoundEffect) PlayChannel(channel int, times int) {
+	s.chunk.PlayChannel(channel, times-1)
+}
