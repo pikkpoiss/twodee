@@ -39,3 +39,40 @@ func (r Rectangle) Overlaps(s Rectangle) bool {
 	return s.Min.X < r.Max.X && s.Max.X > r.Min.X &&
 		s.Min.Y < r.Max.Y && s.Max.Y > r.Min.Y
 }
+
+// Returns true if r is intersection by the line a, b.
+func (r Rectangle) IntersectedBy(a, b Point) bool {
+	if a.X < r.Min.X && b.X < r.Min.X {
+		return false
+	} else if a.X > r.Max.X && b.X > r.Max.X {
+		return false
+	} else if a.Y < r.Min.Y && b.Y < r.Min.Y {
+		return false
+	} else if a.Y > r.Max.Y && b.Y > r.Max.Y {
+		return false
+	} else {
+		// The line is neither totally to the left, right, above, or below
+		// the rectangle. There may be a collision.
+		corners := []Point{
+			Pt(r.Min.X, r.Min.Y),
+			Pt(r.Min.Y, r.Max.Y),
+			Pt(r.Max.X, r.Min.Y),
+			Pt(r.Max.X, r.Max.Y),
+		}
+		eq := GetVectorDeterminantEquation(a, b)
+		lastEvalSide := eq(corners[0]) > 0
+		for _, corner := range corners[1:] {
+			side := eq(corner) > 0
+			if side != lastEvalSide {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func GetVectorDeterminantEquation(a, b Point) func(Point) float32 {
+	return func(p Point) float32 {
+		return (p.X-a.X)*(b.Y-a.Y) - (p.Y-a.Y)*(b.X-a.X)
+	}
+}
