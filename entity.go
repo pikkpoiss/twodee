@@ -95,3 +95,7 @@ func (e *AnimatingEntity) Update(elapsed time.Duration) {
 func (e *AnimatingEntity) Frame() int {
 	return e.animation.Current
 }
+
+func (e *AnimatingEntity) OffsetFrame(offset int) int {
+	return e.animation.OffsetFrame(offset)
+}

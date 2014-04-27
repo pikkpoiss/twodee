@@ -52,6 +52,11 @@ func (a *Animation) Update(elapsed time.Duration) {
 	}
 }
 
+func (a *Animation) OffsetFrame(offset int) int {
+	index := int(a.accumulated/a.FrameLength) % len(a.Sequence)
+	return a.Sequence[(index + offset) % len(a.Sequence)]
+}
+
 func (a *Animation) SetCallback(callback AnimationCallback) {
 	a.callback = callback
 }
