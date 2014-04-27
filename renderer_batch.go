@@ -27,18 +27,20 @@ type BatchRenderer struct {
 	TextureUnitLoc gl.UniformLocation
 	ModelViewLoc   gl.UniformLocation
 	ProjectionLoc  gl.UniformLocation
+	TexOffsetLoc   gl.UniformLocation
 }
 
 const BATCH_FRAGMENT = `#version 150
 precision mediump float;
 
 uniform sampler2D u_TextureUnit;
+uniform vec2 u_TextureOffset;
 in vec2 v_TextureCoordinates;
 out vec4 v_FragData;
 
 void main()
 {
-    vec2 texcoords = v_TextureCoordinates;
+    vec2 texcoords = v_TextureCoordinates + u_TextureOffset;
     v_FragData = texture(u_TextureUnit, texcoords);
     //v_FragData = vec4(1.0,0.0,0.0,1.0);
 }`
@@ -78,6 +80,7 @@ func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
 		TextureUnitLoc: program.GetUniformLocation("u_TextureUnit"),
 		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
 		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
+		TexOffsetLoc:   program.GetUniformLocation("u_TextureOffset"),
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -135,6 +138,7 @@ func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
+	r.TexOffsetLoc.Uniform2f(batch.textureOffset.X, batch.textureOffset.Y)
 	gl.DrawArrays(gl.TRIANGLES, 0, batch.Count)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
@@ -155,9 +159,10 @@ func (tr *BatchRenderer) Delete() error {
 }
 
 type Batch struct {
-	Buffer  gl.Buffer
-	Texture *Texture
-	Count   int
+	Buffer        gl.Buffer
+	Texture       *Texture
+	Count         int
+	textureOffset Point
 }
 
 type TexturedTile interface {
@@ -213,11 +218,20 @@ func LoadBatch(tiles []TexturedTile, metadata TileMetadata) (b *Batch, err error
 		return
 	}
 	b = &Batch{
-		Buffer:  vbo,
-		Texture: texture,
-		Count:   len(vertices) / 5,
+		Buffer:        vbo,
+		Texture:       texture,
+		Count:         len(vertices) / 5,
+		textureOffset: Pt(0, 0),
 	}
 	return
+}
+
+func (b *Batch) SetTextureOffsetPx(x, y int) {
+	var (
+		tx = float32(x) / float32(b.Texture.Width)
+		ty = float32(y) / float32(b.Texture.Height)
+	)
+	b.textureOffset = Pt(tx, ty)
 }
 
 func (b *Batch) Delete() {
