@@ -45,3 +45,7 @@ func (s *SoundEffect) Play(times int) {
 func (s *SoundEffect) PlayChannel(channel int, times int) {
 	s.chunk.PlayChannel(channel, times-1)
 }
+
+func (s *SoundEffect) SetVolume(volume int) {
+	s.chunk.Volume(volume)
+}
