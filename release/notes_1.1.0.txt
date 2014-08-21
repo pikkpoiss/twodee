@@ -1,0 +1,61 @@
+62387d2 Remove all old code.
+e44b365 Updated docs
+67d4a32 Initial commit of new library code
+3709dd9 Update for acting as a library.
+0fd4c03 Add a simple events system and methods for mapping from screen -> world coords.
+1447dc8 Customizable screen sizes.
+9336912 Configurable tile dimensions.
+c015e0a Add layer support.
+ced3441 Remove debug from text. Start stubbing out a menu system.
+4e6db28 Continued work on menu interface.
+e22c441 More incremental menu work.
+6dbd520 More work toward menus.
+d46f49b Added details to README.md regarding glfw3 error with OS X install
+fe6c594 Adding more menu code.
+2bddd86 Process key events.
+6a27b51 Get back working in menus.
+19649a9 Menu refactor allowing menu items to be bound to memory locations.
+412573e Added mouse clicking events and some more menu utility methods.
+45897ca Adding sound support.
+52ab14f Updating linux build instructions.
+78c1ca4 Start working toward entities.
+767e6e9 Rudimentary animation system.
+85ccf08 Updated sound lib and instructions to work on Windows.
+9d79272 Update readme.
+9876813 Move projection code into renderer.
+e4e35fd Process events in reverse layer order.
+63bb811 Support flipping textures.
+bad75d1 Set up the ability to restart an OpenGL context.
+d9bd81e Update readme.
+17ba9c1 Adding a batch renderer.
+4159f5a Split up renderer files.
+7d857e7 More work on batch renderer.
+2716c7d Adding error checking to sound loading.
+051f59f Make it possible to render batch tile geometry (like a large level)
+5069089 Added pause and resume functions for music
+57d260a Added background music to the game layer and pause/resume toggles
+d4b5bbd Clean up of formatting
+587a2e3 Batch renderer update, move more rendering stuff into renderer.
+76e87bc Created a separate file for sound effects based on Mixer/chunks type from Go-SDL. Cleaned up sound.go
+d2cbdd9 Remove debug output.
+f5f8409 Update README with some additional brew instructions.
+72cb30d First take on a system for handing game-centric events.
+c7b8b5b Do some refactoring of the game event system. Also switch to using a select statement for channel polling so we don't deadlock.
+7f48e12 Renamed Audio struct to Music struct to differentiate it from SoundEffect struct
+8b69aa7 Adding a grid implementation which may be used for pathfinding.
+53dc1e0 Dumb A* implementation.
+ff2a830 Fixed linking to urls in README.md
+577ed09 Merge pull request #1 from museun/patch-1
+4b869ad Add vim swp files to gitignore.
+58489af Flip the grid vertically.
+ea39027 Add an Overlaps function to Rectangle.
+37d554d Be able to update animating entity frames.
+53ec3bc Merge branch 'master' of github.com:kurrik/twodee
+bdce3cb Allow batches to have their texture coordinates offset by a uniform value.
+e2b2e5f Adding callback support for animations.
+20571ed Added ability to play an animation at an offset.
+74028f2 Support tiles which are not powers of two.
+46f1216 Fix tile renderer for non pow2 tiles, add spacebar.
+88dd40e Added ability to specify channel to play sound effect on
+c3464bc Add a method for determining if a line intersects a rectangle.
+0e5ba0d Added ability to set sound effect volume
