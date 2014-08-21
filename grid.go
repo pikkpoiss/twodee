@@ -34,7 +34,10 @@ func NewGrid(w, h int32) *Grid {
 }
 
 func (g *Grid) Index(x, y int32) int32 {
-	return g.Width*(g.Height - y - 1) + x
+	if x < 0 || y < 0 {
+		return -1
+	}
+	return g.Width*(g.Height-y-1) + x
 }
 
 func (g *Grid) Get(x, y int32) bool {
