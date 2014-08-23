@@ -14,6 +14,10 @@
 
 package twodee
 
+import (
+	"math"
+)
+
 type Point struct {
 	X float32
 	Y float32
@@ -29,6 +33,14 @@ func (p Point) Scale(a float32) Point {
 
 func (p Point) Add(pt Point) Point {
 	return Point{p.X + pt.X, p.Y + pt.Y}
+}
+
+func (p Point) DistanceTo(pt Point) float32 {
+	var (
+		dx = float64(pt.X - p.X)
+		dy = float64(pt.Y - p.Y)
+	)
+	return float32(math.Sqrt(dx*dx + dy*dy))
 }
 
 type Rectangle struct {
