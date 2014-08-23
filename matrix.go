@@ -101,3 +101,9 @@ func Unproject(invproj *Matrix4, x float32, y float32) (wx, wy float32) {
 	wy = out.Y
 	return
 }
+
+func Project(proj *Matrix4, x float32, y float32) (sx, sy float32) {
+	var out gmath.Vector4
+	out = getGMathMatrix(proj).MulVec4(gmath.Vector4{x, y, 1, 1})
+	return out.X, out.Y
+}
