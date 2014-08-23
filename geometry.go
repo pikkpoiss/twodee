@@ -23,6 +23,14 @@ func Pt(x, y float32) Point {
 	return Point{x, y}
 }
 
+func (p Point) Scale(a float32) Point {
+	return Point{p.X * a, p.Y * a}
+}
+
+func (p Point) Add(pt Point) Point {
+	return Point{p.X + pt.X, p.Y + pt.Y}
+}
+
 type Rectangle struct {
 	Min Point
 	Max Point
