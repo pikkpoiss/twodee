@@ -56,7 +56,10 @@ func (r *Renderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
 }
 
 func (r *Renderer) WorldToScreenCoords(x, y float32) (sx, sy float32) {
-	return Project(r.projection, x, y)
+	var pctx, pcty = returProject(r.projection, x, y)
+	sx = pctx * r.screenBounds.Max.X + (r.screenBounds.Max.X / 2.0)
+	sy = pcty * r.screenBounds.Max.Y + (r.screenBounds.Max.Y / 2.0)
+	return
 }
 
 func CreateVAO() (array gl.VertexArray, err error) {
