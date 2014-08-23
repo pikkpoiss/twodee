@@ -19,13 +19,21 @@ import (
 	"github.com/go-gl/gl"
 )
 
+type InterpolationType gl.GLenum
+
+const (
+	LinearInterpolation  = InterpolationType(gl.LINEAR)
+	NearestInterpolation = InterpolationType(gl.NEAREST)
+)
+
 type TileMetadata struct {
-	Path       string
-	PxPerUnit  int
-	TileWidth  int
-	TileHeight int
-	FramesWide int
-	FramesHigh int
+	Path          string
+	PxPerUnit     int
+	TileWidth     int
+	TileHeight    int
+	FramesWide    int
+	FramesHigh    int
+	Interpolation InterpolationType
 }
 
 type TileRenderer struct {
@@ -63,7 +71,11 @@ void main()
     vec2 texcoords = scale * v_TextureCoordinates;
     texcoords += scale * vec2(u_Frame % u_Frames.x, u_Frames.y - (u_Frame / u_Frames.x) - 1);
     texcoords.y += (1 - u_Ratio.y);
-    v_FragData = texture(u_TextureUnit, texcoords);
+    vec4 color = texture(u_TextureUnit, texcoords);
+    if (color.a < 0.1) {
+      discard;
+    }
+    v_FragData = color;
 }`
 
 const TILE_VERTEX = `#version 150
@@ -97,7 +109,10 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 	if program, err = BuildProgram(TILE_VERTEX, TILE_FRAGMENT); err != nil {
 		return
 	}
-	if texture, err = LoadTexture(metadata.Path, gl.NEAREST); err != nil {
+	if metadata.Interpolation == 0 {
+		metadata.Interpolation = NearestInterpolation
+	}
+	if texture, err = LoadTexture(metadata.Path, int(metadata.Interpolation)); err != nil {
 		return
 	}
 	texRatioX = float32(texture.OriginalWidth) / float32(texture.Width)

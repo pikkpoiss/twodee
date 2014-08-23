@@ -52,6 +52,8 @@ func NewContext() (context *Context, err error) {
 	glfw.WindowHint(glfw.ClientApi, glfw.OpenglApi)
 	glfw.WindowHint(glfw.OpenglProfile, glfw.OpenglCoreProfile)
 	glfw.WindowHint(glfw.OpenglForwardCompatible, gl.TRUE)
+	glfw.WindowHint(glfw.StencilBits, 8)
+	glfw.WindowHint(glfw.DepthBits, 24)
 	context = &Context{
 		cursor:     true,
 		fullscreen: false,
