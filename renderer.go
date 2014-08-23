@@ -56,9 +56,11 @@ func (r *Renderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
 }
 
 func (r *Renderer) WorldToScreenCoords(x, y float32) (sx, sy float32) {
-	var pctx, pcty = returProject(r.projection, x, y)
-	sx = pctx * r.screenBounds.Max.X + (r.screenBounds.Max.X / 2.0)
-	sy = pcty * r.screenBounds.Max.Y + (r.screenBounds.Max.Y / 2.0)
+	var pctx, pcty = Project(r.projection, x, y)
+	var halfw = r.screenBounds.Max.X / 2.0
+	var halfh = r.screenBounds.Max.Y / 2.0
+	sx = pctx * halfw + halfw
+	sy = pcty * halfh + halfh
 	return
 }
 
