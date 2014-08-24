@@ -35,6 +35,11 @@ func (p Point) Add(pt Point) Point {
 	return Point{p.X + pt.X, p.Y + pt.Y}
 }
 
+// Subtracts pt from p.
+func (p Point) Sub(pt Point) Point {
+	return Point{p.X - pt.X, p.Y - pt.Y}
+}
+
 func (p Point) DistanceTo(pt Point) float32 {
 	var (
 		dx = float64(pt.X - p.X)
