@@ -65,6 +65,11 @@ func (r Rectangle) Overlaps(s Rectangle) bool {
 		s.Min.Y < r.Max.Y && s.Max.Y > r.Min.Y
 }
 
+func (r Rectangle) ContainsPoint(a Point) bool {
+	return r.Min.X <= a.X && r.Max.X >= a.X &&
+		r.Min.Y <= a.Y && r.Max.Y >= a.Y
+}
+
 // Returns true if r is intersection by the line a, b.
 func (r Rectangle) IntersectedBy(a, b Point) bool {
 	if a.X < r.Min.X && b.X < r.Min.X {
