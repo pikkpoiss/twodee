@@ -117,7 +117,7 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 	gl.Disable(gl.CULL_FACE)
-	glfw.SwapInterval(1)
+	glfw.SwapInterval(0)
 	if c.VAO, err = CreateVAO(); err != nil {
 		return
 	}

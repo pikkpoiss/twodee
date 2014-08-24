@@ -161,61 +161,20 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 
 func (tr *TileRenderer) Bind() error {
 	tr.Program.Use()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	gl.ActiveTexture(gl.TEXTURE0)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.Texture.Bind(gl.TEXTURE_2D)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.TextureUnitLoc.Uniform1i(0)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.VBO.Bind(gl.ARRAY_BUFFER)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
-	tr.PositionLoc.EnableArray()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
-	tr.TextureLoc.EnableArray()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.Renderer.projection))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	return nil
 }
 
 func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) error {
 	tr.FrameLoc.Uniform1i(frame)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.FramesLoc.Uniform2i(tr.xframes, tr.yframes)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	tr.RatioLoc.Uniform2f(tr.xratio, tr.yratio)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	m := GetRotTransMatrix(x, y, 0, r)
 	if flipx && flipy {
 		m.Mul(GetScaleMatrix(-1, -1, 1))
@@ -225,13 +184,7 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) erro
 		m.Mul(GetScaleMatrix(1, -1, 1))
 	}
 	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	return nil
 }
 
