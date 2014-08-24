@@ -90,63 +90,24 @@ func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
 
 func (r *BatchRenderer) Bind() error {
 	r.Program.Use()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	gl.ActiveTexture(gl.TEXTURE0)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.TextureUnitLoc.Uniform1i(0)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(r.Renderer.projection))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	return nil
 }
 
 func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	batch.Texture.Bind()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	batch.Buffer.Bind(gl.ARRAY_BUFFER)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.PositionLoc.EnableArray()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.TextureLoc.EnableArray()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	m := GetRotTransMatrix(x, y, 0, rot)
 	r.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	r.TexOffsetLoc.Uniform2f(batch.textureOffset.X, batch.textureOffset.Y)
 	gl.DrawArrays(gl.TRIANGLES, 0, batch.Count)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	batch.Buffer.Unbind(gl.ARRAY_BUFFER)
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
 	return nil
 }
 
