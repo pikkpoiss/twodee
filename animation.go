@@ -24,6 +24,7 @@ const (
 	Step20Hz = time.Duration(50000) * time.Microsecond
 	Step15Hz = Step30Hz * 2
 	Step10Hz = Step20Hz * 2
+	Step5Hz = Step10Hz * 2
 )
 
 type Animation struct {
