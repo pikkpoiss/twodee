@@ -188,6 +188,24 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) erro
 	return nil
 }
 
+func (tr *TileRenderer) DrawScaled(frame int, x, y, r, s float32, flipx, flipy bool) error {
+	tr.FrameLoc.Uniform1i(frame)
+	tr.FramesLoc.Uniform2i(tr.xframes, tr.yframes)
+	tr.RatioLoc.Uniform2f(tr.xratio, tr.yratio)
+	m := GetRotTransScaleMatrix(x, y, 0, r, s)
+	if flipx && flipy {
+		m.Mul(GetScaleMatrix(-1, -1, 1))
+	} else if flipx && !flipy {
+		m.Mul(GetScaleMatrix(-1, 1, 1))
+	} else if !flipx && flipy {
+		m.Mul(GetScaleMatrix(1, -1, 1))
+	}
+	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	return nil
+}
+
+
 func (tr *TileRenderer) Unbind() error {
 	tr.VBO.Unbind(gl.ARRAY_BUFFER)
 	if e := gl.GetError(); e != 0 {

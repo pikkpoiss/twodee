@@ -60,6 +60,16 @@ func GetRotTransMatrix(x, y, z, a float32) *Matrix4 {
 	return getMatrix(trans.Mul(rot))
 }
 
+func GetRotTransScaleMatrix(x, y, z, a, s float32) *Matrix4 {
+	var (
+		axis  = gmath.Vector3{0, 0, 1}
+		trans = gmath.NewTranslationMatrix4(x, y, z)
+		rot   = gmath.NewRotationMatrix4(axis, a)
+		scale = getGMathMatrix(GetScaleMatrix(s, s, 0))
+	)
+	return getMatrix(trans.Mul(rot).Mul(scale))
+}
+
 func GetScaleMatrix(x, y, z float32) *Matrix4 {
 	return &Matrix4{
 		x, 0, 0, 0,
