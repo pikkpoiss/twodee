@@ -22,8 +22,8 @@ import (
 type Renderer struct {
 	worldBounds  Rectangle
 	screenBounds Rectangle
-	projection   *Matrix4
-	inverse      *Matrix4
+	projection   Matrix4
+	inverse      Matrix4
 }
 
 func NewRenderer(world, screen Rectangle) (r *Renderer, err error) {

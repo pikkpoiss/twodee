@@ -92,7 +92,7 @@ func (r *BatchRenderer) Bind() error {
 	r.Program.Use()
 	gl.ActiveTexture(gl.TEXTURE0)
 	r.TextureUnitLoc.Uniform1i(0)
-	r.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(r.Renderer.projection))
+	r.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(&r.Renderer.projection))
 	return nil
 }
 
@@ -104,7 +104,7 @@ func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	r.PositionLoc.EnableArray()
 	r.TextureLoc.EnableArray()
 	m := GetRotTransMatrix(x, y, 0, rot)
-	r.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
+	r.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(&m))
 	r.TexOffsetLoc.Uniform2f(batch.textureOffset.X, batch.textureOffset.Y)
 	gl.DrawArrays(gl.TRIANGLES, 0, batch.Count)
 	batch.Buffer.Unbind(gl.ARRAY_BUFFER)

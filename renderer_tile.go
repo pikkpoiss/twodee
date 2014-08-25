@@ -167,7 +167,7 @@ func (tr *TileRenderer) Bind() error {
 	tr.VBO.Bind(gl.ARRAY_BUFFER)
 	tr.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
 	tr.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
-	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.Renderer.projection))
+	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(&tr.Renderer.projection))
 	return nil
 }
 
@@ -183,7 +183,7 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) erro
 	} else if !flipx && flipy {
 		m.Mul(GetScaleMatrix(1, -1, 1))
 	}
-	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
+	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(&m))
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 	return nil
 }
@@ -200,7 +200,7 @@ func (tr *TileRenderer) DrawScaled(frame int, x, y, r, s float32, flipx, flipy b
 	} else if !flipx && flipy {
 		m.Mul(GetScaleMatrix(1, -1, 1))
 	}
-	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(m))
+	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(&m))
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 	return nil
 }

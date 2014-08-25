@@ -145,7 +145,7 @@ func (tr *TextRenderer) Bind() error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(tr.Renderer.projection))
+	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(&tr.Renderer.projection))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
