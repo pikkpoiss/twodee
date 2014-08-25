@@ -87,13 +87,12 @@ func NewFontFace(path string, size float64, fg, bg color.Color) (fontface *FontF
 	if font, err = freetype.ParseFont(fontbytes); err != nil {
 		return
 	}
-	bounds = font.Bounds(1.0)
+	bounds = font.Bounds(1)
 	context = freetype.NewContext()
 	context.SetFont(font)
 	context.SetFontSize(size)
 	context.SetDPI(72)
 	scale = float32(context.PointToFix32(size) >> 8)
-
 	fontface = &FontFace{
 		font:    font,
 		charw:   scale * float32(bounds.XMax-bounds.XMin),
@@ -107,12 +106,13 @@ func NewFontFace(path string, size float64, fg, bg color.Color) (fontface *FontF
 
 func (ff *FontFace) GetText(text string) (t *Texture, err error) {
 	var (
-		src image.Image
-		bg  image.Image
-		dst draw.Image
-		pt  raster.Point
-		w   int
-		h   int
+		src       image.Image
+		bg        image.Image
+		dst       draw.Image
+		shortened draw.Image
+		pt        raster.Point
+		w         int
+		h         int
 	)
 	src = image.NewUniform(ff.fg)
 	bg = image.NewUniform(ff.bg)
@@ -124,12 +124,14 @@ func (ff *FontFace) GetText(text string) (t *Texture, err error) {
 	ff.context.SetDst(dst)
 	ff.context.SetClip(dst.Bounds())
 	pt = freetype.Pt(0, int(ff.charh))
-	if _, err = ff.context.DrawString(text, pt); err != nil {
+	if pt, err = ff.context.DrawString(text, pt); err != nil {
 		return
 	}
 	// if err = WritePNG("hello.png", dst); err != nil {
 	// 	return
 	// }
-	t, err = GetTexture(dst, gl.NEAREST)
+	shortened = image.NewRGBA(image.Rect(0, 0, int(pt.X/256), h))
+	draw.Draw(shortened, shortened.Bounds(), dst, image.ZP, draw.Src)
+	t, err = GetTexture(shortened, gl.NEAREST)
 	return
 }

@@ -40,12 +40,15 @@ func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
 }
 
 func GetTexture(img image.Image, smoothing int) (texture *Texture, err error) {
+	var bounds = img.Bounds()
+	return GetTruncatedTexture(img, smoothing, bounds.Dx(), bounds.Dy())
+}
+
+func GetTruncatedTexture(img image.Image, smoothing int, w, h int) (texture *Texture, err error) {
 	var (
-		original image.Rectangle
-		bounds   image.Rectangle
-		gltex    gl.Texture
+		bounds image.Rectangle
+		gltex  gl.Texture
 	)
-	original = img.Bounds()
 	img = getPow2Image(img)
 	bounds = img.Bounds()
 	if gltex, err = GetGLTexture(img, smoothing); err != nil {
@@ -55,8 +58,8 @@ func GetTexture(img image.Image, smoothing int) (texture *Texture, err error) {
 		Texture:        gltex,
 		Width:          bounds.Dx(),
 		Height:         bounds.Dy(),
-		OriginalWidth:  original.Dx(),
-		OriginalHeight: original.Dy(),
+		OriginalWidth:  w,
+		OriginalHeight: h,
 	}
 	return
 }
