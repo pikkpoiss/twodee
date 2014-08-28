@@ -61,6 +61,14 @@ func NewContext() (context *Context, err error) {
 	return
 }
 
+func (c *Context) SetResizable(val bool) {
+	if val {
+		glfw.WindowHint(glfw.Resizable, 1)
+	} else {
+		glfw.WindowHint(glfw.Resizable, 0)
+	}
+}
+
 func (c *Context) SetCursor(val bool) {
 	c.cursor = val
 }
