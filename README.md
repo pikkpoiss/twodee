@@ -30,6 +30,7 @@ Make sure Clang is your default compiler.
     export CXX=clang++
 
 Get the environment set up:
+
     brew install go
     brew install hg
     brew install glew
