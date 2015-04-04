@@ -17,12 +17,12 @@ package twodee
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	"image"
 )
 
 type Texture struct {
-	Texture        gl.Texture
+	Texture        uint32
 	Width          int
 	Height         int
 	OriginalWidth  int
@@ -47,7 +47,7 @@ func GetTexture(img image.Image, smoothing int) (texture *Texture, err error) {
 func GetTruncatedTexture(img image.Image, smoothing int, w, h int) (texture *Texture, err error) {
 	var (
 		bounds image.Rectangle
-		gltex  gl.Texture
+		gltex  uint32
 	)
 	img = getPow2Image(img)
 	bounds = img.Bounds()
@@ -65,20 +65,22 @@ func GetTruncatedTexture(img image.Image, smoothing int, w, h int) (texture *Tex
 }
 
 func (t *Texture) Bind() {
-	t.Texture.Bind(gl.TEXTURE_2D)
+	gl.BindTexture(gl.TEXTURE_2D, t.Texture)
 }
 
 func (t *Texture) Unbind() {
-	t.Texture.Unbind(gl.TEXTURE_2D)
+	gl.BindTexture(gl.TEXTURE_2D, 0)
 }
 
 func (t *Texture) Delete() {
 	if t.Texture != 0 {
-		t.Texture.Delete()
+		gl.BindTexture(gl.TEXTURE_2D, 0)
+		gl.DeleteTextures(1, &t.Texture)
+		t.Texture = 0
 	}
 }
 
-func GetGLTexture(img image.Image, smoothing int) (t gl.Texture, err error) {
+func GetGLTexture(img image.Image, smoothing int) (t uint32, err error) {
 	var (
 		data   *bytes.Buffer
 		bounds image.Rectangle
@@ -91,23 +93,23 @@ func GetGLTexture(img image.Image, smoothing int) (t gl.Texture, err error) {
 	bounds = img.Bounds()
 	width = bounds.Max.X - bounds.Min.X
 	height = bounds.Max.Y - bounds.Min.Y
-	t = gl.GenTexture()
+	gl.GenTextures(1, &t)
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt1 ERROR: %s\n", e)
 	}
-	t.Bind(gl.TEXTURE_2D)
+	gl.BindTexture(gl.TEXTURE_2D, t)
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt2 ERROR: %s\n", e)
 	}
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, smoothing)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, int32(smoothing))
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt3 ERROR: %s\n", e)
 	}
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, smoothing)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, int32(smoothing))
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt4 ERROR: %s\n", e)
 	}
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_INT_8_8_8_8, data.Bytes())
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(width), int32(height), 0, gl.RGBA, gl.UNSIGNED_INT_8_8_8_8, gl.Ptr(data.Bytes()))
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt5 ERROR: %s\n", e)
 	}
@@ -115,7 +117,7 @@ func GetGLTexture(img image.Image, smoothing int) (t gl.Texture, err error) {
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt6 ERROR: %s\n", e)
 	}
-	t.Unbind(gl.TEXTURE_2D)
+	gl.BindTexture(gl.TEXTURE_2D, 0)
 	if e := gl.GetError(); e != 0 {
 		fmt.Printf("ggt7 ERROR: %s\n", e)
 	}

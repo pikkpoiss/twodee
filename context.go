@@ -16,7 +16,7 @@ package twodee
 
 import (
 	"fmt"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/gl/v3.2-core/gl"
 	glfw "github.com/go-gl/glfw/v3.1/glfw"
 )
 
@@ -25,7 +25,7 @@ type Context struct {
 	Events        *EventHandler
 	OpenGLVersion string
 	ShaderVersion string
-	VAO           gl.VertexArray
+	VAO           uint32
 	cursor        bool
 	fullscreen    bool
 	w             int
@@ -34,24 +34,21 @@ type Context struct {
 	initialized   bool
 }
 
-func glfwErrorCallback(err glfw.ErrorCode, desc string) {
-	fmt.Printf("%v: %v\n", err, desc)
-}
-
 func NewContext() (context *Context, err error) {
-	glfw.SetErrorCallback(glfwErrorCallback)
-	if !glfw.Init() {
-		err = fmt.Errorf("Could not init glfw")
+	if err = glfw.Init(); err != nil {
 		return
 	}
 	if err = initSound(); err != nil {
 		return
 	}
 	glfw.WindowHint(glfw.ContextVersionMajor, 3)
-	glfw.WindowHint(glfw.ContextVersionMinor, 2)
-	glfw.WindowHint(glfw.ClientApi, glfw.OpenglApi)
-	glfw.WindowHint(glfw.OpenglProfile, glfw.OpenglCoreProfile)
-	glfw.WindowHint(glfw.OpenglForwardCompatible, gl.TRUE)
+	glfw.WindowHint(glfw.ContextVersionMinor, 3)
+	// TODO: Understand what this implies, see
+	// https://www.opengl.org/registry/specs/ARB/robustness.txt
+	//glfw.WindowHint(glfw.ClientAPI, glfw.LoseContextOnReset)
+	//glfw.WindowHint(glfw.ContextReleaseBehavior, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLProfile, glfw.OpenGLCoreProfile)
+	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 	glfw.WindowHint(glfw.StencilBits, 8)
 	glfw.WindowHint(glfw.DepthBits, 24)
 	context = &Context{
@@ -96,20 +93,15 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 	c.name = name
 	var monitor *glfw.Monitor
 	if c.fullscreen == true {
-		if monitor, err = glfw.GetPrimaryMonitor(); err != nil {
-			return
-		}
+		monitor = glfw.GetPrimaryMonitor()
 	}
 	if c.Window, err = glfw.CreateWindow(c.w, c.h, c.name, monitor, nil); err != nil {
 		return
 	}
 	if c.cursor == false {
-		c.Window.SetInputMode(glfw.Cursor, glfw.CursorHidden)
+		c.Window.SetInputMode(glfw.CursorMode, glfw.CursorHidden)
 	}
 	c.Window.MakeContextCurrent()
-	if e := gl.GetError(); e != 0 {
-		err = fmt.Errorf("OpenGL MakeContextCurrent error: %X\n", e)
-	}
 	gl.Init()
 	if e := gl.GetError(); e != 0 {
 		if e == gl.INVALID_ENUM {
@@ -120,7 +112,7 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 		}
 	}
 	c.OpenGLVersion = glfw.GetVersionString()
-	c.ShaderVersion = gl.GetString(gl.SHADING_LANGUAGE_VERSION)
+	c.ShaderVersion = gl.GoStr(gl.GetString(gl.SHADING_LANGUAGE_VERSION))
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
@@ -129,14 +121,15 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 	if c.VAO, err = CreateVAO(); err != nil {
 		return
 	}
-	c.VAO.Bind()
+	gl.BindVertexArray(c.VAO)
 	c.Events = NewEventHandler(c.Window)
 	return
 }
 
 func (c *Context) Delete() {
 	cleanupSound()
-	c.VAO.Delete()
+	gl.BindVertexArray(0)
+	gl.DeleteVertexArrays(1, &c.VAO)
 	if c.Window != nil {
 		c.Window.Destroy()
 	}

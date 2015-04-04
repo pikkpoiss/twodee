@@ -16,10 +16,10 @@ package twodee
 
 import (
 	"fmt"
-	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/gl/v3.2-core/gl"
 )
 
-type InterpolationType gl.GLenum
+type InterpolationType uint32
 
 const (
 	LinearInterpolation  = InterpolationType(gl.LINEAR)
@@ -38,17 +38,17 @@ type TileMetadata struct {
 
 type TileRenderer struct {
 	*Renderer
-	Program        gl.Program
-	Texture        gl.Texture
-	PositionLoc    gl.AttribLocation
-	TextureLoc     gl.AttribLocation
-	TextureUnitLoc gl.UniformLocation
-	FrameLoc       gl.UniformLocation
-	FramesLoc      gl.UniformLocation
-	RatioLoc       gl.UniformLocation
-	ModelViewLoc   gl.UniformLocation
-	ProjectionLoc  gl.UniformLocation
-	VBO            gl.Buffer
+	Program        uint32
+	Texture        uint32
+	PositionLoc    uint32
+	TextureLoc     uint32
+	TextureUnitLoc int32
+	FrameLoc       int32
+	FramesLoc      int32
+	RatioLoc       int32
+	ModelViewLoc   int32
+	ProjectionLoc  int32
+	VBO            uint32
 	xframes        int
 	yframes        int
 	xratio         float32
@@ -76,7 +76,7 @@ void main()
       discard;
     }
     v_FragData = color;
-}`
+}` + "\x00"
 
 const TILE_VERTEX = `#version 150
 
@@ -92,16 +92,16 @@ void main()
 {
     v_TextureCoordinates = a_TextureCoordinates;
     gl_Position = m_ProjectionMatrix * m_ModelViewMatrix * a_Position;
-}`
+}` + "\x00"
 
 func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileRenderer, err error) {
 	var (
 		texRatioX  float32
 		texRatioY  float32
 		rect       []float32
-		program    gl.Program
+		program    uint32
 		texture    *Texture
-		vbo        gl.Buffer
+		vbo        uint32
 		halfWidth  = float32(metadata.TileWidth/metadata.PxPerUnit) / 2.0
 		halfHeight = float32(metadata.TileHeight/metadata.PxPerUnit) / 2.0
 		r          *Renderer
@@ -140,14 +140,14 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 		VBO:            vbo,
 		Program:        program,
 		Texture:        texture.Texture,
-		PositionLoc:    program.GetAttribLocation("a_Position"),
-		TextureLoc:     program.GetAttribLocation("a_TextureCoordinates"),
-		TextureUnitLoc: program.GetUniformLocation("u_TextureUnit"),
-		FrameLoc:       program.GetUniformLocation("u_Frame"),
-		FramesLoc:      program.GetUniformLocation("u_Frames"),
-		RatioLoc:       program.GetUniformLocation("u_Ratio"),
-		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
-		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
+		PositionLoc:    uint32(gl.GetAttribLocation(program, gl.Str("a_Position\x00"))),
+		TextureLoc:     uint32(gl.GetAttribLocation(program, gl.Str("a_TextureCoordinates\x00"))),
+		TextureUnitLoc: gl.GetUniformLocation(program, gl.Str("u_TextureUnit\x00")),
+		FrameLoc:       gl.GetUniformLocation(program, gl.Str("u_Frame\x00")),
+		FramesLoc:      gl.GetUniformLocation(program, gl.Str("u_Frames\x00")),
+		RatioLoc:       gl.GetUniformLocation(program, gl.Str("u_Ratio\x00")),
+		ModelViewLoc:   gl.GetUniformLocation(program, gl.Str("m_ModelViewMatrix\x00")),
+		ProjectionLoc:  gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
 		xframes:        metadata.FramesWide,
 		yframes:        metadata.FramesHigh,
 		xratio:         texRatioX,
@@ -160,21 +160,23 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 }
 
 func (tr *TileRenderer) Bind() error {
-	tr.Program.Use()
+	gl.UseProgram(tr.Program)
 	gl.ActiveTexture(gl.TEXTURE0)
-	tr.Texture.Bind(gl.TEXTURE_2D)
-	tr.TextureUnitLoc.Uniform1i(0)
-	tr.VBO.Bind(gl.ARRAY_BUFFER)
-	tr.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
-	tr.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
-	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(&tr.Renderer.projection))
+	gl.BindTexture(gl.TEXTURE_2D, tr.Texture)
+	gl.Uniform1i(tr.TextureUnitLoc, 0)
+	gl.BindBuffer(gl.ARRAY_BUFFER, tr.VBO)
+	gl.EnableVertexAttribArray(tr.PositionLoc)
+	gl.VertexAttribPointer(tr.PositionLoc, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+	gl.EnableVertexAttribArray(tr.TextureLoc)
+	gl.VertexAttribPointer(tr.TextureLoc, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	gl.UniformMatrix4fv(tr.ProjectionLoc, 1, false, &tr.Renderer.projection[0])
 	return nil
 }
 
 func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) error {
-	tr.FrameLoc.Uniform1i(frame)
-	tr.FramesLoc.Uniform2i(tr.xframes, tr.yframes)
-	tr.RatioLoc.Uniform2f(tr.xratio, tr.yratio)
+	gl.Uniform1i(tr.FrameLoc, int32(frame))
+	gl.Uniform2i(tr.FramesLoc, int32(tr.xframes), int32(tr.yframes))
+	gl.Uniform2f(tr.RatioLoc, tr.xratio, tr.yratio)
 	m := GetRotTransMatrix(x, y, 0, r)
 	if flipx && flipy {
 		m.Mul(GetScaleMatrix(-1, -1, 1))
@@ -183,15 +185,15 @@ func (tr *TileRenderer) Draw(frame int, x, y, r float32, flipx, flipy bool) erro
 	} else if !flipx && flipy {
 		m.Mul(GetScaleMatrix(1, -1, 1))
 	}
-	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(&m))
+	gl.UniformMatrix4fv(tr.ModelViewLoc, 1, false, &m[0])
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 	return nil
 }
 
 func (tr *TileRenderer) DrawScaled(frame int, x, y, r, s float32, flipx, flipy bool) error {
-	tr.FrameLoc.Uniform1i(frame)
-	tr.FramesLoc.Uniform2i(tr.xframes, tr.yframes)
-	tr.RatioLoc.Uniform2f(tr.xratio, tr.yratio)
+	gl.Uniform1i(tr.FrameLoc, int32(frame))
+	gl.Uniform2i(tr.FramesLoc, int32(tr.xframes), int32(tr.yframes))
+	gl.Uniform2f(tr.RatioLoc, tr.xratio, tr.yratio)
 	m := GetRotTransScaleMatrix(x, y, 0, r, s)
 	if flipx && flipy {
 		m.Mul(GetScaleMatrix(-1, -1, 1))
@@ -200,14 +202,13 @@ func (tr *TileRenderer) DrawScaled(frame int, x, y, r, s float32, flipx, flipy b
 	} else if !flipx && flipy {
 		m.Mul(GetScaleMatrix(1, -1, 1))
 	}
-	tr.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(&m))
+	gl.UniformMatrix4fv(tr.ModelViewLoc, 1, false, &m[0])
 	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 	return nil
 }
 
-
 func (tr *TileRenderer) Unbind() error {
-	tr.VBO.Unbind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -215,7 +216,9 @@ func (tr *TileRenderer) Unbind() error {
 }
 
 func (tr *TileRenderer) Delete() error {
-	tr.Texture.Delete()
-	tr.VBO.Delete()
+	gl.BindTexture(gl.TEXTURE_2D, 0)
+	gl.DeleteTextures(1, &tr.Texture)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.DeleteBuffers(1, &tr.VBO)
 	return nil
 }

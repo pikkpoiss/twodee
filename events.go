@@ -26,7 +26,7 @@ func NewEventHandler(w *glfw.Window) (e *EventHandler) {
 	e = &EventHandler{
 		Events: make(chan Event, 100),
 	}
-	w.SetCursorPositionCallback(e.onMouseMove)
+	w.SetCursorPosCallback(e.onMouseMove)
 	w.SetKeyCallback(e.onKey)
 	w.SetMouseButtonCallback(e.onMouseButton)
 	return
