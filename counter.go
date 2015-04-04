@@ -15,7 +15,7 @@
 package twodee
 
 import (
-	glfw "github.com/go-gl/glfw3"
+	glfw "github.com/go-gl/glfw/v3.1/glfw"
 	"math"
 )
 
