@@ -17,10 +17,10 @@ My expectation is to use this for Ludum Dare competitions as I go.
  - [x] Building on OSX / Linux / Windows
  - [ ] OSX / Windows packaging scripts
  - [ ] Very simple cinematics scripting
- - [ ] Import from Tiled native file format (http://www.mapeditor.org/)
+ - [x] Import from Tiled native file format (http://www.mapeditor.org/)
  - [ ] Glow shaders
  - [ ] Collision detection
- - [ ] Game grid + pathfinding
+ - [x] Game grid + pathfinding
 
 ##Building (OSX)
 
@@ -39,19 +39,12 @@ Get the environment set up:
     brew install --build-bottle --static glfw3
     // Set up SDL.
     brew install sdl
-    brew install sdl_mixer
+    brew install libvorbis libogg sdl_mixer
     brew install sdl_image
 
-Install deps:
+Install go library deps:
 
-    brew install libvorbis libogg sdl_mixer
-
-    go get code.google.com/p/freetype-go/freetype
-    go get github.com/Agon/googlmath
-    go get github.com/go-gl/gl
-    go get github.com/go-gl/glfw3
-    go get github.com/kurrik/Go-SDL/mixer
-    go get github.com/kurrik/Go-SDL/sdl
+    ./setup.sh
 
 ##Troubleshooting (OSX)
 
