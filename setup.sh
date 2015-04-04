@@ -8,3 +8,4 @@ go get -u github.com/go-gl/gl/v3.2-core/gl
 go get -u github.com/go-gl/glfw/v3.1/glfw
 go get -u github.com/kurrik/Go-SDL/mixer
 go get -u github.com/kurrik/Go-SDL/sdl
+go get -u github.com/robertkrimen/otto
