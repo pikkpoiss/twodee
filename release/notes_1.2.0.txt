@@ -1,0 +1,21 @@
+bb1d1bf Add some bounds checking to the grid.Index method.
+4d62453 Add more utility features for points.
+25d881f DistanceTo function.
+f6112e2 Some changes to tile renderer.
+acaaebd World to screen coords.
+38077ef Try my hand at projection.
+484db6d Scale output.
+a6b519e Fixed translation of game coordinates to screen coordinates
+affc1b5 Performance optimizations.
+bbe2499 Add a subtraction function for points.
+0c380d5 Rip out error checking.
+cfc6753 Merge branch 'master' of github.com:kurrik/twodee
+4c81049 Adds a contains point method.
+e4dee2e Be able to scale tiles.
+e1375d3 Add 10Hz animation.
+458f157 Added IsPlaying method for sound effects
+36b0faf Make text textures the correct width.
+5d3a282 Merge branch 'master' of github.com:kurrik/twodee
+80bf2a8 Update to new matrix lib.
+45a14df Add resizability.
+1febb5f Clean up README.
