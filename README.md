@@ -15,12 +15,12 @@ My expectation is to use this for Ludum Dare competitions as I go.
  - [x] Fullscreen toggle
  - [x] Keyboard / Mouse events
  - [x] Building on OSX / Linux / Windows
+ - [x] Game grid + pathfinding
+ - [x] Import from Tiled native file format (http://www.mapeditor.org/)
+ - [x] Glow shaders
  - [ ] OSX / Windows packaging scripts
  - [ ] Very simple cinematics scripting
- - [x] Import from Tiled native file format (http://www.mapeditor.org/)
- - [ ] Glow shaders
  - [ ] Collision detection
- - [x] Game grid + pathfinding
 
 ##Building (OSX)
 
