@@ -15,18 +15,47 @@
 package twodee
 
 import (
+	"errors"
+	"fmt"
 	"github.com/robertkrimen/otto"
 )
 
 type Scripting struct {
-	vm *otto.Otto
+	vm        *otto.Otto
+	listeners map[string][]otto.Value
 }
 
 func NewScripting() (s *Scripting, err error) {
 	s = &Scripting{
-		vm: otto.New(),
+		vm:        otto.New(),
+		listeners: map[string][]otto.Value{},
 	}
 	return
+}
+
+func (s *Scripting) setAPI() {
+	var err = errors.New("Usage: addEventListener(string, func)")
+	s.vm.Set("addEventListener", func(call otto.FunctionCall) otto.Value {
+		if len(call.ArgumentList) != 2 {
+			panic(err)
+		}
+		if !call.Argument(0).IsString() {
+			panic(err)
+		}
+		if !call.Argument(1).IsFunction() {
+			panic(err)
+		}
+		var (
+			callbacks []otto.Value
+			present   bool
+			eventName = call.Argument(0).String()
+		)
+		if callbacks, present = s.listeners[eventName]; !present {
+			s.listeners[eventName] = callbacks
+		}
+		s.listeners[eventName] = append(s.listeners[eventName], call.Argument(1))
+		return otto.Value{}
+	})
 }
 
 func (s *Scripting) LoadScript(path string) (err error) {
@@ -36,8 +65,48 @@ func (s *Scripting) LoadScript(path string) (err error) {
 	if script, err = s.vm.Compile(path, nil); err != nil {
 		return
 	}
+	s.setAPI()
 	if _, err = s.vm.Run(script); err != nil {
 		return
+	}
+	return
+}
+
+func (s *Scripting) convertArguments(args []interface{}) (converted []interface{}, err error) {
+	var (
+		i   int
+		arg interface{}
+	)
+	converted = make([]interface{}, len(args))
+	for i, arg = range args {
+		if converted[i], err = s.vm.ToValue(arg); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (s *Scripting) TriggerEvent(eventName string, rawArguments ...interface{}) (err error) {
+	var (
+		present   bool
+		callbacks []otto.Value
+		callback  otto.Value
+		response  otto.Value
+		arguments []interface{}
+	)
+	if callbacks, present = s.listeners[eventName]; !present {
+		return // Not an error to have no listeners.
+	}
+	if arguments, err = s.convertArguments(rawArguments); err != nil {
+		return
+	}
+	for _, callback = range callbacks {
+		if response, err = callback.Call(callback, arguments...); err != nil {
+			return
+		}
+		if response.IsString() {
+			fmt.Printf("Response from callback: %s\n", response.String())
+		}
 	}
 	return
 }
