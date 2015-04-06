@@ -24,6 +24,7 @@ type Entity interface {
 	Frame() int
 	Rotation() float32
 	MoveTo(Point)
+	MoveToCoords(x, y float32)
 	Update(elapsed time.Duration)
 }
 
@@ -55,6 +56,10 @@ func (e *BaseEntity) Pos() Point {
 
 func (e *BaseEntity) MoveTo(pt Point) {
 	e.pos = pt
+}
+
+func (e *BaseEntity) MoveToCoords(x, y float32) {
+	e.pos = Pt(x, y)
 }
 
 func (e *BaseEntity) Frame() int {
