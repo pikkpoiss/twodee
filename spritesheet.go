@@ -18,15 +18,8 @@ import (
 	"encoding/json"
 )
 
-type SpritesheetPoint struct {
-	X        float32
-	Y        float32
-	TextureX float32
-	TextureY float32
-}
-
 type SpritesheetFrame struct {
-	Points []SpritesheetPoint
+	Points []TexturedPoint
 }
 
 type SpritesheetFrameConfig struct {
@@ -58,11 +51,11 @@ func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 		texH = c.textureH / c.textureOriginalH
 	)
 	return &SpritesheetFrame{
-		Points: []SpritesheetPoint{
-			SpritesheetPoint{x, y, texX, texY},
-			SpritesheetPoint{x, y + h, texX, texY + texH},
-			SpritesheetPoint{x + w, y, texX + texW, texY},
-			SpritesheetPoint{x + w, y + h, texX + texW, texY + texH},
+		Points: []TexturedPoint{
+			TexturedPoint{x, y, 0, texX, texY},
+			TexturedPoint{x, y + h, 0, texX, texY + texH},
+			TexturedPoint{x + w, y, 0, texX + texW, texY},
+			TexturedPoint{x + w, y + h, 0, texX + texW, texY + texH},
 		},
 	}
 }

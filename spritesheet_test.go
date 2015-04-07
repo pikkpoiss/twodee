@@ -55,10 +55,10 @@ func TestParseTexturePackerJSONArrayString(t *testing.T) {
 		sheet  *Spritesheet
 		frame  *SpritesheetFrame
 		err    error
-		point0 = SpritesheetPoint{-0.40625, -0.40625, 0.03125, 0.41328412}
-		point1 = SpritesheetPoint{-0.40625, 0.40625, 0.03125, 0.5092251}
-		point2 = SpritesheetPoint{0.40625, -0.40625, 0.4375, 0.41328412}
-		point3 = SpritesheetPoint{0.40625, 0.40625, 0.4375, 0.5092251}
+		point0 = TexturedPoint{-0.40625, -0.40625, 0.0, 0.03125, 0.41328412}
+		point1 = TexturedPoint{-0.40625, 0.40625, 0.0, 0.03125, 0.5092251}
+		point2 = TexturedPoint{0.40625, -0.40625, 0.0, 0.4375, 0.41328412}
+		point3 = TexturedPoint{0.40625, 0.40625, 0.0, 0.4375, 0.5092251}
 	)
 	if sheet, err = ParseTexturePackerJSONArrayString(TEST_ARRAY_STRING); err != nil {
 		t.Fatalf("Problem parsing JSON array: %v", err)

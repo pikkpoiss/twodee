@@ -2,7 +2,7 @@ package twodee
 
 import (
 	"fmt"
-	"github.com/go-gl/gl/v3.2-core/gl"
+	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
 const GLOW_FRAGMENT = `#version 150
