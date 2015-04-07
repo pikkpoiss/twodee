@@ -112,7 +112,7 @@ func NewTileRenderer(bounds, screen Rectangle, metadata TileMetadata) (tr *TileR
 	if metadata.Interpolation == 0 {
 		metadata.Interpolation = NearestInterpolation
 	}
-	if texture, err = LoadTexture(metadata.Path, int(metadata.Interpolation)); err != nil {
+	if texture, err = LoadTexture(metadata.Path, TextureSmoothing(metadata.Interpolation)); err != nil {
 		return
 	}
 	texRatioX = float32(texture.OriginalWidth) / float32(texture.Width)

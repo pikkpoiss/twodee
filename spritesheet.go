@@ -46,27 +46,31 @@ func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 		w    = c.sourceW / c.originalW
 		h    = c.sourceH / c.originalH
 		texX = c.textureX / c.textureOriginalW
-		texY = c.textureY / c.textureOriginalH
+		texY = 1.0 - (c.textureY / c.textureOriginalH)
 		texW = c.textureW / c.textureOriginalW
 		texH = c.textureH / c.textureOriginalH
 	)
 	return &SpritesheetFrame{
 		Points: []TexturedPoint{
-			TexturedPoint{x, y, 0, texX, texY},
-			TexturedPoint{x, y + h, 0, texX, texY + texH},
-			TexturedPoint{x + w, y, 0, texX + texW, texY},
-			TexturedPoint{x + w, y + h, 0, texX + texW, texY + texH},
+			TexturedPoint{x, y, 0, texX, texY - texH},
+			TexturedPoint{x + w, y, 0, texX + texW, texY - texH},
+			TexturedPoint{x, y + h, 0, texX, texY},
+			TexturedPoint{x, y + h, 0, texX, texY},
+			TexturedPoint{x + w, y, 0, texX + texW, texY - texH},
+			TexturedPoint{x + w, y + h, 0, texX + texW, texY},
 		},
 	}
 }
 
 type Spritesheet struct {
-	frames map[string]*SpritesheetFrame
+	frames      map[string]*SpritesheetFrame
+	TexturePath string
 }
 
-func NewSpritesheet() *Spritesheet {
+func NewSpritesheet(path string) *Spritesheet {
 	return &Spritesheet{
-		frames: map[string]*SpritesheetFrame{},
+		frames:      map[string]*SpritesheetFrame{},
+		TexturePath: path,
 	}
 }
 
@@ -125,7 +129,7 @@ func ParseTexturePackerJSONArrayString(contents string) (s *Spritesheet, err err
 	if err = json.Unmarshal([]byte(contents), &parsed); err != nil {
 		return
 	}
-	s = NewSpritesheet()
+	s = NewSpritesheet(parsed.Meta.Image)
 	for _, frame := range parsed.Frames {
 		s.AddFrame(frame.Filename, SpritesheetFrameConfig{
 			sourceX:          float32(frame.SpriteSourceSize.X),

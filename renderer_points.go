@@ -48,34 +48,57 @@ const POINTS_FRAGMENT = `#version 150
 precision mediump float;
 
 uniform sampler2D TextureUnit;
-in vec2 TextureCoordinates;
+in vec2 v_TextureCoordinates;
 out vec4 v_FragData;
 
-void main()
-{
-    vec4 color = texture(TextureUnit, TextureCoordinates);
-    if (color.a < 0.1) {
-      discard;
-    }
-    v_FragData = color;
+void main() {
+  vec4 color = texture(TextureUnit, v_TextureCoordinates);
+  //if (color.a < 0.1) {
+  //  discard;
+  //}
+  v_FragData = color;
+  //v_FragData = vec4(color.x, 1.0, 0.0, color.a);
 }` + "\x00"
 
 const POINTS_VERTEX = `#version 150
 
-in vec3 Position;
-in vec3 Translation;
-in vec3 Rotation;
-in vec3 Scale;
+in vec4 v_Position;
+in vec3 v_Translation;
+in vec3 v_Rotation;
+in vec3 v_Scale;
 in vec2 TextureCoordinates;
 
-uniform mat4 ProjectionMatrix;
+uniform mat4 m_ProjectionMatrix;
 
-out vec2 TextureCoordinates;
+out vec2 v_TextureCoordinates;
 
-void main()
-{
-    TextureCoordinates = TextureCoordinates;
-    gl_Position = ProjectionMatrix * ModelViewMatrix * Position;
+void main() {
+  mat4 Translation = mat4(
+    vec4(1.0, 0.0, 0.0, v_Translation.x),
+    vec4(0.0, 1.0, 0.0, v_Translation.y),
+    vec4(0.0, 0.0, 1.0, v_Translation.z),
+    vec4(0.0, 0.0, 0.0,             1.0)
+  );
+
+  mat4 Scale = mat4(
+    vec4(v_Scale.x,       0.0,       0.0, 0.0),
+    vec4(      0.0, v_Scale.y,       0.0, 0.0),
+    vec4(      0.0,       0.0, v_Scale.z, 0.0),
+    vec4(      0.0,       0.0,       0.0, 1.0)
+  );
+
+  float rotCos = float(cos(v_Rotation.x));
+  float rotSin = float(sin(v_Rotation.x));
+
+  mat4 Rotation = mat4(
+    vec4(rotCos, -rotSin, 0.0, 0.0),
+    vec4(rotSin,  rotCos, 0.0, 0.0),
+    vec4(   0.0,     0.0, 1.0, 0.0),
+    vec4(   0.0,     0.0, 0.0, 1.0)
+  );
+
+  v_TextureCoordinates = TextureCoordinates;
+  gl_Position =  m_ProjectionMatrix * (v_Position * Scale * Rotation * Translation);
 }` + "\x00"
 
 func NewPointsRenderer(bounds, screen Rectangle) (tr *PointsRenderer, err error) {
@@ -100,14 +123,14 @@ func NewPointsRenderer(bounds, screen Rectangle) (tr *PointsRenderer, err error)
 		instanceVBO:      vbos[1],
 		vertexBytes:      0,
 		instanceBytes:    0,
-		positionLoc:      uint32(gl.GetAttribLocation(program, gl.Str("Position\x00"))),
-		translationLoc:   uint32(gl.GetAttribLocation(program, gl.Str("Translation\x00"))),
-		rotationLoc:      uint32(gl.GetAttribLocation(program, gl.Str("Rotation\x00"))),
-		scaleLoc:         uint32(gl.GetAttribLocation(program, gl.Str("Scale\x00"))),
+		positionLoc:      uint32(gl.GetAttribLocation(program, gl.Str("v_Position\x00"))),
+		translationLoc:   uint32(gl.GetAttribLocation(program, gl.Str("v_Translation\x00"))),
+		rotationLoc:      uint32(gl.GetAttribLocation(program, gl.Str("v_Rotation\x00"))),
+		scaleLoc:         uint32(gl.GetAttribLocation(program, gl.Str("v_Scale\x00"))),
 		textureLoc:       uint32(gl.GetAttribLocation(program, gl.Str("TextureCoordinates\x00"))),
 		textureUnitLoc:   gl.GetUniformLocation(program, gl.Str("TextureUnit\x00")),
 		modelViewLoc:     gl.GetUniformLocation(program, gl.Str("ModelViewMatrix\x00")),
-		projectionLoc:    gl.GetUniformLocation(program, gl.Str("ProjectionMatrix\x00")),
+		projectionLoc:    gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
 		sizePoint:        uint32(unsafe.Sizeof(texturedPoint)),
 		sizeAttr:         uint32(unsafe.Sizeof(instanceAttributes)),
 		offPointX:        gl.PtrOffset(int(unsafe.Offsetof(texturedPoint.X))),
@@ -175,18 +198,13 @@ func (tr *PointsRenderer) Draw(instances *InstanceList) error {
 	gl.UniformMatrix4fv(tr.projectionLoc, 1, false, &tr.Renderer.projection[0])
 
 	// Actually draw.
-	gl.DrawArraysInstanced(gl.TRIANGLE_STRIP, 0, int32(len(instances.Geometry)), int32(len(instances.Instances)))
+	gl.DrawArraysInstanced(gl.TRIANGLES, 0, int32(len(instances.Geometry)), int32(len(instances.Instances)))
 
 	// Undo instance attr repetition.
 	gl.VertexAttribDivisor(tr.translationLoc, 0)
 	gl.VertexAttribDivisor(tr.rotationLoc, 0)
 	gl.VertexAttribDivisor(tr.scaleLoc, 0)
 
-	return nil
-}
-
-func (tr *PointsRenderer) Unbind() error {
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	return nil
 }
 

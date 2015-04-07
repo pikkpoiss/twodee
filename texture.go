@@ -21,6 +21,13 @@ import (
 	"image"
 )
 
+type TextureSmoothing int
+
+const (
+	Nearest TextureSmoothing = gl.NEAREST
+	Linear  TextureSmoothing = gl.LINEAR
+)
+
 type Texture struct {
 	Texture        uint32
 	Width          int
@@ -29,7 +36,7 @@ type Texture struct {
 	OriginalHeight int
 }
 
-func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
+func LoadTexture(path string, smoothing TextureSmoothing) (texture *Texture, err error) {
 	var (
 		img image.Image
 	)
@@ -39,12 +46,12 @@ func LoadTexture(path string, smoothing int) (texture *Texture, err error) {
 	return GetTexture(img, smoothing)
 }
 
-func GetTexture(img image.Image, smoothing int) (texture *Texture, err error) {
+func GetTexture(img image.Image, smoothing TextureSmoothing) (texture *Texture, err error) {
 	var bounds = img.Bounds()
 	return GetTruncatedTexture(img, smoothing, bounds.Dx(), bounds.Dy())
 }
 
-func GetTruncatedTexture(img image.Image, smoothing int, w, h int) (texture *Texture, err error) {
+func GetTruncatedTexture(img image.Image, smoothing TextureSmoothing, w, h int) (texture *Texture, err error) {
 	var (
 		bounds image.Rectangle
 		gltex  uint32
@@ -80,7 +87,7 @@ func (t *Texture) Delete() {
 	}
 }
 
-func GetGLTexture(img image.Image, smoothing int) (t uint32, err error) {
+func GetGLTexture(img image.Image, smoothing TextureSmoothing) (t uint32, err error) {
 	var (
 		data   *bytes.Buffer
 		bounds image.Rectangle
