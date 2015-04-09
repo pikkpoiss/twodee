@@ -14,6 +14,10 @@
 
 package twodee
 
+import (
+	"github.com/go-gl/mathgl/mgl32"
+)
+
 type TexturedPoint struct {
 	X        float32
 	Y        float32
@@ -23,18 +27,20 @@ type TexturedPoint struct {
 }
 
 type InstanceAttributes struct {
-	X        float32
-	Y        float32
-	Z        float32
-	RotationX float32
-	RotationY float32
-	RotationZ float32
-	ScaleX   float32
-	ScaleY   float32
-	ScaleZ   float32
+	X                 float32
+	Y                 float32
+	Z                 float32
+	RotationX         float32
+	RotationY         float32
+	RotationZ         float32
+	ScaleX            float32
+	ScaleY            float32
+	ScaleZ            float32
+	PointAdjustment   mgl32.Mat4
+	TextureAdjustment mgl32.Mat4
 }
 
 type InstanceList struct {
-	Geometry []TexturedPoint
+	Geometry  []TexturedPoint
 	Instances []InstanceAttributes
 }

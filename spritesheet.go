@@ -16,10 +16,13 @@ package twodee
 
 import (
 	"encoding/json"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type SpritesheetFrame struct {
-	Points []TexturedPoint
+	Points            []TexturedPoint
+	PointAdjustment   mgl32.Mat4
+	TextureAdjustment mgl32.Mat4
 }
 
 type SpritesheetFrameConfig struct {
@@ -41,14 +44,26 @@ type SpritesheetFrameConfig struct {
 
 func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 	var (
-		x    = c.sourceX/c.originalW - c.pivotX
-		y    = c.sourceY/c.originalH - c.pivotY
+		x    = c.sourceX/c.originalW
+		y    = c.sourceY/c.originalH
 		w    = c.sourceW / c.originalW
 		h    = c.sourceH / c.originalH
 		texX = c.textureX / c.textureOriginalW
-		texY = 1.0 - (c.textureY / c.textureOriginalH)
+		texY = c.textureY / c.textureOriginalH
 		texW = c.textureW / c.textureOriginalW
 		texH = c.textureH / c.textureOriginalH
+	)
+	var (
+		texMove   = mgl32.Translate3D(texX, -texH-texY, 0.0)
+		texScale  = mgl32.Scale3D(texW, texH, 1.0)
+		texRotate = mgl32.HomogRotate3DZ(mgl32.DegToRad(0))
+		texAdj    = texMove.Mul4(texScale).Mul4(texRotate).Transpose()
+	)
+	var (
+		ptMove   = mgl32.Translate3D(x, y, 0.0)
+		ptScale  = mgl32.Scale3D(w, h, 1.0)
+		ptRotate = mgl32.HomogRotate3DZ(mgl32.DegToRad(0))
+		ptAdj    = ptMove.Mul4(ptScale).Mul4(ptRotate).Transpose()
 	)
 	return &SpritesheetFrame{
 		Points: []TexturedPoint{
@@ -59,6 +74,8 @@ func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 			TexturedPoint{x + w, y, 0, texX + texW, texY - texH},
 			TexturedPoint{x + w, y + h, 0, texX + texW, texY},
 		},
+		PointAdjustment:   ptAdj,
+		TextureAdjustment: texAdj,
 	}
 }
 
