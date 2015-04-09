@@ -41,6 +41,5 @@ type InstanceAttributes struct {
 }
 
 type InstanceList struct {
-	Geometry  []TexturedPoint
 	Instances []InstanceAttributes
 }

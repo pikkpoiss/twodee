@@ -217,11 +217,7 @@ func (tr *PointsRenderer) Draw(instances *InstanceList) error {
 	gl.UniformMatrix4fv(tr.projectionLoc, 1, false, &tr.Renderer.projection[0])
 
 	// Actually draw.
-	gl.DrawArraysInstanced(
-		gl.TRIANGLES,
-		0,
-		int32(len(instances.Geometry)),
-		int32(len(instances.Instances)))
+	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, int32(len(instances.Instances)))
 
 	// Undo instance attr repetition.
 	gl.VertexAttribDivisor(tr.translationLoc, 0)
