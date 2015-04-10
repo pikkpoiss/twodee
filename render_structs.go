@@ -26,20 +26,24 @@ type TexturedPoint struct {
 	TextureY float32
 }
 
-type InstanceAttributes struct {
-	X                 float32
-	Y                 float32
-	Z                 float32
-	RotationX         float32
-	RotationY         float32
-	RotationZ         float32
-	ScaleX            float32
-	ScaleY            float32
-	ScaleZ            float32
+type ModelViewConfig struct {
+	X         float32
+	Y         float32
+	Z         float32
+	RotationX float32
+	RotationY float32
+	RotationZ float32
+	ScaleX    float32
+	ScaleY    float32
+	ScaleZ    float32
+}
+
+type FrameConfig struct {
 	PointAdjustment   mgl32.Mat4
 	TextureAdjustment mgl32.Mat4
 }
 
-type InstanceList struct {
-	Instances []InstanceAttributes
+type SpriteConfig struct {
+	View ModelViewConfig
+	Frame FrameConfig
 }

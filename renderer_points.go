@@ -20,7 +20,7 @@ import (
 	"unsafe"
 )
 
-type PointsRenderer struct {
+type SpriteRenderer struct {
 	*Renderer
 	program           uint32
 	translationLoc    uint32
@@ -32,7 +32,6 @@ type PointsRenderer struct {
 	projectionLoc     int32
 	instanceVBO       uint32
 	instanceBytes     int
-	sizeAttr          int32
 	offAttrX          unsafe.Pointer
 	offAttrRotationX  unsafe.Pointer
 	offAttrScaleX     unsafe.Pointer
@@ -40,7 +39,7 @@ type PointsRenderer struct {
 	offAttrTextureAdj int
 }
 
-const POINTS_FRAGMENT = `#version 150
+const SPRITE_FRAGMENT = `#version 150
 precision mediump float;
 
 uniform sampler2D TextureUnit;
@@ -55,7 +54,7 @@ void main() {
   v_FragData = color;
 }` + "\x00"
 
-const POINTS_VERTEX = `#version 150
+const SPRITE_VERTEX = `#version 150
 
 in vec3 v_Translation;
 in vec3 v_Rotation;
@@ -122,21 +121,23 @@ void main() {
       Translation);
 }` + "\x00"
 
-func NewPointsRenderer(bounds, screen Rectangle) (tr *PointsRenderer, err error) {
+func NewSpriteRenderer(bounds, screen Rectangle) (tr *SpriteRenderer, err error) {
 	var (
-		program            uint32
-		vbos               = make([]uint32, 1)
-		r                  *Renderer
-		instanceAttributes InstanceAttributes
+		program     uint32
+		vbos        = make([]uint32, 1)
+		r           *Renderer
+		sprite      SpriteConfig
+		frameOffset = int(unsafe.Offsetof(sprite.Frame))
+		viewOffset  = int(unsafe.Offsetof(sprite.View))
 	)
-	if program, err = BuildProgram(POINTS_VERTEX, POINTS_FRAGMENT); err != nil {
+	if program, err = BuildProgram(SPRITE_VERTEX, SPRITE_FRAGMENT); err != nil {
 		return
 	}
 	gl.GenBuffers(1, &vbos[0])
 	if r, err = NewRenderer(bounds, screen); err != nil {
 		return
 	}
-	tr = &PointsRenderer{
+	tr = &SpriteRenderer{
 		Renderer:          r,
 		program:           program,
 		instanceVBO:       vbos[0],
@@ -148,12 +149,11 @@ func NewPointsRenderer(bounds, screen Rectangle) (tr *PointsRenderer, err error)
 		textureAdjLoc:     uint32(gl.GetAttribLocation(program, gl.Str("m_TextureAdjustment\x00"))),
 		textureUnitLoc:    gl.GetUniformLocation(program, gl.Str("TextureUnit\x00")),
 		projectionLoc:     gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
-		sizeAttr:          int32(unsafe.Sizeof(instanceAttributes)),
-		offAttrX:          gl.PtrOffset(int(unsafe.Offsetof(instanceAttributes.X))),
-		offAttrRotationX:  gl.PtrOffset(int(unsafe.Offsetof(instanceAttributes.RotationX))),
-		offAttrScaleX:     gl.PtrOffset(int(unsafe.Offsetof(instanceAttributes.ScaleX))),
-		offAttrPointAdj:   int(unsafe.Offsetof(instanceAttributes.PointAdjustment)),
-		offAttrTextureAdj: int(unsafe.Offsetof(instanceAttributes.TextureAdjustment)),
+		offAttrX:          gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.X))),
+		offAttrRotationX:  gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.RotationX))),
+		offAttrScaleX:     gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.ScaleX))),
+		offAttrPointAdj:   frameOffset + int(unsafe.Offsetof(sprite.Frame.PointAdjustment)),
+		offAttrTextureAdj: frameOffset + int(unsafe.Offsetof(sprite.Frame.TextureAdjustment)),
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -161,27 +161,31 @@ func NewPointsRenderer(bounds, screen Rectangle) (tr *PointsRenderer, err error)
 	return
 }
 
-func (tr *PointsRenderer) Draw(instances *InstanceList) error {
+func (tr *SpriteRenderer) Draw(instances []SpriteConfig) error {
 	var (
 		bytesNeeded int
-		stride      int32
+		byteoffset  int
 		count       int32
 		data        unsafe.Pointer
 		float       float32 = 0
-		floatsize           = uint32(unsafe.Sizeof(float))
-		offset      unsafe.Pointer
+		floatSize   uint32
 		i           uint32
-		byteoffset  int
+		offset      unsafe.Pointer
+		sprite      SpriteConfig
+		stride      int32
 	)
+
+	floatSize = uint32(unsafe.Sizeof(float))
+	stride = int32(unsafe.Sizeof(sprite))
+
 	gl.UseProgram(tr.program)
 	gl.Uniform1i(tr.textureUnitLoc, 0)
 
 	// Instance data binding
 	gl.BindBuffer(gl.ARRAY_BUFFER, tr.instanceVBO)
-	stride = tr.sizeAttr
-	count = int32(len(instances.Instances))
+	count = int32(len(instances))
 	bytesNeeded = int(stride * count)
-	data = gl.Ptr(instances.Instances)
+	data = gl.Ptr(instances)
 	if bytesNeeded > tr.instanceBytes {
 		gl.BufferData(gl.ARRAY_BUFFER, bytesNeeded, data, gl.STREAM_DRAW)
 		tr.instanceBytes = bytesNeeded
@@ -202,7 +206,7 @@ func (tr *PointsRenderer) Draw(instances *InstanceList) error {
 	gl.VertexAttribDivisor(tr.scaleLoc, 1)
 
 	for i = 0; i < 4; i++ {
-		byteoffset = int(i * 4 * floatsize)
+		byteoffset = int(i * 4 * floatSize)
 		offset = gl.PtrOffset(tr.offAttrPointAdj + byteoffset)
 		gl.EnableVertexAttribArray(tr.pointAdjLoc + i)
 		gl.VertexAttribPointer(tr.pointAdjLoc+i, 4, gl.FLOAT, false, stride, offset)
@@ -217,7 +221,7 @@ func (tr *PointsRenderer) Draw(instances *InstanceList) error {
 	gl.UniformMatrix4fv(tr.projectionLoc, 1, false, &tr.Renderer.projection[0])
 
 	// Actually draw.
-	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, int32(len(instances.Instances)))
+	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, int32(len(instances)))
 
 	// Undo instance attr repetition.
 	gl.VertexAttribDivisor(tr.translationLoc, 0)
@@ -232,7 +236,7 @@ func (tr *PointsRenderer) Draw(instances *InstanceList) error {
 	return nil
 }
 
-func (tr *PointsRenderer) Delete() error {
+func (tr *SpriteRenderer) Delete() error {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	gl.DeleteBuffers(1, &tr.instanceVBO)
 	return nil

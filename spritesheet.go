@@ -20,9 +20,8 @@ import (
 )
 
 type SpritesheetFrame struct {
-	Points            []TexturedPoint
-	PointAdjustment   mgl32.Mat4
-	TextureAdjustment mgl32.Mat4
+	Points []TexturedPoint
+	Frame  FrameConfig
 }
 
 type SpritesheetFrameConfig struct {
@@ -44,8 +43,8 @@ type SpritesheetFrameConfig struct {
 
 func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 	var (
-		x    = c.sourceX/c.originalW
-		y    = c.sourceY/c.originalH
+		x    = c.sourceX / c.originalW
+		y    = c.sourceY / c.originalH
 		w    = c.sourceW / c.originalW
 		h    = c.sourceH / c.originalH
 		texX = c.textureX / c.textureOriginalW
@@ -74,8 +73,10 @@ func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 			TexturedPoint{x + w, y, 0, texX + texW, texY - texH},
 			TexturedPoint{x + w, y + h, 0, texX + texW, texY},
 		},
-		PointAdjustment:   ptAdj,
-		TextureAdjustment: texAdj,
+		Frame: FrameConfig{
+			PointAdjustment:   ptAdj,
+			TextureAdjustment: texAdj,
+		},
 	}
 }
 
