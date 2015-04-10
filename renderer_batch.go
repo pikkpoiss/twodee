@@ -19,6 +19,23 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
+type InterpolationType uint32
+
+const (
+	LinearInterpolation  = InterpolationType(gl.LINEAR)
+	NearestInterpolation = InterpolationType(gl.NEAREST)
+)
+
+type TileMetadata struct {
+	Path          string
+	PxPerUnit     int
+	TileWidth     int
+	TileHeight    int
+	FramesWide    int
+	FramesHigh    int
+	Interpolation InterpolationType
+}
+
 type BatchRenderer struct {
 	*Renderer
 	Program        uint32
