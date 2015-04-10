@@ -20,8 +20,7 @@ import (
 )
 
 type SpritesheetFrame struct {
-	Points []TexturedPoint
-	Frame  FrameConfig
+	Frame FrameConfig
 }
 
 type SpritesheetFrameConfig struct {
@@ -39,14 +38,11 @@ type SpritesheetFrameConfig struct {
 	textureOriginalH float32
 	pivotX           float32
 	pivotY           float32
+	pxPerUnit        float32
 }
 
 func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 	var (
-		x    = c.sourceX / c.originalW
-		y    = c.sourceY / c.originalH
-		w    = c.sourceW / c.originalW
-		h    = c.sourceH / c.originalH
 		texX = c.textureX / c.textureOriginalW
 		texY = c.textureY / c.textureOriginalH
 		texW = c.textureW / c.textureOriginalW
@@ -59,20 +55,10 @@ func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 		texAdj    = texMove.Mul4(texScale).Mul4(texRotate).Transpose()
 	)
 	var (
-		ptMove   = mgl32.Translate3D(x, y, 0.0)
-		ptScale  = mgl32.Scale3D(w, h, 1.0)
-		ptRotate = mgl32.HomogRotate3DZ(mgl32.DegToRad(0))
-		ptAdj    = ptMove.Mul4(ptScale).Mul4(ptRotate).Transpose()
+		ptScale = mgl32.Scale3D(c.sourceW/c.pxPerUnit, c.sourceH/c.pxPerUnit, 1.0)
+		ptAdj   = ptScale.Transpose()
 	)
 	return &SpritesheetFrame{
-		Points: []TexturedPoint{
-			TexturedPoint{x, y, 0, texX, texY - texH},
-			TexturedPoint{x + w, y, 0, texX + texW, texY - texH},
-			TexturedPoint{x, y + h, 0, texX, texY},
-			TexturedPoint{x, y + h, 0, texX, texY},
-			TexturedPoint{x + w, y, 0, texX + texW, texY - texH},
-			TexturedPoint{x + w, y + h, 0, texX + texW, texY},
-		},
 		Frame: FrameConfig{
 			PointAdjustment:   ptAdj,
 			TextureAdjustment: texAdj,
@@ -140,7 +126,7 @@ type texturePackerJSONArray struct {
 	Meta   texturePackerMeta    `json:meta`
 }
 
-func ParseTexturePackerJSONArrayString(contents string) (s *Spritesheet, err error) {
+func ParseTexturePackerJSONArrayString(contents string, pxPerUnit float32) (s *Spritesheet, err error) {
 	var (
 		parsed texturePackerJSONArray
 	)
@@ -164,6 +150,7 @@ func ParseTexturePackerJSONArrayString(contents string) (s *Spritesheet, err err
 			textureOriginalH: float32(parsed.Meta.Size.H),
 			pivotX:           frame.Pivot.X,
 			pivotY:           frame.Pivot.Y,
+			pxPerUnit:        pxPerUnit,
 		})
 	}
 	return
