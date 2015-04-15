@@ -24,21 +24,15 @@ type SpritesheetFrame struct {
 }
 
 type SpritesheetFrameConfig struct {
-	sourceX          float32
-	sourceY          float32
-	sourceW          float32
-	sourceH          float32
-	originalW        float32
-	originalH        float32
+	sourceW float32
+	sourceH float32
 	textureX         float32
 	textureY         float32
 	textureW         float32
 	textureH         float32
 	textureOriginalW float32
 	textureOriginalH float32
-	pivotX           float32
-	pivotY           float32
-	pxPerUnit        float32
+	pxPerUnit float32
 }
 
 func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
@@ -136,20 +130,14 @@ func ParseTexturePackerJSONArrayString(contents string, pxPerUnit float32) (s *S
 	s = NewSpritesheet(parsed.Meta.Image)
 	for _, frame := range parsed.Frames {
 		s.AddFrame(frame.Filename, SpritesheetFrameConfig{
-			sourceX:          float32(frame.SpriteSourceSize.X),
-			sourceY:          float32(frame.SpriteSourceSize.Y),
 			sourceW:          float32(frame.SpriteSourceSize.W),
 			sourceH:          float32(frame.SpriteSourceSize.H),
-			originalW:        float32(frame.SourceSize.W),
-			originalH:        float32(frame.SourceSize.H),
 			textureX:         float32(frame.Frame.X),
 			textureY:         float32(frame.Frame.Y),
 			textureW:         float32(frame.Frame.W),
 			textureH:         float32(frame.Frame.H),
 			textureOriginalW: float32(parsed.Meta.Size.W),
 			textureOriginalH: float32(parsed.Meta.Size.H),
-			pivotX:           frame.Pivot.X,
-			pivotY:           frame.Pivot.Y,
 			pxPerUnit:        pxPerUnit,
 		})
 	}
