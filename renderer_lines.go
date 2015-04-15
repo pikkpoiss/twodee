@@ -17,6 +17,8 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
+	"image/color"
 	"unsafe"
 )
 
@@ -24,11 +26,15 @@ type LinesRenderer struct {
 	*Renderer
 	program       uint32
 	buffer        uint32
+	indexBuffer   uint32
 	bufferBytes   int
 	positionLoc   uint32
 	normalLoc     uint32
 	miterLoc      uint32
+	modelviewLoc  int32
 	thicknessLoc  int32
+	colorLoc      int32
+	innerLoc      int32
 	projectionLoc int32
 	offPosition   unsafe.Pointer
 	offNormal     unsafe.Pointer
@@ -39,31 +45,38 @@ type LinesRenderer struct {
 const LINES_FRAGMENT = `#version 150
 precision mediump float;
 
+in float f_Edge;
+uniform float f_Inner;
+uniform vec4 v_Color;
 out vec4 v_FragData;
 
 void main() {
-  vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
-  v_FragData = color;
+  float v = 1.0 - abs(f_Edge);
+  v = smoothstep(0.65, 0.7, v * f_Inner);
+  v_FragData = mix(v_Color, vec4(0.0), v);
 }` + "\x00"
 
 const LINES_VERTEX = `#version 150
 in vec2 v_Position;
 in vec2 v_Normal;
 in float f_Miter;
-
-uniform float Thickness;
+uniform float f_Thickness;
+uniform mat4 m_ModelView;
 uniform mat4 m_Projection;
+out float f_Edge;
 
 void main() {
+    f_Edge = sign(f_Miter);
+
     //push the point along its normal by half thickness
-    vec2 position = v_Position.xy + vec2(v_Normal * Thickness/2.0 * f_Miter);
-    gl_Position = m_Projection * vec4(position, 0.0, 1.0);
+    vec2 position = v_Position.xy + vec2(v_Normal * f_Thickness/2.0 * f_Miter);
+    gl_Position = m_Projection * m_ModelView * vec4(position, 0.0, 1.0);
 }` + "\x00"
 
 func NewLinesRenderer(bounds, screen Rectangle) (lr *LinesRenderer, err error) {
 	var (
 		program uint32
-		vbo     uint32
+		vbos    = make([]uint32, 2)
 		r       *Renderer
 		point   TexturedPoint
 	)
@@ -73,17 +86,21 @@ func NewLinesRenderer(bounds, screen Rectangle) (lr *LinesRenderer, err error) {
 	if r, err = NewRenderer(bounds, screen); err != nil {
 		return
 	}
-	gl.GenBuffers(1, &vbo)
+	gl.GenBuffers(2, &vbos[0])
 	lr = &LinesRenderer{
 		Renderer:      r,
 		program:       program,
-		buffer:        vbo,
+		buffer:        vbos[0],
+		indexBuffer:   vbos[1],
 		bufferBytes:   0,
 		positionLoc:   uint32(gl.GetAttribLocation(program, gl.Str("v_Position\x00"))),
 		normalLoc:     uint32(gl.GetAttribLocation(program, gl.Str("v_Normal\x00"))),
 		miterLoc:      uint32(gl.GetAttribLocation(program, gl.Str("f_Miter\x00"))),
-		thicknessLoc:  gl.GetUniformLocation(program, gl.Str("Thickness\x00")),
+		modelviewLoc:  gl.GetUniformLocation(program, gl.Str("m_ModelView\x00")),
 		projectionLoc: gl.GetUniformLocation(program, gl.Str("m_Projection\x00")),
+		thicknessLoc:  gl.GetUniformLocation(program, gl.Str("f_Thickness\x00")),
+		colorLoc:      gl.GetUniformLocation(program, gl.Str("v_Color\x00")),
+		innerLoc:      gl.GetUniformLocation(program, gl.Str("f_Inner\x00")),
 		offPosition:   gl.PtrOffset(int(unsafe.Offsetof(point.X))),
 		offNormal:     gl.PtrOffset(int(unsafe.Offsetof(point.TextureX))),
 		offMiter:      gl.PtrOffset(int(unsafe.Offsetof(point.Z))),
@@ -98,6 +115,7 @@ func NewLinesRenderer(bounds, screen Rectangle) (lr *LinesRenderer, err error) {
 func (lr *LinesRenderer) Bind() (err error) {
 	gl.UseProgram(lr.program)
 	gl.BindBuffer(gl.ARRAY_BUFFER, lr.buffer)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, lr.indexBuffer)
 	gl.EnableVertexAttribArray(lr.positionLoc)
 	gl.EnableVertexAttribArray(lr.normalLoc)
 	gl.EnableVertexAttribArray(lr.miterLoc)
@@ -113,25 +131,33 @@ func (lr *LinesRenderer) Bind() (err error) {
 
 func (lr *LinesRenderer) Unbind() (err error) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
 	}
 	return
 }
 
-func (lr *LinesRenderer) Draw(points []TexturedPoint, thickness float32) (err error) {
+func (lr *LinesRenderer) Draw(line *LineGeometry, mv mgl32.Mat4, style *LineStyle) (err error) {
 	var (
-		bytesNeeded int            = len(points) * int(lr.stride)
-		data        unsafe.Pointer = gl.Ptr(points)
+		dataBytes    int   = len(line.Vertices) * int(lr.stride)
+		indexBytes   int   = len(line.Indices) * int(lr.stride)
+		elementCount int32 = int32(len(line.Indices))
+		r, g, b, a         = style.Color.RGBA()
 	)
-	gl.Uniform1f(lr.thicknessLoc, thickness)
-	if bytesNeeded > lr.bufferBytes {
-		gl.BufferData(gl.ARRAY_BUFFER, bytesNeeded, data, gl.STREAM_DRAW)
-		lr.bufferBytes = bytesNeeded
+	gl.Uniform1f(lr.thicknessLoc, style.Thickness)
+	gl.Uniform1f(lr.innerLoc, style.Inner)
+	gl.Uniform4f(lr.colorLoc, float32(r)/255.0, float32(g)/255.0, float32(b)/255.0, float32(a)/255.0)
+	gl.UniformMatrix4fv(lr.modelviewLoc, 1, false, &mv[0])
+	if dataBytes > lr.bufferBytes {
+		lr.bufferBytes = dataBytes
+		gl.BufferData(gl.ARRAY_BUFFER, dataBytes, gl.Ptr(line.Vertices), gl.STREAM_DRAW)
+		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, indexBytes, gl.Ptr(line.Indices), gl.STREAM_DRAW)
 	} else {
-		gl.BufferSubData(gl.ARRAY_BUFFER, 0, bytesNeeded, data)
+		gl.BufferSubData(gl.ARRAY_BUFFER, 0, dataBytes, gl.Ptr(line.Vertices))
+		gl.BufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, indexBytes, gl.Ptr(line.Indices))
 	}
-	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(points)))
+	gl.DrawElements(gl.TRIANGLES, elementCount, gl.UNSIGNED_INT, gl.PtrOffset(0))
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
 	}
@@ -140,9 +166,17 @@ func (lr *LinesRenderer) Draw(points []TexturedPoint, thickness float32) (err er
 
 func (lr *LinesRenderer) Delete() (err error) {
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, 0)
 	gl.DeleteBuffers(1, &lr.buffer)
+	gl.DeleteBuffers(1, &lr.indexBuffer)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
 	}
 	return
+}
+
+type LineStyle struct {
+	Thickness float32
+	Color     color.Color
+	Inner     float32
 }

@@ -43,7 +43,7 @@ func direction(a, b mgl32.Vec2) mgl32.Vec2 {
 	return a.Sub(b).Normalize()
 }
 
-func GetNormals(points []mgl32.Vec2, closed bool) (out []Normal) {
+func getNormals(points []mgl32.Vec2, closed bool) (out []Normal) {
 	var (
 		curNormal    mgl32.Vec2
 		total        int
@@ -112,4 +112,71 @@ type Normal struct {
 
 func addNext(list []Normal, normal mgl32.Vec2, length float32) []Normal {
 	return append(list, Normal{Vector: normal, Length: length})
+}
+
+func duplicateNormals(list []Normal) (out []Normal) {
+	out = make([]Normal, len(list)*2)
+	for i := 0; i < len(list); i++ {
+		out[2*i] = list[i]
+		out[2*i].Length *= -1
+		out[2*i+1] = list[i]
+	}
+	return
+}
+
+func duplicateVec2(list []mgl32.Vec2) (out []mgl32.Vec2) {
+	out = make([]mgl32.Vec2, len(list)*2)
+	for i := 0; i < len(list); i++ {
+		out[2*i] = list[i]
+		out[2*i+1] = list[i]
+	}
+	return
+}
+
+type LineGeometry struct {
+	Points   []TexturedPoint
+	Vertices []TexturedPoint
+	Indices  []uint32
+}
+
+func NewLineGeometry(path []mgl32.Vec2, closed bool) (out *LineGeometry) {
+	var (
+		normals  []Normal
+		count    int
+		indices  []uint32
+		vertices []TexturedPoint
+		i        int
+	)
+	normals = getNormals(path, closed)
+	if closed {
+		normals = append(normals, normals[0])
+		path = append(path, path[0])
+	}
+	count = len(path) - 1
+	indices = make([]uint32, count*6)
+	for i = 0; i < count; i++ {
+		indices[i*6+0] = uint32(2*i + 0)
+		indices[i*6+1] = uint32(2*i + 1)
+		indices[i*6+2] = uint32(2*i + 2)
+		indices[i*6+3] = uint32(2*i + 2)
+		indices[i*6+4] = uint32(2*i + 1)
+		indices[i*6+5] = uint32(2*i + 3)
+	}
+	normals = duplicateNormals(normals)
+	path = duplicateVec2(path)
+	vertices = make([]TexturedPoint, len(normals))
+	for i = 0; i < len(normals); i++ {
+		vertices[i] = TexturedPoint{
+			X:        path[i][0],
+			Y:        path[i][1],
+			Z:        normals[i].Length,
+			TextureX: normals[i].Vector[0],
+			TextureY: normals[i].Vector[1],
+		}
+	}
+	out = &LineGeometry{
+		Indices:  indices,
+		Vertices: vertices,
+	}
+	return
 }
