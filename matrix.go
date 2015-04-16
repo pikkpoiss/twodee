@@ -15,7 +15,9 @@
 package twodee
 
 import (
+	"fmt"
 	gmath "github.com/Agon/googlmath"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Matrix4 [16]float32
@@ -82,41 +84,31 @@ func GetScaleMatrix(x, y, z float32) Matrix4 {
 	}
 }
 
-func GetOrthoMatrix(x1, x2, y1, y2, n, f float32) Matrix4 {
-	// http://www.songho.ca/opengl/gl_projectionmatrix.html
-	return Matrix4{
-		2.0 / (x2 - x1), 0, 0, 0,
-		0, 2.0 / (y2 - y1), 0, 0,
-		0, 0, -2.0 / (f - n), 0,
-		-(x2 + x1) / (x2 - x1), -(y2 + y1) / (y2 - y1), -(f + n) / (f - n), 1,
-	}
-}
-
-func GetInverseMatrix(m Matrix4) (out Matrix4, err error) {
+func GetInverseMatrix(m mgl32.Mat4) (out mgl32.Mat4, err error) {
 	var (
-		inv gmath.Matrix4
+		empty = mgl32.Mat4{}
 	)
-	if inv, err = getGMathMatrix(m).Invert(); err != nil {
+	if out = m.Inv(); out == empty {
+		err = fmt.Errorf("Matrix %v not invertible", m)
 		return
 	}
-	out = getMatrix(inv)
 	return
 }
 
-func Unproject(invproj Matrix4, x float32, y float32) (wx, wy float32) {
+func Unproject(invproj mgl32.Mat4, x float32, y float32) (wx, wy float32) {
 	var (
-		screen = gmath.Vector4{x, y, 1, 1}
-		out    gmath.Vector4
+		screen = mgl32.Vec4{x, y, 1, 1}
+		out    mgl32.Vec4
 	)
-	out = getGMathMatrix(invproj).MulVec4(screen)
-	out.Scale(1.0 / out.W)
-	wx = out.X
-	wy = out.Y
+	out = invproj.Mul4x1(screen)
+	out = out.Mul(1.0 / out[3])
+	wx = out[0]
+	wy = out[1]
 	return
 }
 
-func Project(proj Matrix4, x float32, y float32) (sx, sy float32) {
-	var out gmath.Vector4
-	out = getGMathMatrix(proj).MulVec4(gmath.Vector4{x, y, 1, 1})
-	return out.X, out.Y
+func Project(proj mgl32.Mat4, x float32, y float32) (sx, sy float32) {
+	var out mgl32.Vec4
+	out = proj.Mul4x1(mgl32.Vec4{x, y, 1, 1})
+	return out[0], out[1]
 }

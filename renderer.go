@@ -17,14 +17,15 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"strings"
 )
 
 type Renderer struct {
 	worldBounds  Rectangle
 	screenBounds Rectangle
-	projection   Matrix4
-	inverse      Matrix4
+	projection   mgl32.Mat4
+	inverse      mgl32.Mat4
 }
 
 func NewRenderer(world, screen Rectangle) (r *Renderer, err error) {
@@ -40,7 +41,7 @@ func (r *Renderer) SetScreenBounds(bounds Rectangle) {
 
 func (r *Renderer) SetWorldBounds(bounds Rectangle) (err error) {
 	r.worldBounds = bounds
-	r.projection = GetOrthoMatrix(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
+	r.projection = mgl32.Ortho(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
 	r.inverse, err = GetInverseMatrix(r.projection)
 	return
 }
