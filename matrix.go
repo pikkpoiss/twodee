@@ -19,43 +19,6 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func GetTranslationMatrix(x, y, z float32) mgl32.Mat4 {
-	return mgl32.Translate3D(x, y, z)
-}
-
-func GetRotationMatrix(x, y, z, a float32) mgl32.Mat4 {
-	axis := mgl32.Vec3{x, y, z}
-	return mgl32.HomogRotate3D(a, axis)
-}
-
-func GetRotTransMatrix(x, y, z, a float32) mgl32.Mat4 {
-	var (
-		axis  = mgl32.Vec3{0, 0, 1}
-		trans = mgl32.Translate3D(x, y, z)
-		rot   = mgl32.HomogRotate3D(a, axis)
-	)
-	return trans.Mul4(rot)
-}
-
-func GetRotTransScaleMatrix(x, y, z, a, s float32) mgl32.Mat4 {
-	var (
-		axis  = mgl32.Vec3{0, 0, 1}
-		trans = mgl32.Translate3D(x, y, z)
-		rot   = mgl32.HomogRotate3D(a, axis)
-		scale = mgl32.Scale3D(s, s, 1.0)
-	)
-	return trans.Mul4(rot).Mul4(scale)
-}
-
-func GetScaleMatrix(x, y, z float32) mgl32.Mat4 {
-	return mgl32.Mat4{
-		x, 0, 0, 0,
-		0, y, 0, 0,
-		0, 0, z, 0,
-		0, 0, 0, 1,
-	}
-}
-
 func GetInverseMatrix(m mgl32.Mat4) (out mgl32.Mat4, err error) {
 	var (
 		empty = mgl32.Mat4{}

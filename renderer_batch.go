@@ -17,6 +17,7 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type InterpolationType uint32
@@ -120,7 +121,7 @@ func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	gl.VertexAttribPointer(r.PositionLoc, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
 	gl.EnableVertexAttribArray(r.TextureLoc)
 	gl.VertexAttribPointer(r.TextureLoc, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
-	m := GetRotTransMatrix(x, y, 0, rot)
+	m := mgl32.Translate3D(x, y, 0.0).Mul4(mgl32.HomogRotate3DZ(rot))
 	gl.UniformMatrix4fv(r.ModelViewLoc, 1, false, &m[0])
 	gl.Uniform2f(r.TexOffsetLoc, batch.textureOffset.X, batch.textureOffset.Y)
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(batch.Count))
