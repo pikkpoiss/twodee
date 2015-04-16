@@ -17,53 +17,17 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/go-gl/mathgl/mgl32"
 	"strings"
 )
 
 type Renderer struct {
-	worldBounds  Rectangle
-	screenBounds Rectangle
-	projection   mgl32.Mat4
-	inverse      mgl32.Mat4
+	Camera *Camera
 }
 
-func NewRenderer(world, screen Rectangle) (r *Renderer, err error) {
-	r = &Renderer{}
-	r.SetScreenBounds(screen)
-	err = r.SetWorldBounds(world)
-	return
-}
-
-func (r *Renderer) SetScreenBounds(bounds Rectangle) {
-	r.screenBounds = bounds
-}
-
-func (r *Renderer) SetWorldBounds(bounds Rectangle) (err error) {
-	r.worldBounds = bounds
-	r.projection = mgl32.Ortho(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
-	r.inverse, err = GetInverseMatrix(r.projection)
-	return
-}
-
-func (r *Renderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
-	// http://stackoverflow.com/questions/7692988/
-	var (
-		halfw = r.screenBounds.Max.X / 2.0
-		halfh = r.screenBounds.Max.Y / 2.0
-		xpct  = (x - halfw) / halfw
-		ypct  = (halfh - y) / halfh
-	)
-	return Unproject(r.inverse, xpct, ypct)
-}
-
-func (r *Renderer) WorldToScreenCoords(x, y float32) (sx, sy float32) {
-	var pctx, pcty = Project(r.projection, x, y)
-	var halfw = r.screenBounds.Max.X / 2.0
-	var halfh = r.screenBounds.Max.Y / 2.0
-	sx = pctx*halfw + halfw
-	sy = pcty*halfh + halfh
-	return
+func NewRenderer(camera *Camera) (r *Renderer) {
+	return &Renderer{
+		Camera: camera,
+	}
 }
 
 func CreateVAO() (array uint32, err error) {

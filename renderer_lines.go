@@ -73,22 +73,18 @@ void main() {
     gl_Position = m_Projection * m_ModelView * vec4(position, 0.0, 1.0);
 }` + "\x00"
 
-func NewLinesRenderer(bounds, screen Rectangle) (lr *LinesRenderer, err error) {
+func NewLinesRenderer(camera *Camera) (lr *LinesRenderer, err error) {
 	var (
 		program uint32
 		vbos    = make([]uint32, 2)
-		r       *Renderer
 		point   TexturedPoint
 	)
 	if program, err = BuildProgram(LINES_VERTEX, LINES_FRAGMENT); err != nil {
 		return
 	}
-	if r, err = NewRenderer(bounds, screen); err != nil {
-		return
-	}
 	gl.GenBuffers(2, &vbos[0])
 	lr = &LinesRenderer{
-		Renderer:      r,
+		Renderer:      NewRenderer(camera),
 		program:       program,
 		buffer:        vbos[0],
 		indexBuffer:   vbos[1],
@@ -122,7 +118,7 @@ func (lr *LinesRenderer) Bind() (err error) {
 	gl.VertexAttribPointer(lr.positionLoc, 2, gl.FLOAT, false, lr.stride, lr.offPosition)
 	gl.VertexAttribPointer(lr.normalLoc, 2, gl.FLOAT, false, lr.stride, lr.offNormal)
 	gl.VertexAttribPointer(lr.miterLoc, 1, gl.FLOAT, false, lr.stride, lr.offMiter)
-	gl.UniformMatrix4fv(lr.projectionLoc, 1, false, &lr.Renderer.projection[0])
+	gl.UniformMatrix4fv(lr.projectionLoc, 1, false, &lr.Renderer.Camera.Projection[0])
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
 	}

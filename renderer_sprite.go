@@ -121,11 +121,10 @@ void main() {
       Translation);
 }` + "\x00"
 
-func NewSpriteRenderer(bounds, screen Rectangle) (tr *SpriteRenderer, err error) {
+func NewSpriteRenderer(camera *Camera) (tr *SpriteRenderer, err error) {
 	var (
 		program     uint32
 		vbos        = make([]uint32, 1)
-		r           *Renderer
 		sprite      SpriteConfig
 		frameOffset = int(unsafe.Offsetof(sprite.Frame))
 		viewOffset  = int(unsafe.Offsetof(sprite.View))
@@ -134,11 +133,8 @@ func NewSpriteRenderer(bounds, screen Rectangle) (tr *SpriteRenderer, err error)
 		return
 	}
 	gl.GenBuffers(1, &vbos[0])
-	if r, err = NewRenderer(bounds, screen); err != nil {
-		return
-	}
 	tr = &SpriteRenderer{
-		Renderer:          r,
+		Renderer:          NewRenderer(camera),
 		program:           program,
 		instanceVBO:       vbos[0],
 		instanceBytes:     0,
@@ -218,7 +214,7 @@ func (tr *SpriteRenderer) Draw(instances []SpriteConfig) error {
 		gl.VertexAttribDivisor(tr.textureAdjLoc+i, 1)
 	}
 	// Projection
-	gl.UniformMatrix4fv(tr.projectionLoc, 1, false, &tr.Renderer.projection[0])
+	gl.UniformMatrix4fv(tr.projectionLoc, 1, false, &tr.Renderer.Camera.Projection[0])
 
 	// Actually draw.
 	gl.DrawArraysInstanced(gl.TRIANGLES, 0, 6, int32(len(instances)))

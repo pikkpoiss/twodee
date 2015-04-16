@@ -79,19 +79,15 @@ void main()
     gl_Position = m_ProjectionMatrix * m_ModelViewMatrix * a_Position;
 }` + "\x00"
 
-func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
+func NewBatchRenderer(camera *Camera) (tr *BatchRenderer, err error) {
 	var (
 		program uint32
-		r       *Renderer
 	)
 	if program, err = BuildProgram(BATCH_VERTEX, BATCH_FRAGMENT); err != nil {
 		return
 	}
-	if r, err = NewRenderer(bounds, screen); err != nil {
-		return
-	}
 	tr = &BatchRenderer{
-		Renderer:       r,
+		Renderer:       NewRenderer(camera),
 		Program:        program,
 		PositionLoc:    uint32(gl.GetAttribLocation(program, gl.Str("a_Position\x00"))),
 		TextureLoc:     uint32(gl.GetAttribLocation(program, gl.Str("a_TextureCoordinates\x00"))),
@@ -110,7 +106,7 @@ func (r *BatchRenderer) Bind() error {
 	gl.UseProgram(r.Program)
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.Uniform1i(r.TextureUnitLoc, 0)
-	gl.UniformMatrix4fv(r.ProjectionLoc, 1, false, &r.Renderer.projection[0])
+	gl.UniformMatrix4fv(r.ProjectionLoc, 1, false, &r.Camera.Projection[0])
 	return nil
 }
 

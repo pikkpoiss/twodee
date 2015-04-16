@@ -76,12 +76,11 @@ void main()
     gl_Position = m_ProjectionMatrix * trans * scale * a_Position;
 }` + "\x00"
 
-func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
+func NewTextRenderer(camera *Camera) (tr *TextRenderer, err error) {
 	var (
 		rect    []float32
 		program uint32
 		vbo     uint32
-		r       *Renderer
 	)
 	rect = []float32{
 		0, 0, 0.0, 0.0, 0.0,
@@ -95,11 +94,8 @@ func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
 	}
-	if r, err = NewRenderer(screen, screen); err != nil {
-		return
-	}
 	tr = &TextRenderer{
-		Renderer:       r,
+		Renderer:       NewRenderer(camera),
 		VBO:            vbo,
 		Program:        program,
 		PositionLoc:    uint32(gl.GetAttribLocation(program, gl.Str("a_Position\x00"))),
@@ -108,8 +104,8 @@ func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
 		TransLoc:       gl.GetUniformLocation(program, gl.Str("v_Trans\x00")),
 		ScaleLoc:       gl.GetUniformLocation(program, gl.Str("v_Scale\x00")),
 		ProjectionLoc:  gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
-		Width:          screen.Max.X - screen.Min.X,
-		Height:         screen.Max.Y - screen.Min.Y,
+		Width:          camera.ScreenBounds.Max.X - camera.ScreenBounds.Min.X,
+		Height:         camera.ScreenBounds.Max.Y - camera.ScreenBounds.Min.Y,
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -140,7 +136,7 @@ func (tr *TextRenderer) Bind() error {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	gl.UniformMatrix4fv(tr.ProjectionLoc, 1, false, &tr.Renderer.projection[0])
+	gl.UniformMatrix4fv(tr.ProjectionLoc, 1, false, &tr.Renderer.Camera.Projection[0])
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
