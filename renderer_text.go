@@ -17,6 +17,7 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type TextRenderer struct {
@@ -30,7 +31,7 @@ type TextRenderer struct {
 	TransLoc       int32
 	ProjectionLoc  int32
 	TextureUnitLoc int32
-	projection     *Matrix4
+	projection     *mgl32.Mat4
 	Width          float32
 	Height         float32
 }

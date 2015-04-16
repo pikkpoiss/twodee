@@ -16,67 +16,39 @@ package twodee
 
 import (
 	"fmt"
-	gmath "github.com/Agon/googlmath"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type Matrix4 [16]float32
-
-func (m Matrix4) Mul(a Matrix4) {
-	n := getMatrix(getGMathMatrix(m).Mul(getGMathMatrix(a)))
-	for i := 0; i < 16; i++ {
-		m[i] = n[i]
-	}
+func GetTranslationMatrix(x, y, z float32) mgl32.Mat4 {
+	return mgl32.Translate3D(x, y, z)
 }
 
-func getMatrix(m gmath.Matrix4) Matrix4 {
-	return Matrix4{
-		m.M11, m.M12, m.M13, m.M14,
-		m.M21, m.M22, m.M23, m.M24,
-		m.M31, m.M32, m.M33, m.M34,
-		m.M41, m.M42, m.M43, m.M44,
-	}
+func GetRotationMatrix(x, y, z, a float32) mgl32.Mat4 {
+	axis := mgl32.Vec3{x, y, z}
+	return mgl32.HomogRotate3D(a, axis)
 }
 
-func getGMathMatrix(m Matrix4) gmath.Matrix4 {
-	return gmath.Matrix4{
-		m[0], m[1], m[2], m[3],
-		m[4], m[5], m[6], m[7],
-		m[8], m[9], m[10], m[11],
-		m[12], m[13], m[14], m[15],
-	}
-}
-
-func GetTranslationMatrix(x, y, z float32) Matrix4 {
-	return getMatrix(gmath.TranslationMatrix4(x, y, z))
-}
-
-func GetRotationMatrix(x, y, z, a float32) Matrix4 {
-	axis := gmath.Vector3{x, y, z}
-	return getMatrix(gmath.RotationMatrix4(axis, a))
-}
-
-func GetRotTransMatrix(x, y, z, a float32) Matrix4 {
+func GetRotTransMatrix(x, y, z, a float32) mgl32.Mat4 {
 	var (
-		axis  = gmath.Vector3{0, 0, 1}
-		trans = gmath.TranslationMatrix4(x, y, z)
-		rot   = gmath.RotationMatrix4(axis, a)
+		axis  = mgl32.Vec3{0, 0, 1}
+		trans = mgl32.Translate3D(x, y, z)
+		rot   = mgl32.HomogRotate3D(a, axis)
 	)
-	return getMatrix(trans.Mul(rot))
+	return trans.Mul4(rot)
 }
 
-func GetRotTransScaleMatrix(x, y, z, a, s float32) Matrix4 {
+func GetRotTransScaleMatrix(x, y, z, a, s float32) mgl32.Mat4 {
 	var (
-		axis  = gmath.Vector3{0, 0, 1}
-		trans = gmath.TranslationMatrix4(x, y, z)
-		rot   = gmath.RotationMatrix4(axis, a)
-		scale = getGMathMatrix(GetScaleMatrix(s, s, 0))
+		axis  = mgl32.Vec3{0, 0, 1}
+		trans = mgl32.Translate3D(x, y, z)
+		rot   = mgl32.HomogRotate3D(a, axis)
+		scale = mgl32.Scale3D(s, s, 1.0)
 	)
-	return getMatrix(trans.Mul(rot).Mul(scale))
+	return trans.Mul4(rot).Mul4(scale)
 }
 
-func GetScaleMatrix(x, y, z float32) Matrix4 {
-	return Matrix4{
+func GetScaleMatrix(x, y, z float32) mgl32.Mat4 {
+	return mgl32.Mat4{
 		x, 0, 0, 0,
 		0, y, 0, 0,
 		0, 0, z, 0,
