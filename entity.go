@@ -74,13 +74,13 @@ func (e *BaseEntity) Update(elapsed time.Duration) {
 }
 
 type AnimatingEntity struct {
-	animation *Animation
+	animation *FrameAnimation
 	*BaseEntity
 }
 
 func NewAnimatingEntity(x, y, w, h, r float32, l time.Duration, f []int) *AnimatingEntity {
 	return &AnimatingEntity{
-		animation:  NewAnimation(l, f),
+		animation:  NewFrameAnimation(l, f),
 		BaseEntity: NewBaseEntity(x, y, w, h, r, 0),
 	}
 }

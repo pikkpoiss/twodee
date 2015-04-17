@@ -15,6 +15,7 @@
 package twodee
 
 import (
+	"math"
 	"time"
 )
 
@@ -24,48 +25,119 @@ const (
 	Step20Hz = time.Duration(50000) * time.Microsecond
 	Step15Hz = Step30Hz * 2
 	Step10Hz = Step20Hz * 2
-	Step5Hz = Step10Hz * 2
+	Step5Hz  = Step10Hz * 2
 )
 
+type AnimationCallback func()
+
+type Animating interface {
+	Update(elapsed time.Duration) (done bool)
+	SetCallback(callback AnimationCallback)
+	HasCallback() bool
+	Reset()
+}
+
 type Animation struct {
-	accumulated time.Duration
-	Current     int
-	FrameLength time.Duration
-	Sequence    []int
-	callback    AnimationCallback
+	elapsed  time.Duration
+	callback AnimationCallback
 }
 
-func NewAnimation(length time.Duration, frames []int) *Animation {
-	return &Animation{
-		FrameLength: length,
-		Sequence:    frames,
-		Current:     frames[0],
-	}
+func NewAnimation() *Animation {
+	return &Animation{}
 }
 
-func (a *Animation) Update(elapsed time.Duration) {
-	a.accumulated += elapsed
-	index := int(a.accumulated/a.FrameLength) % len(a.Sequence)
-	a.Current = a.Sequence[index]
-	if a.callback != nil && index == len(a.Sequence)-1 {
-		a.callback()
-		a.callback = nil
-	}
+func (a *Animation) Update(elapsed time.Duration) (done bool) {
+	a.elapsed += elapsed
+	return false
 }
 
-func (a *Animation) OffsetFrame(offset int) int {
-	index := int(a.accumulated/a.FrameLength) % len(a.Sequence)
-	return a.Sequence[(index + offset) % len(a.Sequence)]
+func (a *Animation) Elapsed() time.Duration {
+	return a.elapsed
+}
+
+func (a *Animation) Reset() {
+	a.elapsed = time.Duration(0)
 }
 
 func (a *Animation) SetCallback(callback AnimationCallback) {
 	a.callback = callback
 }
 
-type AnimationCallback func()
+func (a *Animation) HasCallback() bool {
+	return a.callback != nil
+}
 
-func (a *Animation) SetSequence(seq []int) {
+func (a *Animation) Callback() {
+	if a.HasCallback() {
+		a.callback()
+	}
+}
+
+type FrameAnimation struct {
+	*Animation
+	FrameLength time.Duration
+	Sequence    []int
+	Current     int
+}
+
+func NewFrameAnimation(length time.Duration, frames []int) *FrameAnimation {
+	return &FrameAnimation{
+		Animation:   NewAnimation(),
+		FrameLength: length,
+		Sequence:    frames,
+		Current:     frames[0],
+	}
+}
+
+func (a *FrameAnimation) Update(elapsed time.Duration) (done bool) {
+	a.Animation.Update(elapsed)
+	index := int(a.Elapsed()/a.FrameLength) % len(a.Sequence)
+	a.Current = a.Sequence[index]
+	done = false
+	if a.HasCallback() && index == len(a.Sequence)-1 {
+		a.Callback()
+		a.SetCallback(nil)
+		done = true
+	}
+	return
+}
+
+func (a *FrameAnimation) OffsetFrame(offset int) int {
+	index := int(a.Elapsed()/a.FrameLength) % len(a.Sequence)
+	return a.Sequence[(index+offset)%len(a.Sequence)]
+}
+
+func (a *FrameAnimation) SetSequence(seq []int) {
 	a.Sequence = seq
 	a.Current = a.Sequence[0]
-	a.accumulated = time.Duration(0)
+	a.Animation.Reset()
+}
+
+type ContinuousFunc func(elapsed time.Duration) float32
+
+type ContinuousAnimation struct {
+	*Animation
+	function ContinuousFunc
+}
+
+func NewContinuousAnimation(f ContinuousFunc) *ContinuousAnimation {
+	return &ContinuousAnimation{
+		Animation: NewAnimation(),
+		function:  f,
+	}
+}
+
+func (a *ContinuousAnimation) Value() float32 {
+	return a.function(a.Elapsed())
+}
+
+func SineDecayFunc(duration time.Duration, amplitude, frequency, decay float32) ContinuousFunc {
+	var interval = float64(frequency * 2.0 * math.Pi)
+	return func(elapsed time.Duration) float32 {
+		if elapsed > duration {
+			return 0.0
+		}
+		decayAmount := 1.0 - float32(elapsed)/float32(duration)*decay
+		return float32(math.Sin(elapsed.Seconds()*interval)) * amplitude * decayAmount
+	}
 }
