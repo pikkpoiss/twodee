@@ -20,19 +20,21 @@ import (
 )
 
 type SpritesheetFrame struct {
-	Frame FrameConfig
+	Frame  FrameConfig
+	Width  float32 // In units
+	Height float32 // In units
 }
 
 type SpritesheetFrameConfig struct {
-	sourceW float32
-	sourceH float32
+	sourceW          float32
+	sourceH          float32
 	textureX         float32
 	textureY         float32
 	textureW         float32
 	textureH         float32
 	textureOriginalW float32
 	textureOriginalH float32
-	pxPerUnit float32
+	pxPerUnit        float32
 }
 
 func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
@@ -57,6 +59,8 @@ func (c SpritesheetFrameConfig) ToSpritesheetFrame() *SpritesheetFrame {
 			PointAdjustment:   ptAdj,
 			TextureAdjustment: texAdj,
 		},
+		Width:  c.sourceW / c.pxPerUnit,
+		Height: c.sourceH / c.pxPerUnit,
 	}
 }
 
