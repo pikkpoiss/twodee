@@ -20,16 +20,24 @@ import (
 
 type EventHandler struct {
 	Events chan Event
+	window *glfw.Window
 }
 
 func NewEventHandler(w *glfw.Window) (e *EventHandler) {
 	e = &EventHandler{
 		Events: make(chan Event, 100),
+		window: w,
 	}
+	// See http://www.glfw.org/docs/latest/input.html#input_keyboard
+	w.SetInputMode(glfw.StickyKeysMode, 1)
 	w.SetCursorPosCallback(e.onMouseMove)
 	w.SetKeyCallback(e.onKey)
 	w.SetMouseButtonCallback(e.onMouseButton)
 	return
+}
+
+func (e *EventHandler) GetKey(code KeyCode) Action {
+	return Action(e.window.GetKey(glfw.Key(code)))
 }
 
 func (e *EventHandler) Poll() {
