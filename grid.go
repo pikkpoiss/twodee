@@ -113,3 +113,31 @@ func (g *Grid) FixMove(bounds mgl32.Vec4, move mgl32.Vec2, sizex, sizey float32)
 func (g *Grid) GridAligned(x float32, sizex float32) float32 {
 	return sizex * float32(int32((x/sizex)+0.5))
 }
+
+func (g *Grid) CanSee(from, to mgl32.Vec2, sizex, sizey float32) bool {
+	var (
+		minx  = int32(from[0] / sizex)
+		maxx  = int32(from[1] / sizey)
+		miny  = int32(to[0] / sizex)
+		maxy  = int32(to[1] / sizey)
+		slope = float32(maxy-miny) / float32(maxx-minx)
+		c     = float32(miny) - (slope * float32(minx))
+		x     int32
+		y     int32
+	)
+	for x = minx; x <= maxx; x++ {
+		y = int32(slope*float32(x) + c)
+		if g.Get(x, y) {
+			// Something blocks the way
+			return false
+		}
+	}
+	for y = miny; y <= maxy; y++ {
+		x = int32((float32(y) - c) / slope)
+		if g.Get(x, y) {
+			// Something blocks the way
+			return false
+		}
+	}
+	return true
+}
