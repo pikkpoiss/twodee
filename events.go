@@ -132,6 +132,16 @@ const (
 	KeyX      = KeyCode(glfw.KeyX)
 	KeyY      = KeyCode(glfw.KeyY)
 	KeyZ      = KeyCode(glfw.KeyZ)
+	Key1      = KeyCode(glfw.Key1)
+	Key2      = KeyCode(glfw.Key2)
+	Key3      = KeyCode(glfw.Key3)
+	Key4      = KeyCode(glfw.Key4)
+	Key5      = KeyCode(glfw.Key5)
+	Key6      = KeyCode(glfw.Key6)
+	Key7      = KeyCode(glfw.Key7)
+	Key8      = KeyCode(glfw.Key8)
+	Key9      = KeyCode(glfw.Key9)
+	Key0      = KeyCode(glfw.Key0)
 )
 
 type Action int
