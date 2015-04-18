@@ -40,6 +40,18 @@ func (e *EventHandler) GetKey(code KeyCode) Action {
 	return Action(e.window.GetKey(glfw.Key(code)))
 }
 
+func (e *EventHandler) JoystickPresent(joystick Joystick) bool {
+	return glfw.JoystickPresent(glfw.Joystick(joystick))
+}
+
+func (e *EventHandler) JoystickAxes(joystick Joystick) []float32 {
+	return glfw.GetJoystickAxes(glfw.Joystick(joystick))
+}
+
+func (e *EventHandler) JoystickButtons(joystick Joystick) []byte {
+	return glfw.GetJoystickButtons(glfw.Joystick(joystick))
+}
+
 func (e *EventHandler) Poll() {
 	glfw.PollEvents()
 }
@@ -142,6 +154,12 @@ const (
 	Key8      = KeyCode(glfw.Key8)
 	Key9      = KeyCode(glfw.Key9)
 	Key0      = KeyCode(glfw.Key0)
+)
+
+type Joystick int
+
+const (
+	Joystick1 = Joystick(glfw.Joystick1)
 )
 
 type Action int
