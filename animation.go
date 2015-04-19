@@ -131,13 +131,16 @@ func (a *ContinuousAnimation) Value() float32 {
 	return a.function(a.Elapsed())
 }
 
-func SineDecayFunc(duration time.Duration, amplitude, frequency, decay float32) ContinuousFunc {
+func SineDecayFunc(duration time.Duration, amplitude, frequency, decay float32, callback AnimationCallback) ContinuousFunc {
 	var interval = float64(frequency * 2.0 * math.Pi)
 	return func(elapsed time.Duration) float32 {
 		if elapsed > duration {
+			if callback != nil {
+				callback()
+			}
 			return 0.0
 		}
 		decayAmount := 1.0 - float32(elapsed)/float32(duration)*decay
-		return float32(math.Sin(elapsed.Seconds()*interval)) * amplitude * decayAmount
+		return float32(math.Sin(elapsed.Seconds()*interval/duration.Seconds())) * amplitude * decayAmount
 	}
 }
