@@ -114,6 +114,10 @@ func (g *Grid) GridAligned(x float32, sizex float32) float32 {
 	return sizex * float32(int32((x/sizex)+0.5))
 }
 
+func (g *Grid) GridPosition(v float32, sizev float32) int32 {
+	return int32(v / sizev)
+}
+
 func (g *Grid) CanSee(from, to mgl32.Vec2, sizex, sizey float32) bool {
 	var (
 		minx  = int32(from[0] / sizex)
