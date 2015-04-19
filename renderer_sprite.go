@@ -54,7 +54,8 @@ void main() {
   //if (color.a < 0.1) {
   //  discard;
   //}
-  if (v_BaseColor.a > 0.1 && color.a < 0.1) {
+  // This is really hacky
+  if (v_BaseColor.a > 0.1 && color.r == 1.0 && color.g == 100.0/255.0 && color.b == 1.0) {
     v_FragData = v_BaseColor;
   } else {
     v_FragData = color;
