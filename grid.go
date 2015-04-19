@@ -118,6 +118,10 @@ func (g *Grid) GridPosition(v float32, sizev float32) int32 {
 	return int32(v / sizev)
 }
 
+func (g *Grid) InversePosition(i int32, sizei float32) float32 {
+	return float32(i) * sizei
+}
+
 func (g *Grid) CanSee(from, to mgl32.Vec2, sizex, sizey float32) bool {
 	var (
 		minx  = int32(from[0] / sizex)
