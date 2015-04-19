@@ -183,11 +183,10 @@ func LoadBatch(tiles []TexturedTile, metadata TileMetadata) (b *Batch, err error
 		return
 	}
 	for i := 0; i < len(tiles); i++ {
-		if tiles[i] == nil {
-			continue
+		if tiles[i] != nil {
+			v := triangles(tiles[i], float32(metadata.PxPerUnit), float32(texture.Width), float32(texture.Height))
+			copy(vertices[step*i:], v[:])
 		}
-		v := triangles(tiles[i], float32(metadata.PxPerUnit), float32(texture.Width), float32(texture.Height))
-		copy(vertices[step*i:], v[:])
 	}
 	if vbo, err = CreateVBO(len(vertices)*4, vertices, gl.STATIC_DRAW); err != nil {
 		return
