@@ -82,7 +82,7 @@ func newStep(x, y, g, p int32, parent *step) *step {
 
 // Pretty much a direct A* implementation from
 // http://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.html
-func (g *Grid) GetPath(x1, y1, x2, y2 int32) (out []Point, err error) {
+func (g *Grid) GetPath(x1, y1, x2, y2 int32) (out []GridPoint, err error) {
 	var (
 		open     = &pathQueue{}
 		closed   = pathSet{}
@@ -177,20 +177,24 @@ func heuristic(x1, y1, x2, y2 int32) int32 {
 	return dx + dy
 }
 
-func getPoints(dest *step) []Point {
+type GridPoint struct {
+	X, Y int32
+}
+
+func getPoints(dest *step) []GridPoint {
 	var (
 		count  = 1
 		marker = dest
-		out    []Point
+		out    []GridPoint
 	)
 	for marker.parent != nil {
 		count += 1
 		marker = marker.parent
 	}
-	out = make([]Point, count)
+	out = make([]GridPoint, count)
 	marker = dest
 	for i := count - 1; i > -1; i-- {
-		out[i] = Pt(float32(marker.x), float32(marker.y))
+		out[i] = GridPoint{marker.x, marker.y}
 		marker = marker.parent
 	}
 	return out
