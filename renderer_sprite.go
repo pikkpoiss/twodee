@@ -28,6 +28,7 @@ type SpriteRenderer struct {
 	scaleLoc          uint32
 	pointAdjLoc       uint32
 	textureAdjLoc     uint32
+	colorLoc          uint32
 	textureUnitLoc    int32
 	projectionLoc     int32
 	instanceVBO       uint32
@@ -35,6 +36,7 @@ type SpriteRenderer struct {
 	offAttrX          unsafe.Pointer
 	offAttrRotationX  unsafe.Pointer
 	offAttrScaleX     unsafe.Pointer
+	offAttrColor      unsafe.Pointer
 	offAttrPointAdj   int
 	offAttrTextureAdj int
 }
@@ -44,6 +46,7 @@ precision mediump float;
 
 uniform sampler2D TextureUnit;
 in vec2 v_TextureCoordinates;
+in vec4 v_BaseColor;
 out vec4 v_FragData;
 
 void main() {
@@ -51,7 +54,11 @@ void main() {
   //if (color.a < 0.1) {
   //  discard;
   //}
-  v_FragData = color;
+  if (v_BaseColor.a > 0.1 && color.a < 0.1) {
+    v_FragData = v_BaseColor;
+  } else {
+    v_FragData = color;
+  }
 }` + "\x00"
 
 const SPRITE_VERTEX = `#version 150
@@ -59,12 +66,14 @@ const SPRITE_VERTEX = `#version 150
 in vec3 v_Translation;
 in vec3 v_Rotation;
 in vec3 v_Scale;
+in vec4 v_Color;
 
 in mat4 m_PointAdjustment;
 in mat4 m_TextureAdjustment;
 
 uniform mat4 m_ProjectionMatrix;
 
+out vec4 v_BaseColor;
 out vec2 v_TextureCoordinates;
 
 const vec2 Points[] = vec2[6](
@@ -110,6 +119,7 @@ void main() {
     vec4(   0.0,     0.0, 0.0, 1.0)
   );
 
+  v_BaseColor = v_Color;
   v_TextureCoordinates = (vec4(TexturePoints[gl_VertexID], 0.0, 1.0) *
      m_TextureAdjustment).xy;
 
@@ -143,10 +153,12 @@ func NewSpriteRenderer(camera *Camera) (tr *SpriteRenderer, err error) {
 		scaleLoc:          uint32(gl.GetAttribLocation(program, gl.Str("v_Scale\x00"))),
 		pointAdjLoc:       uint32(gl.GetAttribLocation(program, gl.Str("m_PointAdjustment\x00"))),
 		textureAdjLoc:     uint32(gl.GetAttribLocation(program, gl.Str("m_TextureAdjustment\x00"))),
+		colorLoc:          uint32(gl.GetAttribLocation(program, gl.Str("v_Color\x00"))),
 		textureUnitLoc:    gl.GetUniformLocation(program, gl.Str("TextureUnit\x00")),
 		projectionLoc:     gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
 		offAttrX:          gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.X))),
 		offAttrRotationX:  gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.RotationX))),
+		offAttrColor:          gl.PtrOffset(int(unsafe.Offsetof(sprite.Color))),
 		offAttrScaleX:     gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.ScaleX))),
 		offAttrPointAdj:   frameOffset + int(unsafe.Offsetof(sprite.Frame.PointAdjustment)),
 		offAttrTextureAdj: frameOffset + int(unsafe.Offsetof(sprite.Frame.TextureAdjustment)),
@@ -201,6 +213,10 @@ func (tr *SpriteRenderer) Draw(instances []SpriteConfig) error {
 	gl.VertexAttribPointer(tr.scaleLoc, 3, gl.FLOAT, false, stride, tr.offAttrScaleX)
 	gl.VertexAttribDivisor(tr.scaleLoc, 1)
 
+	gl.EnableVertexAttribArray(tr.colorLoc)
+	gl.VertexAttribPointer(tr.colorLoc, 4, gl.FLOAT, false, stride, tr.offAttrColor)
+	gl.VertexAttribDivisor(tr.colorLoc, 1)
+
 	for i = 0; i < 4; i++ {
 		byteoffset = int(i * 4 * floatSize)
 		offset = gl.PtrOffset(tr.offAttrPointAdj + byteoffset)
@@ -223,6 +239,7 @@ func (tr *SpriteRenderer) Draw(instances []SpriteConfig) error {
 	gl.VertexAttribDivisor(tr.translationLoc, 0)
 	gl.VertexAttribDivisor(tr.rotationLoc, 0)
 	gl.VertexAttribDivisor(tr.scaleLoc, 0)
+	gl.VertexAttribDivisor(tr.colorLoc, 0)
 	for i = 0; i < 4; i++ {
 		gl.VertexAttribDivisor(tr.pointAdjLoc+i, 0)
 		gl.VertexAttribDivisor(tr.textureAdjLoc+i, 0)

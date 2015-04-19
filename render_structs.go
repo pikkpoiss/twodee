@@ -44,6 +44,7 @@ type FrameConfig struct {
 }
 
 type SpriteConfig struct {
-	View ModelViewConfig
+	View  ModelViewConfig
 	Frame FrameConfig
+	Color mgl32.Vec4
 }
