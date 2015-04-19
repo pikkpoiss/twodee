@@ -15,9 +15,10 @@
 package twodee
 
 import (
-	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/color"
+
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Grid struct {
@@ -125,8 +126,8 @@ func (g *Grid) InversePosition(i int32, sizei float32) float32 {
 func (g *Grid) CanSee(from, to mgl32.Vec2, sizex, sizey float32) bool {
 	var (
 		minx  = int32(from[0] / sizex)
-		maxx  = int32(from[1] / sizey)
-		miny  = int32(to[0] / sizex)
+		maxx  = int32(to[0] / sizex)
+		miny  = int32(from[1] / sizey)
 		maxy  = int32(to[1] / sizey)
 		slope = float32(maxy-miny) / float32(maxx-minx)
 		c     = float32(miny) - (slope * float32(minx))
