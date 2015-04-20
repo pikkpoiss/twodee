@@ -60,6 +60,10 @@ func Rect(x1, y1, x2, y2 float32) Rectangle {
 	}
 }
 
+func (r Rectangle) Midpoint() Point {
+	return Pt((r.Max.X + r.Min.X) / 2.0, (r.Max.Y + r.Min.Y) / 2.0)
+}
+
 func (r Rectangle) Overlaps(s Rectangle) bool {
 	return s.Min.X < r.Max.X && s.Max.X > r.Min.X &&
 		s.Min.Y < r.Max.Y && s.Max.Y > r.Min.Y
