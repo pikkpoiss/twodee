@@ -128,7 +128,7 @@ Install SDL stuff:
 
 ### Software Dependencies
 
-#### Go 1.2.1
+#### Go 1.4.1
   * http://golang.org
   * Download Windows MSI
   * Install to `C:\Go\`
@@ -231,10 +231,12 @@ Install SDL stuff:
 
 ### Go Library Dependencies
 
-    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/go-gl/gl
+    go get -u github.com/go-gl/gl/v3.3-core/gl
+    go get -u github.com/go-gl/glfw/v3.1/glfw
+    go get -u github.com/go-gl/mathgl/mgl32
+    go get -u github.com/robertkrimen/otto
     CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/go-gl/glfw3
 
-    go get github.com/Agon/googlmath
     go get code.google.com/p/freetype-go/freetype
 
     CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get github.com/kurrik/Go-SDL/sdl
