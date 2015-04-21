@@ -16,10 +16,6 @@ package twodee
 
 type GameEventType int
 
-type GETyper interface {
-	GEType() GameEventType
-}
-
 type BasicGameEvent struct {
 	geType GameEventType
 }

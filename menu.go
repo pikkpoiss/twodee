@@ -18,16 +18,6 @@ import (
 	"fmt"
 )
 
-type MenuItem interface {
-	Highlighted() bool
-	Label() string
-	setHighlighted(val bool)
-	Parent() MenuItem
-	setParent(item MenuItem)
-	Active() bool
-	setActive(val bool)
-}
-
 type baseMenuItem struct {
 	label       string
 	highlighted bool

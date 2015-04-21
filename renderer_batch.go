@@ -140,11 +140,6 @@ type Batch struct {
 	textureOffset Point
 }
 
-type TexturedTile interface {
-	ScaledBounds(ratio float32) (x, y, w, h float32)
-	ScaledTextureBounds(rx float32, ry float32) (x, y, w, h float32)
-}
-
 func triangles(t TexturedTile, ratio, texw, texh float32) [30]float32 {
 	var (
 		x, y, w, h     = t.ScaledBounds(ratio)

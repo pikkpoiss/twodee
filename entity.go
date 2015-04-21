@@ -18,16 +18,6 @@ import (
 	"time"
 )
 
-type Entity interface {
-	Pos() Point
-	Bounds() Rectangle
-	Frame() int
-	Rotation() float32
-	MoveTo(Point)
-	MoveToCoords(x, y float32)
-	Update(elapsed time.Duration)
-}
-
 type BaseEntity struct {
 	pos      Point
 	halfW    float32

@@ -91,8 +91,6 @@ func (e *EventHandler) enqueue(event Event) {
 	}
 }
 
-type Event interface{}
-
 type MouseMoveEvent struct {
 	X float32
 	Y float32

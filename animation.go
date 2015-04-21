@@ -30,13 +30,6 @@ const (
 
 type AnimationCallback func()
 
-type Animating interface {
-	Update(elapsed time.Duration) (done bool)
-	SetCallback(callback AnimationCallback)
-	HasCallback() bool
-	Reset()
-}
-
 type Animation struct {
 	elapsed  time.Duration
 	callback AnimationCallback
