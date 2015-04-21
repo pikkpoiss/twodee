@@ -60,9 +60,9 @@ func (a *Animation) Reset() {
 }
 
 func (a *Animation) SetCallback(callback AnimationCallback) {
-	//if a.callback != nil {
-	//	a.callback()
-	//}
+	if a.callback != nil {
+		a.callback()
+	}
 	a.callback = callback
 }
 
