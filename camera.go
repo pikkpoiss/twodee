@@ -38,7 +38,13 @@ func (c *Camera) SetScreenBounds(bounds Rectangle) {
 
 func (c *Camera) SetWorldBounds(bounds Rectangle) (err error) {
 	c.WorldBounds = bounds
-	c.Projection = mgl32.Ortho(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
+	c.Projection = mgl32.Ortho(
+		bounds.Min.X(),
+		bounds.Max.X(),
+		bounds.Min.Y(),
+		bounds.Max.Y(),
+		1,
+		0)
 	c.Inverse, err = GetInverseMatrix(c.Projection)
 	return
 }
@@ -46,8 +52,8 @@ func (c *Camera) SetWorldBounds(bounds Rectangle) (err error) {
 func (c *Camera) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
 	// http://stackoverflow.com/questions/7692988/
 	var (
-		halfw = c.ScreenBounds.Max.X / 2.0
-		halfh = c.ScreenBounds.Max.Y / 2.0
+		halfw = c.ScreenBounds.Max.X() / 2.0
+		halfh = c.ScreenBounds.Max.Y() / 2.0
 		xpct  = (x - halfw) / halfw
 		ypct  = (halfh - y) / halfh
 	)
@@ -56,8 +62,8 @@ func (c *Camera) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
 
 func (c *Camera) WorldToScreenCoords(x, y float32) (sx, sy float32) {
 	var pctx, pcty = Project(c.Projection, x, y)
-	var halfw = c.ScreenBounds.Max.X / 2.0
-	var halfh = c.ScreenBounds.Max.Y / 2.0
+	var halfw = c.ScreenBounds.Max.X() / 2.0
+	var halfh = c.ScreenBounds.Max.Y() / 2.0
 	sx = pctx*halfw + halfw
 	sy = pcty*halfh + halfh
 	return

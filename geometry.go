@@ -15,37 +15,31 @@
 package twodee
 
 import (
-	"math"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Point struct {
-	X float32
-	Y float32
+	mgl32.Vec2
 }
 
 func Pt(x, y float32) Point {
-	return Point{x, y}
+	return Point{mgl32.Vec2{x, y}}
 }
 
 func (p Point) Scale(a float32) Point {
-	return Point{p.X * a, p.Y * a}
+	return Point{p.Vec2.Mul(a)}
 }
 
 func (p Point) Add(pt Point) Point {
-	return Point{p.X + pt.X, p.Y + pt.Y}
+	return Point{p.Vec2.Add(pt.Vec2)}
 }
 
-// Subtracts pt from p.
 func (p Point) Sub(pt Point) Point {
-	return Point{p.X - pt.X, p.Y - pt.Y}
+	return Point{p.Vec2.Sub(pt.Vec2)}
 }
 
 func (p Point) DistanceTo(pt Point) float32 {
-	var (
-		dx = float64(pt.X - p.X)
-		dy = float64(pt.Y - p.Y)
-	)
-	return float32(math.Sqrt(dx*dx + dy*dy))
+	return p.Sub(pt).Len()
 }
 
 type Rectangle struct {
@@ -61,37 +55,37 @@ func Rect(x1, y1, x2, y2 float32) Rectangle {
 }
 
 func (r Rectangle) Midpoint() Point {
-	return Pt((r.Max.X + r.Min.X) / 2.0, (r.Max.Y + r.Min.Y) / 2.0)
+	return Pt((r.Max.X()+r.Min.X())/2.0, (r.Max.Y()+r.Min.Y())/2.0)
 }
 
 func (r Rectangle) Overlaps(s Rectangle) bool {
-	return s.Min.X < r.Max.X && s.Max.X > r.Min.X &&
-		s.Min.Y < r.Max.Y && s.Max.Y > r.Min.Y
+	return s.Min.X() < r.Max.X() && s.Max.X() > r.Min.X() &&
+		s.Min.Y() < r.Max.Y() && s.Max.Y() > r.Min.Y()
 }
 
 func (r Rectangle) ContainsPoint(a Point) bool {
-	return r.Min.X <= a.X && r.Max.X >= a.X &&
-		r.Min.Y <= a.Y && r.Max.Y >= a.Y
+	return r.Min.X() <= a.X() && r.Max.X() >= a.X() &&
+		r.Min.Y() <= a.Y() && r.Max.Y() >= a.Y()
 }
 
 // Returns true if r is intersection by the line a, b.
 func (r Rectangle) IntersectedBy(a, b Point) bool {
-	if a.X < r.Min.X && b.X < r.Min.X {
+	if a.X() < r.Min.X() && b.X() < r.Min.X() {
 		return false
-	} else if a.X > r.Max.X && b.X > r.Max.X {
+	} else if a.X() > r.Max.X() && b.X() > r.Max.X() {
 		return false
-	} else if a.Y < r.Min.Y && b.Y < r.Min.Y {
+	} else if a.Y() < r.Min.Y() && b.Y() < r.Min.Y() {
 		return false
-	} else if a.Y > r.Max.Y && b.Y > r.Max.Y {
+	} else if a.Y() > r.Max.Y() && b.Y() > r.Max.Y() {
 		return false
 	} else {
 		// The line is neither totally to the left, right, above, or below
 		// the rectangle. There may be a collision.
 		corners := []Point{
-			Pt(r.Min.X, r.Min.Y),
-			Pt(r.Min.Y, r.Max.Y),
-			Pt(r.Max.X, r.Min.Y),
-			Pt(r.Max.X, r.Max.Y),
+			Pt(r.Min.X(), r.Min.Y()),
+			Pt(r.Min.Y(), r.Max.Y()),
+			Pt(r.Max.X(), r.Min.Y()),
+			Pt(r.Max.X(), r.Max.Y()),
 		}
 		eq := GetVectorDeterminantEquation(a, b)
 		lastEvalSide := eq(corners[0]) > 0
@@ -107,6 +101,6 @@ func (r Rectangle) IntersectedBy(a, b Point) bool {
 
 func GetVectorDeterminantEquation(a, b Point) func(Point) float32 {
 	return func(p Point) float32 {
-		return (p.X-a.X)*(b.Y-a.Y) - (p.Y-a.Y)*(b.X-a.X)
+		return (p.X()-a.X())*(b.Y()-a.Y()) - (p.Y()-a.Y())*(b.X()-a.X())
 	}
 }

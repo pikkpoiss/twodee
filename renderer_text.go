@@ -104,8 +104,8 @@ func NewTextRenderer(camera *Camera) (tr *TextRenderer, err error) {
 		TransLoc:       gl.GetUniformLocation(program, gl.Str("v_Trans\x00")),
 		ScaleLoc:       gl.GetUniformLocation(program, gl.Str("v_Scale\x00")),
 		ProjectionLoc:  gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
-		Width:          camera.ScreenBounds.Max.X - camera.ScreenBounds.Min.X,
-		Height:         camera.ScreenBounds.Max.Y - camera.ScreenBounds.Min.Y,
+		Width:          camera.ScreenBounds.Max.X() - camera.ScreenBounds.Min.X(),
+		Height:         camera.ScreenBounds.Max.Y() - camera.ScreenBounds.Min.Y(),
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)

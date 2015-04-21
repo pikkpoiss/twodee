@@ -119,7 +119,7 @@ func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	gl.VertexAttribPointer(r.TextureLoc, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
 	m := mgl32.Translate3D(x, y, 0.0).Mul4(mgl32.HomogRotate3DZ(rot))
 	gl.UniformMatrix4fv(r.ModelViewLoc, 1, false, &m[0])
-	gl.Uniform2f(r.TexOffsetLoc, batch.textureOffset.X, batch.textureOffset.Y)
+	gl.Uniform2f(r.TexOffsetLoc, batch.textureOffset.X(), batch.textureOffset.Y())
 	gl.DrawArrays(gl.TRIANGLES, 0, int32(batch.Count))
 	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	return nil

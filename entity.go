@@ -47,7 +47,12 @@ func NewBaseEntity(x, y, w, h, r float32, frame int) *BaseEntity {
 }
 
 func (e *BaseEntity) Bounds() Rectangle {
-	return Rect(e.pos.X-e.halfW, e.pos.Y-e.halfH, e.pos.X+e.halfW, e.pos.Y+e.halfH)
+	return Rect(
+		e.pos.X()-e.halfW,
+		e.pos.Y()-e.halfH,
+		e.pos.X()+e.halfW,
+		e.pos.Y()+e.halfH,
+	)
 }
 
 func (e *BaseEntity) Pos() Point {
