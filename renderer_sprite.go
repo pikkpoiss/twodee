@@ -159,7 +159,7 @@ func NewSpriteRenderer(camera *Camera) (tr *SpriteRenderer, err error) {
 		projectionLoc:     gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
 		offAttrX:          gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.X))),
 		offAttrRotationX:  gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.RotationX))),
-		offAttrColor:          gl.PtrOffset(int(unsafe.Offsetof(sprite.Color))),
+		offAttrColor:      gl.PtrOffset(int(unsafe.Offsetof(sprite.Color))),
 		offAttrScaleX:     gl.PtrOffset(viewOffset + int(unsafe.Offsetof(sprite.View.ScaleX))),
 		offAttrPointAdj:   frameOffset + int(unsafe.Offsetof(sprite.Frame.PointAdjustment)),
 		offAttrTextureAdj: frameOffset + int(unsafe.Offsetof(sprite.Frame.TextureAdjustment)),

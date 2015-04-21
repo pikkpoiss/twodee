@@ -15,10 +15,9 @@
 package twodee
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/color"
-
-	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Grid struct {

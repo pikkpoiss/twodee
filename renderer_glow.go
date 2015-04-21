@@ -155,7 +155,7 @@ func (r *GlowRenderer) initFramebuffer(w, h int) (fb uint32, tex uint32, err err
 	if err = r.GetError(); err != nil {
 		return
 	}
-	buffers := []uint32{ gl.COLOR_ATTACHMENT0 }
+	buffers := []uint32{gl.COLOR_ATTACHMENT0}
 	gl.DrawBuffers(1, &buffers[0])
 
 	var rb uint32

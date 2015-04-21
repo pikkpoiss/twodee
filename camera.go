@@ -19,10 +19,10 @@ import (
 )
 
 type Camera struct {
-	WorldBounds Rectangle
+	WorldBounds  Rectangle
 	ScreenBounds Rectangle
-	Projection mgl32.Mat4
-	Inverse mgl32.Mat4
+	Projection   mgl32.Mat4
+	Inverse      mgl32.Mat4
 }
 
 func NewCamera(world Rectangle, screen Rectangle) (c *Camera, err error) {
