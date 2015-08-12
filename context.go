@@ -21,7 +21,7 @@ import (
 )
 
 type Context struct {
-	Window        *glfw.Window
+	window        *glfw.Window
 	Events        *EventHandler
 	OpenGLVersion string
 	ShaderVersion string
@@ -75,12 +75,16 @@ func (c *Context) SetFullscreen(val bool) {
 		return
 	}
 	c.fullscreen = val
-	if c.Window != nil {
-		win := c.Window
-		c.Window = nil
+	if c.window != nil {
+		win := c.window
+		c.window = nil
 		win.Destroy()
 		c.CreateWindow(c.w, c.h, c.name)
 	}
+}
+
+func (c *Context) SetSwapInterval(val int) {
+	glfw.SwapInterval(val)
 }
 
 func (c *Context) Fullscreen() bool {
@@ -95,13 +99,13 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 	if c.fullscreen == true {
 		monitor = glfw.GetPrimaryMonitor()
 	}
-	if c.Window, err = glfw.CreateWindow(c.w, c.h, c.name, monitor, nil); err != nil {
+	if c.window, err = glfw.CreateWindow(c.w, c.h, c.name, monitor, nil); err != nil {
 		return
 	}
 	if c.cursor == false {
-		c.Window.SetInputMode(glfw.CursorMode, glfw.CursorHidden)
+		c.window.SetInputMode(glfw.CursorMode, glfw.CursorHidden)
 	}
-	c.Window.MakeContextCurrent()
+	c.window.MakeContextCurrent()
 	gl.Init()
 	if e := gl.GetError(); e != 0 {
 		if e == gl.INVALID_ENUM {
@@ -117,21 +121,29 @@ func (c *Context) CreateWindow(w, h int, name string) (err error) {
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	gl.ClearColor(0.0, 0.0, 0.0, 1.0)
 	gl.Disable(gl.CULL_FACE)
-	glfw.SwapInterval(0)
+	glfw.SwapInterval(1)
 	if c.VAO, err = CreateVAO(); err != nil {
 		return
 	}
 	gl.BindVertexArray(c.VAO)
-	c.Events = NewEventHandler(c.Window)
+	c.Events = NewEventHandler(c.window)
 	return
+}
+
+func (c *Context) ShouldClose() bool {
+	return c.window.ShouldClose()
+}
+
+func (c *Context) SwapBuffers() {
+	c.window.SwapBuffers()
 }
 
 func (c *Context) Delete() {
 	cleanupSound()
 	gl.BindVertexArray(0)
 	gl.DeleteVertexArrays(1, &c.VAO)
-	if c.Window != nil {
-		c.Window.Destroy()
+	if c.window != nil {
+		c.window.Destroy()
 	}
 	glfw.Terminate()
 }
