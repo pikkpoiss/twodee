@@ -19,9 +19,8 @@ so it changes from time to time.
 
 ## Requirements
 
- - Go 1.4.2 or later (From golang.org)
- - Mercurial (`brew install hg` or equivalent)
- - Clang (Available with Xcode on OSX)
+ - [Windows](docs/requirements_win.md)
+ - [OSX](docs/requirements_osx.md)
 
 ## Setup
 
@@ -38,73 +37,6 @@ Golang wrapper:
 
 
 # The following is out of date and will be removed shortly.
-
-##Building (OSX)
-
-Make sure Clang is your default compiler.
-
-    export CC=clang
-    export CXX=clang++
-
-Get the environment set up:
-
-    brew install go
-    brew install hg
-    brew install glew
-    // Set up glfw3; see https://github.com/go-gl/glfw3.
-    brew tap homebrew/versions
-    brew install --build-bottle --static glfw3
-    // Set up SDL.
-    brew install sdl
-    brew install libvorbis libogg sdl_mixer
-    brew install sdl_image
-
-Install go library deps:
-
-    ./setup.sh
-
-##Troubleshooting (OSX)
-
-
-### Installing go-gl/gl.
-Before Go 1.2, you may need to run with:
-
-    CC=gcc CGO_CFLAGS=-ftrack-macro-expansion=0 go get github.com/go-gl/gl
-
-See http://stackoverflow.com/questions/16412644/using-opengl-from-go for background.
-
-### Installing glfw
-Maybe you need to install glfw's shared lib (TODO: see if there's a simple brew for this):
-
-    git clone https://github.com/glfw/glfw
-    mkdir glfw/build
-    cd glfw/build
-    cmake -DBUILD_SHARED_LIBS=1 ..
-    make
-    sudo make install
-
-### Installing go-gl/glfw3
-Might need to specify CFLAGS and LDFLAGS for deps:
-
-    CGO_CFLAGS="-I/usr/include" \
-    CGO_LDFLAGS="`pkg-config --libs glu x11 glfw3 xrandr xxf86vm xi xcursor` -lm" \
-    go get github.com/go-gl/glfw3
-
-### Running programs
-Sometimes installed library paths are not in LD_LIBRARY_PATH. Try:
-
-    LD_LIBRARY_PATH=/usr/local/lib go run *.go
-
-### Issue with getting glfw3
-If the go get github.com/go-gl/glfw3 command is throwing an error then you can go to your /usr/local/lib directory and create a symbolic link:
-
-    ln -s libglfw.dylib libglfw3.dylib
-
-### Installing kurrik/Go-SDL/sdl and kurrik/Go-SDL/mixer
-
-    brew install gcc47
-    CC=gcc-4.7 go get -u -v github.com/kurrik/Go-SDL/sdl
-    CC=gcc-4.7 go get -u -v github.com/kurrik/Go-SDL/mixer
 
 ## Building (Ubuntu Trusty)
 
