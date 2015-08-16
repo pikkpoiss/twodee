@@ -1,24 +1,6 @@
 #!/usr/bin/env bash
 
-function red {
-  echo -e "\033[1;31m$1\033[0m $2"
-}
-
-function green {
-  echo -e "\033[1;32m$1\033[0m $2"
-}
-
-function yellow {
-  echo -e "\033[1;33m$1\033[0m $2"
-}
-
-function abort_if_error {
-  RETVAL=$?
-  if [ $RETVAL -ne 0 ]; then
-    red "ERROR: $1"
-    exit 1
-  fi
-}
+. `git rev-parse --show-toplevel`/scripts/common.sh
 
 OLD_TAG=`git describe --tags --abbrev=0`
 CURRENT_TAG=`git describe --tags`
