@@ -84,6 +84,22 @@ else
   cd ..
 fi
 
+if file_exists $PREFIX/lib/libSDL2_mixer.a; then
+  green "EXISTS" "SDL2 mixer"
+else
+  yellow "BUILD" "SDL2 mixer"
+  rm -rf SDL2_mixer-2.0.0
+  unzip SDL2_mixer-2.0.0.zip
+  cd SDL2_mixer-2.0.0
+  ./configure \
+    --prefix=$PREFIX \
+    --with-sdl-prefix=$PREFIX \
+    --disable-music-ogg-shared \
+    --disable-shared
+  make
+  make install
+  cd ..
+fi
 
 ##### Go libraries #############################################################
 
