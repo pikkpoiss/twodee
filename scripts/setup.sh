@@ -17,9 +17,6 @@ green "INIT" "Prefix is $PREFIX"
 if [ -n "$CLEAN" ]; then
   yellow "CLEAN" "Deleting the build path"
   rm -rf $BUILDROOT
-  yellow "CLEAN" "Deleting $GOPATH/src and $GOPATH/pkg"
-  rm -rf $GOPATH/src
-  rm -rf $GOPATH/pkg
 fi
 
 mkdir -p $BUILDROOT

@@ -16,7 +16,7 @@ package twodee
 
 import (
 	"fmt"
-	"github.com/go-gl/gl"
+	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
 type Renderer struct {
@@ -59,8 +59,8 @@ func (r *Renderer) WorldToScreenCoords(x, y float32) (sx, sy float32) {
 	var pctx, pcty = Project(r.projection, x, y)
 	var halfw = r.screenBounds.Max.X / 2.0
 	var halfh = r.screenBounds.Max.Y / 2.0
-	sx = pctx * halfw + halfw
-	sy = pcty * halfh + halfh
+	sx = pctx*halfw + halfw
+	sy = pcty*halfh + halfh
 	return
 }
 

@@ -16,8 +16,8 @@ package twodee
 
 import (
 	"fmt"
-	"github.com/kurrik/Go-SDL/mixer"
-	"github.com/kurrik/Go-SDL/sdl"
+	"github.com/scottferg/Go-SDL2/mixer"
+	"github.com/scottferg/Go-SDL2/sdl"
 )
 
 type SoundEffect struct {
