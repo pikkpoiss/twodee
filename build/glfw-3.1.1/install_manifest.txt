@@ -1,8 +1,0 @@
-/Users/kurrik/workspace/twodee/build/usr/include/GLFW/glfw3.h
-/Users/kurrik/workspace/twodee/build/usr/include/GLFW/glfw3native.h
-/Users/kurrik/workspace/twodee/build/usr/lib/cmake/glfw/glfw3Config.cmake
-/Users/kurrik/workspace/twodee/build/usr/lib/cmake/glfw/glfw3ConfigVersion.cmake
-/Users/kurrik/workspace/twodee/build/usr/lib/cmake/glfw/glfwTargets.cmake
-/Users/kurrik/workspace/twodee/build/usr/lib/cmake/glfw/glfwTargets-noconfig.cmake
-/Users/kurrik/workspace/twodee/build/usr/lib/pkgconfig/glfw3.pc
-/Users/kurrik/workspace/twodee/build/usr/lib/libglfw3.a

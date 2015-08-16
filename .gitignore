@@ -4,3 +4,6 @@
 
 # VIM tmp files
 *.swp
+
+# project-specific files
+build
