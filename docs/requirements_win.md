@@ -60,6 +60,13 @@ Contains pkg-config.
 Allows the bundling scripts to work.
 
  - Download http://sourceforge.net/projects/mingw-w64/files/External%20binary%20packages%20%28Win64%20hosted%29/make/
-  * Downloaded `make-3.82.90-20111115.zip`
-  * Extract `bin_amd64/*` to `C:\mingw\mingw32\bin`
+ - Downloaded `make-3.82.90-20111115.zip`
+ - Extract `bin_amd64/*` to `C:\mingw\mingw32\bin`
 
+## CMake 3.3.1
+
+Needed to configure some dependent libs.
+
+ - Project http://www.cmake.org/
+ - Download http://www.cmake.org/files/v3.3/cmake-3.3.1-win32-x86.exe
+ - Add CMake to system `PATH`
