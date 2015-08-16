@@ -10,7 +10,16 @@ export LDFLAGS="-L$PREFIX/lib"
 export CFLAGS="-I$PREFIX/include"
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 
-green "INIT" "Prefix is $PREFIX"
+if [ "$(uname)" == "Darwin" ]; then
+  PLATFORM="osx"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+  PLATFORM="nix"
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+  PLATFORM="win"
+  export CC="/c/mingw/mingw32/bin/gcc.exe"
+fi
+
+green "INIT" "Prefix is $PREFIX, Platform is $PLATFORM"
 
 ##### Folder setup #############################################################
 
@@ -33,6 +42,7 @@ else
   unzip glfw-3.1.1.zip
   cd glfw-3.1.1
   cmake \
+    -G "Unix Makefiles" \
     -DBUILD_SHARED_LIBS=OFF \
     -DCMAKE_INSTALL_PREFIX:PATH=$PREFIX \
     .
