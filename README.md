@@ -1,26 +1,43 @@
 #twodee
 
+A library for 2d games using OpenGL and Go.
 
-A library for doing 2d game stuff.  I'm not sure what format it will take,
-except that it will use OpenGL and be basically sprite based.
+Under heavy development, we have been using this for Ludum Dare competitions
+so it changes from time to time.
 
-My expectation is to use this for Ludum Dare competitions as I go.
+## Features
 
-## TODO
+ - Menus
+ - Sound
+ - Animations
+ - Fullscreen mode
+ - Keyboard / Mouse / Gamepad events
+ - Building on OSX / Linux / Windows
+ - Game grid + pathfinding
+ - Import from Tiled native file format (http://www.mapeditor.org/)
+ - Some effects shaders (like Glow)
 
- - [x] Menus
- - [x] Sound
- - [x] Animations
- - [x] Flipping tiles vertically/horizontally
- - [x] Fullscreen toggle
- - [x] Keyboard / Mouse events
- - [x] Building on OSX / Linux / Windows
- - [x] Game grid + pathfinding
- - [x] Import from Tiled native file format (http://www.mapeditor.org/)
- - [x] Glow shaders
- - [ ] OSX / Windows packaging scripts
- - [ ] Very simple cinematics scripting
- - [ ] Collision detection
+## Requirements
+
+ - Go 1.4.2 or later (From golang.org)
+ - Mercurial (`brew install hg` or equivalent)
+ - Clang (Available with Xcode on OSX)
+
+## Setup
+
+Run at least once from the twodee root:
+
+    ./scripts/tools.sh
+
+This library depends on various C/C++ packages.  To try and get a stable
+environment for building, sources have been included in the `lib` directory.
+Running the following will build each package and attempt to install a
+Golang wrapper:
+
+    ./scripts/setup.sh
+
+
+# The following is out of date and will be removed shortly.
 
 ##Building (OSX)
 
