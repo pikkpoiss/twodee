@@ -15,6 +15,7 @@
 package twodee
 
 import (
+	"github.com/go-gl/mathgl/mgl32"
 	"image"
 	"image/color"
 )
@@ -74,4 +75,77 @@ func (g *Grid) GetImage(fg, bg color.Color) *image.NRGBA {
 		}
 	}
 	return img
+}
+
+func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y, sizex, sizey float32) bool {
+	// Bounds are {minx, miny, maxx, maxy}
+	// Sizex, sizey are the number of coordinate units a grid entry occupies.
+	var (
+		fudge = float32(0.001) // Prevents item from sticking to wall when we round its coordinates.
+		minx  = int32((bounds[0] + x) / sizex)
+		miny  = int32((bounds[1] + y) / sizey)
+		maxx  = int32((bounds[2] + x - fudge) / sizex)
+		maxy  = int32((bounds[3] + y - fudge) / sizey)
+		i     int32
+		j     int32
+	)
+	for i = minx; i <= maxx; i++ {
+		for j = miny; j <= maxy; j++ {
+			if g.Get(i, j) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (g *Grid) FixMove(bounds mgl32.Vec4, move mgl32.Vec2, sizex, sizey float32) (out mgl32.Vec2) {
+	out = move
+	if g.squareCollides(bounds, out[0], 0.0, sizex, sizey) {
+		out[0] = g.GridAligned(bounds[0], sizex) - bounds[0]
+	}
+	if g.squareCollides(bounds, out[0], out[1], sizex, sizey) {
+		out[1] = g.GridAligned(bounds[1], sizey) - bounds[1]
+	}
+	return
+}
+
+func (g *Grid) GridAligned(x float32, sizex float32) float32 {
+	return sizex * float32(int32((x/sizex)+0.5))
+}
+
+func (g *Grid) GridPosition(v float32, sizev float32) int32 {
+	return int32(v / sizev)
+}
+
+func (g *Grid) InversePosition(i int32, sizei float32) float32 {
+	return float32(i)*sizei + sizei/2.0
+}
+
+func (g *Grid) CanSee(from, to mgl32.Vec2, sizex, sizey float32) bool {
+	var (
+		minx  = int32(from[0] / sizex)
+		maxx  = int32(to[0] / sizex)
+		miny  = int32(from[1] / sizey)
+		maxy  = int32(to[1] / sizey)
+		slope = float32(maxy-miny) / float32(maxx-minx)
+		c     = float32(miny) - (slope * float32(minx))
+		x     int32
+		y     int32
+	)
+	for x = minx; x <= maxx; x++ {
+		y = int32(slope*float32(x) + c)
+		if g.Get(x, y) {
+			// Something blocks the way
+			return false
+		}
+	}
+	for y = miny; y <= maxy; y++ {
+		x = int32((float32(y) - c) / slope)
+		if g.Get(x, y) {
+			// Something blocks the way
+			return false
+		}
+	}
+	return true
 }

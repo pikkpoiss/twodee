@@ -15,35 +15,36 @@
 package twodee
 
 import (
-	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func GetInverseMatrix(m mgl32.Mat4) (out mgl32.Mat4, err error) {
-	var (
-		empty = mgl32.Mat4{}
-	)
-	if out = m.Inv(); out == empty {
-		err = fmt.Errorf("Matrix %v not invertible", m)
-		return
-	}
-	return
+type TexturedPoint struct {
+	X        float32
+	Y        float32
+	Z        float32
+	TextureX float32
+	TextureY float32
 }
 
-func Unproject(invproj mgl32.Mat4, x float32, y float32) (wx, wy float32) {
-	var (
-		screen = mgl32.Vec4{x, y, 1, 1}
-		out    mgl32.Vec4
-	)
-	out = invproj.Mul4x1(screen)
-	out = out.Mul(1.0 / out[3])
-	wx = out[0]
-	wy = out[1]
-	return
+type ModelViewConfig struct {
+	X         float32
+	Y         float32
+	Z         float32
+	RotationX float32
+	RotationY float32
+	RotationZ float32
+	ScaleX    float32
+	ScaleY    float32
+	ScaleZ    float32
 }
 
-func Project(proj mgl32.Mat4, x float32, y float32) (sx, sy float32) {
-	var out mgl32.Vec4
-	out = proj.Mul4x1(mgl32.Vec4{x, y, 1, 1})
-	return out[0], out[1]
+type FrameConfig struct {
+	PointAdjustment   mgl32.Mat4
+	TextureAdjustment mgl32.Mat4
+}
+
+type SpriteConfig struct {
+	View  ModelViewConfig
+	Frame FrameConfig
+	Color mgl32.Vec4
 }

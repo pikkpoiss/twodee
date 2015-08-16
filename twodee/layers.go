@@ -18,14 +18,6 @@ import (
 	"time"
 )
 
-type Layer interface {
-	Render()
-	Update(elapsed time.Duration)
-	Delete()
-	HandleEvent(evt Event) bool
-	Reset() error
-}
-
 type Layers struct {
 	layers []Layer
 }

@@ -17,17 +17,35 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
+
+type InterpolationType uint32
+
+const (
+	LinearInterpolation  = InterpolationType(gl.LINEAR)
+	NearestInterpolation = InterpolationType(gl.NEAREST)
+)
+
+type TileMetadata struct {
+	Path          string
+	PxPerUnit     int
+	TileWidth     int
+	TileHeight    int
+	FramesWide    int
+	FramesHigh    int
+	Interpolation InterpolationType
+}
 
 type BatchRenderer struct {
 	*Renderer
-	Program        gl.Program
-	PositionLoc    gl.AttribLocation
-	TextureLoc     gl.AttribLocation
-	TextureUnitLoc gl.UniformLocation
-	ModelViewLoc   gl.UniformLocation
-	ProjectionLoc  gl.UniformLocation
-	TexOffsetLoc   gl.UniformLocation
+	Program        uint32
+	PositionLoc    uint32
+	TextureLoc     uint32
+	TextureUnitLoc int32
+	ModelViewLoc   int32
+	ProjectionLoc  int32
+	TexOffsetLoc   int32
 }
 
 const BATCH_FRAGMENT = `#version 150
@@ -43,7 +61,7 @@ void main()
     vec2 texcoords = v_TextureCoordinates + u_TextureOffset;
     v_FragData = texture(u_TextureUnit, texcoords);
     //v_FragData = vec4(1.0,0.0,0.0,1.0);
-}`
+}` + "\x00"
 
 const BATCH_VERTEX = `#version 150
 
@@ -59,28 +77,24 @@ void main()
 {
     v_TextureCoordinates = a_TextureCoordinates;
     gl_Position = m_ProjectionMatrix * m_ModelViewMatrix * a_Position;
-}`
+}` + "\x00"
 
-func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
+func NewBatchRenderer(camera *Camera) (tr *BatchRenderer, err error) {
 	var (
-		program gl.Program
-		r       *Renderer
+		program uint32
 	)
 	if program, err = BuildProgram(BATCH_VERTEX, BATCH_FRAGMENT); err != nil {
 		return
 	}
-	if r, err = NewRenderer(bounds, screen); err != nil {
-		return
-	}
 	tr = &BatchRenderer{
-		Renderer:       r,
+		Renderer:       NewRenderer(camera),
 		Program:        program,
-		PositionLoc:    program.GetAttribLocation("a_Position"),
-		TextureLoc:     program.GetAttribLocation("a_TextureCoordinates"),
-		TextureUnitLoc: program.GetUniformLocation("u_TextureUnit"),
-		ModelViewLoc:   program.GetUniformLocation("m_ModelViewMatrix"),
-		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
-		TexOffsetLoc:   program.GetUniformLocation("u_TextureOffset"),
+		PositionLoc:    uint32(gl.GetAttribLocation(program, gl.Str("a_Position\x00"))),
+		TextureLoc:     uint32(gl.GetAttribLocation(program, gl.Str("a_TextureCoordinates\x00"))),
+		TextureUnitLoc: gl.GetUniformLocation(program, gl.Str("u_TextureUnit\x00")),
+		ModelViewLoc:   gl.GetUniformLocation(program, gl.Str("m_ModelViewMatrix\x00")),
+		ProjectionLoc:  gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
+		TexOffsetLoc:   gl.GetUniformLocation(program, gl.Str("u_TextureOffset\x00")),
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -89,25 +103,25 @@ func NewBatchRenderer(bounds, screen Rectangle) (tr *BatchRenderer, err error) {
 }
 
 func (r *BatchRenderer) Bind() error {
-	r.Program.Use()
+	gl.UseProgram(r.Program)
 	gl.ActiveTexture(gl.TEXTURE0)
-	r.TextureUnitLoc.Uniform1i(0)
-	r.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(&r.Renderer.projection))
+	gl.Uniform1i(r.TextureUnitLoc, 0)
+	gl.UniformMatrix4fv(r.ProjectionLoc, 1, false, &r.Camera.Projection[0])
 	return nil
 }
 
 func (r *BatchRenderer) Draw(batch *Batch, x, y, rot float32) error {
 	batch.Texture.Bind()
-	batch.Buffer.Bind(gl.ARRAY_BUFFER)
-	r.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
-	r.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
-	r.PositionLoc.EnableArray()
-	r.TextureLoc.EnableArray()
-	m := GetRotTransMatrix(x, y, 0, rot)
-	r.ModelViewLoc.UniformMatrix4f(false, (*[16]float32)(&m))
-	r.TexOffsetLoc.Uniform2f(batch.textureOffset.X, batch.textureOffset.Y)
-	gl.DrawArrays(gl.TRIANGLES, 0, batch.Count)
-	batch.Buffer.Unbind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, batch.Buffer)
+	gl.EnableVertexAttribArray(r.PositionLoc)
+	gl.VertexAttribPointer(r.PositionLoc, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
+	gl.EnableVertexAttribArray(r.TextureLoc)
+	gl.VertexAttribPointer(r.TextureLoc, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
+	m := mgl32.Translate3D(x, y, 0.0).Mul4(mgl32.HomogRotate3DZ(rot))
+	gl.UniformMatrix4fv(r.ModelViewLoc, 1, false, &m[0])
+	gl.Uniform2f(r.TexOffsetLoc, batch.textureOffset.X(), batch.textureOffset.Y())
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(batch.Count))
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	return nil
 }
 
@@ -120,15 +134,10 @@ func (tr *BatchRenderer) Delete() error {
 }
 
 type Batch struct {
-	Buffer        gl.Buffer
+	Buffer        uint32
 	Texture       *Texture
 	Count         int
 	textureOffset Point
-}
-
-type TexturedTile interface {
-	ScaledBounds(ratio float32) (x, y, w, h float32)
-	ScaledTextureBounds(rx float32, ry float32) (x, y, w, h float32)
 }
 
 func triangles(t TexturedTile, ratio, texw, texh float32) [30]float32 {
@@ -162,7 +171,7 @@ func LoadBatch(tiles []TexturedTile, metadata TileMetadata) (b *Batch, err error
 		step     = 30
 		size     = len(tiles) * step
 		vertices = make([]float32, size)
-		vbo      gl.Buffer
+		vbo      uint32
 		texture  *Texture
 	)
 	if texture, err = LoadTexture(metadata.Path, gl.NEAREST); err != nil {
@@ -197,5 +206,6 @@ func (b *Batch) SetTextureOffsetPx(x, y int) {
 
 func (b *Batch) Delete() {
 	b.Texture.Delete()
-	b.Buffer.Delete()
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.DeleteBuffers(1, &b.Buffer)
 }

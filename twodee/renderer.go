@@ -17,60 +17,26 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"strings"
 )
 
 type Renderer struct {
-	worldBounds  Rectangle
-	screenBounds Rectangle
-	projection   Matrix4
-	inverse      Matrix4
+	Camera *Camera
 }
 
-func NewRenderer(world, screen Rectangle) (r *Renderer, err error) {
-	r = &Renderer{}
-	r.SetScreenBounds(screen)
-	err = r.SetWorldBounds(world)
-	return
+func NewRenderer(camera *Camera) (r *Renderer) {
+	return &Renderer{
+		Camera: camera,
+	}
 }
 
-func (r *Renderer) SetScreenBounds(bounds Rectangle) {
-	r.screenBounds = bounds
-}
-
-func (r *Renderer) SetWorldBounds(bounds Rectangle) (err error) {
-	r.worldBounds = bounds
-	r.projection = GetOrthoMatrix(bounds.Min.X, bounds.Max.X, bounds.Min.Y, bounds.Max.Y, 1, 0)
-	r.inverse, err = GetInverseMatrix(r.projection)
-	return
-}
-
-func (r *Renderer) ScreenToWorldCoords(x, y float32) (wx, wy float32) {
-	// http://stackoverflow.com/questions/7692988/
-	var (
-		halfw = r.screenBounds.Max.X / 2.0
-		halfh = r.screenBounds.Max.Y / 2.0
-		xpct  = (x - halfw) / halfw
-		ypct  = (halfh - y) / halfh
-	)
-	return Unproject(r.inverse, xpct, ypct)
-}
-
-func (r *Renderer) WorldToScreenCoords(x, y float32) (sx, sy float32) {
-	var pctx, pcty = Project(r.projection, x, y)
-	var halfw = r.screenBounds.Max.X / 2.0
-	var halfh = r.screenBounds.Max.Y / 2.0
-	sx = pctx*halfw + halfw
-	sy = pcty*halfh + halfh
-	return
-}
-
-func CreateVAO() (array gl.VertexArray, err error) {
-	array = gl.GenVertexArray()
+func CreateVAO() (array uint32, err error) {
+	gl.GenVertexArrays(1, &array)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR gl.GenVertexArray %X", e)
 		return
 	}
-	array.Bind()
+	gl.BindVertexArray(array)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR array.Bind %X", e)
 		return
@@ -78,23 +44,23 @@ func CreateVAO() (array gl.VertexArray, err error) {
 	return
 }
 
-func CreateVBO(size int, data interface{}, usage gl.GLenum) (buffer gl.Buffer, err error) {
-	buffer = gl.GenBuffer()
+func CreateVBO(size int, data interface{}, usage uint32) (buffer uint32, err error) {
+	gl.GenBuffers(1, &buffer)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR gl.GenBuffer %X", e)
 		return
 	}
-	buffer.Bind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, buffer)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR buffer.Bind %X", e)
 		return
 	}
-	gl.BufferData(gl.ARRAY_BUFFER, size, data, usage)
+	gl.BufferData(gl.ARRAY_BUFFER, size, gl.Ptr(data), usage)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR gl.BufferData %X", e)
 		return
 	}
-	buffer.Unbind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR buffer.Unbind %X", e)
 		return
@@ -102,36 +68,49 @@ func CreateVBO(size int, data interface{}, usage gl.GLenum) (buffer gl.Buffer, e
 	return
 }
 
-func CompileShader(stype gl.GLenum, source string) (shader gl.Shader, err error) {
+func CompileShader(stype uint32, source string) (shader uint32, err error) {
+	csource := gl.Str(source)
 	shader = gl.CreateShader(stype)
-	shader.Source(source)
-	shader.Compile()
-	if status := shader.Get(gl.COMPILE_STATUS); status == 0 {
-		err = fmt.Errorf("ERROR shader compile:\n%s", shader.GetInfoLog())
+	gl.ShaderSource(shader, 1, &csource, nil)
+	gl.CompileShader(shader)
+	var status int32
+	if gl.GetShaderiv(shader, gl.COMPILE_STATUS, &status); status == gl.FALSE {
+		var length int32
+		gl.GetShaderiv(shader, gl.INFO_LOG_LENGTH, &length)
+		log := strings.Repeat("\x00", int(length+1))
+		gl.GetShaderInfoLog(shader, length, nil, gl.Str(log))
+		err = fmt.Errorf("ERROR shader compile:\n%s", log)
 	}
 	return
 }
 
-func LinkProgram(vertex gl.Shader, fragment gl.Shader) (program gl.Program, err error) {
+func LinkProgram(vertex uint32, fragment uint32) (program uint32, err error) {
 	program = gl.CreateProgram()
-	program.AttachShader(vertex)
-	program.AttachShader(fragment)
-	program.BindFragDataLocation(0, "v_FragData")
+	gl.AttachShader(program, vertex)
+	gl.AttachShader(program, fragment)
+	gl.BindFragDataLocation(program, 0, gl.Str("v_FragData\x00"))
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR program.BindFragDataLocation %X", e)
 		return
 	}
-	program.Link()
-	if status := program.Get(gl.LINK_STATUS); status == 0 {
-		err = fmt.Errorf("ERROR program link:\n%s", program.GetInfoLog())
+	gl.LinkProgram(program)
+	var status int32
+	if gl.GetProgramiv(program, gl.LINK_STATUS, &status); status == gl.FALSE {
+		var length int32
+		gl.GetProgramiv(program, gl.INFO_LOG_LENGTH, &length)
+		log := strings.Repeat("\x00", int(length+1))
+		gl.GetProgramInfoLog(program, length, nil, gl.Str(log))
+		err = fmt.Errorf("ERROR program link:\n%s", log)
 	}
+	gl.DeleteShader(vertex)
+	gl.DeleteShader(fragment)
 	return
 }
 
-func BuildProgram(vsrc string, fsrc string) (program gl.Program, err error) {
+func BuildProgram(vsrc string, fsrc string) (program uint32, err error) {
 	var (
-		vertex   gl.Shader
-		fragment gl.Shader
+		vertex   uint32
+		fragment uint32
 	)
 	if vertex, err = CompileShader(gl.VERTEX_SHADER, vsrc); err != nil {
 		return

@@ -20,16 +20,36 @@ import (
 
 type EventHandler struct {
 	Events chan Event
+	window *glfw.Window
 }
 
 func NewEventHandler(w *glfw.Window) (e *EventHandler) {
 	e = &EventHandler{
 		Events: make(chan Event, 100),
+		window: w,
 	}
-	w.SetCursorPositionCallback(e.onMouseMove)
+	// See http://www.glfw.org/docs/latest/input.html#input_keyboard
+	w.SetInputMode(glfw.StickyKeysMode, 1)
+	w.SetCursorPosCallback(e.onMouseMove)
 	w.SetKeyCallback(e.onKey)
 	w.SetMouseButtonCallback(e.onMouseButton)
 	return
+}
+
+func (e *EventHandler) GetKey(code KeyCode) Action {
+	return Action(e.window.GetKey(glfw.Key(code)))
+}
+
+func (e *EventHandler) JoystickPresent(joystick Joystick) bool {
+	return glfw.JoystickPresent(glfw.Joystick(joystick))
+}
+
+func (e *EventHandler) JoystickAxes(joystick Joystick) []float32 {
+	return glfw.GetJoystickAxes(glfw.Joystick(joystick))
+}
+
+func (e *EventHandler) JoystickButtons(joystick Joystick) []byte {
+	return glfw.GetJoystickButtons(glfw.Joystick(joystick))
 }
 
 func (e *EventHandler) Poll() {
@@ -70,8 +90,6 @@ func (e *EventHandler) enqueue(event Event) {
 		// TODO: Warn?
 	}
 }
-
-type Event interface{}
 
 type MouseMoveEvent struct {
 	X float32
@@ -124,6 +142,22 @@ const (
 	KeyX      = KeyCode(glfw.KeyX)
 	KeyY      = KeyCode(glfw.KeyY)
 	KeyZ      = KeyCode(glfw.KeyZ)
+	Key1      = KeyCode(glfw.Key1)
+	Key2      = KeyCode(glfw.Key2)
+	Key3      = KeyCode(glfw.Key3)
+	Key4      = KeyCode(glfw.Key4)
+	Key5      = KeyCode(glfw.Key5)
+	Key6      = KeyCode(glfw.Key6)
+	Key7      = KeyCode(glfw.Key7)
+	Key8      = KeyCode(glfw.Key8)
+	Key9      = KeyCode(glfw.Key9)
+	Key0      = KeyCode(glfw.Key0)
+)
+
+type Joystick int
+
+const (
+	Joystick1 = Joystick(glfw.Joystick1)
 )
 
 type Action int

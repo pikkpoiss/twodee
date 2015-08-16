@@ -17,20 +17,21 @@ package twodee
 import (
 	"fmt"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 )
 
 type TextRenderer struct {
 	*Renderer
-	VBO            gl.Buffer
-	Program        gl.Program
-	Texture        gl.Texture
-	PositionLoc    gl.AttribLocation
-	TextureLoc     gl.AttribLocation
-	ScaleLoc       gl.UniformLocation
-	TransLoc       gl.UniformLocation
-	ProjectionLoc  gl.UniformLocation
-	TextureUnitLoc gl.UniformLocation
-	projection     *Matrix4
+	VBO            uint32
+	Program        uint32
+	Texture        uint32
+	PositionLoc    uint32
+	TextureLoc     uint32
+	ScaleLoc       int32
+	TransLoc       int32
+	ProjectionLoc  int32
+	TextureUnitLoc int32
+	projection     *mgl32.Mat4
 	Width          float32
 	Height         float32
 }
@@ -45,7 +46,7 @@ out vec4 v_FragData;
 void main()
 {
     v_FragData = texture(u_TextureUnit, v_TextureCoordinates);
-}`
+}` + "\x00"
 
 const TEXT_VERTEX = `#version 150
 
@@ -73,14 +74,13 @@ void main()
 
     v_TextureCoordinates = a_TextureCoordinates;
     gl_Position = m_ProjectionMatrix * trans * scale * a_Position;
-}`
+}` + "\x00"
 
-func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
+func NewTextRenderer(camera *Camera) (tr *TextRenderer, err error) {
 	var (
 		rect    []float32
-		program gl.Program
-		vbo     gl.Buffer
-		r       *Renderer
+		program uint32
+		vbo     uint32
 	)
 	rect = []float32{
 		0, 0, 0.0, 0.0, 0.0,
@@ -94,21 +94,18 @@ func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
 	if vbo, err = CreateVBO(len(rect)*4, rect, gl.STATIC_DRAW); err != nil {
 		return
 	}
-	if r, err = NewRenderer(screen, screen); err != nil {
-		return
-	}
 	tr = &TextRenderer{
-		Renderer:       r,
+		Renderer:       NewRenderer(camera),
 		VBO:            vbo,
 		Program:        program,
-		PositionLoc:    program.GetAttribLocation("a_Position"),
-		TextureLoc:     program.GetAttribLocation("a_TextureCoordinates"),
-		TextureUnitLoc: program.GetUniformLocation("u_TextureUnit"),
-		TransLoc:       program.GetUniformLocation("v_Trans"),
-		ScaleLoc:       program.GetUniformLocation("v_Scale"),
-		ProjectionLoc:  program.GetUniformLocation("m_ProjectionMatrix"),
-		Width:          screen.Max.X - screen.Min.X,
-		Height:         screen.Max.Y - screen.Min.Y,
+		PositionLoc:    uint32(gl.GetAttribLocation(program, gl.Str("a_Position\x00"))),
+		TextureLoc:     uint32(gl.GetAttribLocation(program, gl.Str("a_TextureCoordinates\x00"))),
+		TextureUnitLoc: gl.GetUniformLocation(program, gl.Str("u_TextureUnit\x00")),
+		TransLoc:       gl.GetUniformLocation(program, gl.Str("v_Trans\x00")),
+		ScaleLoc:       gl.GetUniformLocation(program, gl.Str("v_Scale\x00")),
+		ProjectionLoc:  gl.GetUniformLocation(program, gl.Str("m_ProjectionMatrix\x00")),
+		Width:          camera.ScreenBounds.Max.X() - camera.ScreenBounds.Min.X(),
+		Height:         camera.ScreenBounds.Max.Y() - camera.ScreenBounds.Min.Y(),
 	}
 	if e := gl.GetError(); e != 0 {
 		err = fmt.Errorf("ERROR: OpenGL error %X", e)
@@ -117,35 +114,29 @@ func NewTextRenderer(screen Rectangle) (tr *TextRenderer, err error) {
 }
 
 func (tr *TextRenderer) Bind() error {
-	tr.Program.Use()
+	gl.UseProgram(tr.Program)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.TextureUnitLoc.Uniform1i(0)
+	gl.Uniform1i(tr.TextureUnitLoc, 0)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.VBO.Bind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, tr.VBO)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.PositionLoc.AttribPointer(3, gl.FLOAT, false, 5*4, uintptr(0))
+	gl.EnableVertexAttribArray(tr.PositionLoc)
+	gl.VertexAttribPointer(tr.PositionLoc, 3, gl.FLOAT, false, 5*4, gl.PtrOffset(0))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.TextureLoc.AttribPointer(2, gl.FLOAT, false, 5*4, uintptr(3*4))
+	gl.EnableVertexAttribArray(tr.TextureLoc)
+	gl.VertexAttribPointer(tr.TextureLoc, 2, gl.FLOAT, false, 5*4, gl.PtrOffset(3*4))
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.PositionLoc.EnableArray()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
-	tr.TextureLoc.EnableArray()
-	if e := gl.GetError(); e != 0 {
-		return fmt.Errorf("ERROR: %X", e)
-	}
-	tr.ProjectionLoc.UniformMatrix4f(false, (*[16]float32)(&tr.Renderer.projection))
+	gl.UniformMatrix4fv(tr.ProjectionLoc, 1, false, &tr.Renderer.Camera.Projection[0])
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -157,15 +148,15 @@ func (tr *TextRenderer) Draw(tex *Texture, x, y float32) (err error) {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tex.Texture.Bind(gl.TEXTURE_2D)
+	gl.BindTexture(gl.TEXTURE_2D, tex.Texture)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.ScaleLoc.Uniform3f(float32(tex.Width), float32(tex.Height), 1)
+	gl.Uniform3f(tr.ScaleLoc, float32(tex.Width), float32(tex.Height), 1)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.TransLoc.Uniform3f(x, y, 0)
+	gl.Uniform3f(tr.TransLoc, x, y, 0)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -173,7 +164,7 @@ func (tr *TextRenderer) Draw(tex *Texture, x, y float32) (err error) {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	tr.VBO.Unbind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -181,7 +172,7 @@ func (tr *TextRenderer) Draw(tex *Texture, x, y float32) (err error) {
 }
 
 func (tr *TextRenderer) Unbind() error {
-	tr.VBO.Unbind(gl.ARRAY_BUFFER)
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
@@ -189,6 +180,7 @@ func (tr *TextRenderer) Unbind() error {
 }
 
 func (tr *TextRenderer) Delete() error {
-	tr.VBO.Delete()
+	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
+	gl.DeleteBuffers(1, &tr.VBO)
 	return nil
 }

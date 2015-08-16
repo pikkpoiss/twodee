@@ -15,12 +15,12 @@ My expectation is to use this for Ludum Dare competitions as I go.
  - [x] Fullscreen toggle
  - [x] Keyboard / Mouse events
  - [x] Building on OSX / Linux / Windows
+ - [x] Game grid + pathfinding
+ - [x] Import from Tiled native file format (http://www.mapeditor.org/)
+ - [x] Glow shaders
  - [ ] OSX / Windows packaging scripts
  - [ ] Very simple cinematics scripting
- - [ ] Import from Tiled native file format (http://www.mapeditor.org/)
- - [ ] Glow shaders
  - [ ] Collision detection
- - [ ] Game grid + pathfinding
 
 ##Building (OSX)
 
@@ -39,19 +39,12 @@ Get the environment set up:
     brew install --build-bottle --static glfw3
     // Set up SDL.
     brew install sdl
-    brew install sdl_mixer
+    brew install libvorbis libogg sdl_mixer
     brew install sdl_image
 
-Install deps:
+Install go library deps:
 
-    brew install libvorbis libogg sdl_mixer
-
-    go get code.google.com/p/freetype-go/freetype
-    go get github.com/Agon/googlmath
-    go get github.com/go-gl/gl
-    go get github.com/go-gl/glfw3
-    go get github.com/kurrik/Go-SDL/mixer
-    go get github.com/kurrik/Go-SDL/sdl
+    ./setup.sh
 
 ##Troubleshooting (OSX)
 
@@ -135,7 +128,7 @@ Install SDL stuff:
 
 ### Software Dependencies
 
-#### Go 1.2.1
+#### Go 1.4.1
   * http://golang.org
   * Download Windows MSI
   * Install to `C:\Go\`
@@ -237,15 +230,16 @@ Install SDL stuff:
         cp lib/x64/*.lib ../../mingw64/lib/
 
 ### Go Library Dependencies
+(may need to put `CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib"` in front of some/all of these but it doesn't seem to need it any more for all of them.
 
-    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/go-gl/gl
-    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/go-gl/glfw3
-
-    go get github.com/Agon/googlmath
+    go get -u github.com/go-gl/gl/v3.3-core/gl
+    go get -u github.com/go-gl/glfw/v3.1/glfw
+    go get -u github.com/go-gl/mathgl/mgl32
+    go get -u github.com/robertkrimen/otto
+    go get -u github.com/go-gl/glfw/v3.1/glfw
     go get code.google.com/p/freetype-go/freetype
-
-    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get github.com/kurrik/Go-SDL/sdl
-    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get github.com/kurrik/Go-SDL/mixer
+    go get -u github.com/kurrik/Go-SDL/sdl
+    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/kurrik/Go-SDL/mixer
 
 ### Twodee
 
@@ -255,3 +249,4 @@ Install SDL stuff:
     git submodule update
     cd examples/basic
     PATH="$PATH;C:\mingw64\lib" go run *.go
+    PATH="/c/mingw64/lib:$PATH" go run *.go (cygwin)
