@@ -3,6 +3,7 @@
  - Go 1.4.2 or later (From [golang.org](http://golang.org))
  - Mercurial (`brew install hg` or equivalent)
  - Clang (Available with Xcode on OSX)
+ - Xcode tools `xcode-select --install`
 
 ## Troubleshooting
 
