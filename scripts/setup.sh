@@ -4,6 +4,11 @@
 
 BUILDROOT=$ROOT/build
 PREFIX=$BUILDROOT/usr
+LIBDIR=$PREFIX/lib
+
+export LDFLAGS="-L$PREFIX/lib"
+export CFLAGS="-I$PREFIX/include"
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 
 green "INIT" "Prefix is $PREFIX"
 
@@ -84,6 +89,23 @@ else
   cd ..
 fi
 
+if file_exists $PREFIX/lib/libSDL2_image.a; then
+  green "EXISTS" "SDL2 image"
+else
+  yellow "BUILD" "SDL2 image"
+  rm -rf SDL2_image-2.0.0
+  unzip SDL2_image-2.0.0.zip
+  cd SDL2_image-2.0.0
+  ./configure \
+    --prefix=$PREFIX \
+    --with-sdl-prefix=$PREFIX \
+    --disable-png-shared \
+    --disable-shared
+  make
+  make install
+  cd ..
+fi
+
 if file_exists $PREFIX/lib/libSDL2_mixer.a; then
   green "EXISTS" "SDL2 mixer"
 else
@@ -103,14 +125,22 @@ fi
 
 ##### Go libraries #############################################################
 
-CGO_CFLAGS="-I$PREFIX/include"
+export CGO_CFLAGS="-I$PREFIX/include"
+export CGO_LDFLAGS="`$PREFIX/bin/sdl2-config --static-libs` -lvorbisfile -lvorbis -logg"
 
-go get -u code.google.com/p/freetype-go/freetype
-go get -u code.google.com/p/freetype-go/freetype/raster
-go get -u code.google.com/p/freetype-go/freetype/truetype
-go get -u github.com/go-gl/gl/v3.3-core/gl
-go get -u github.com/go-gl/glfw/v3.1/glfw
-go get -u github.com/go-gl/mathgl/mgl32
-go get -u github.com/kurrik/Go-SDL/mixer
-go get -u github.com/kurrik/Go-SDL/sdl
-go get -u github.com/robertkrimen/otto
+# Require libraries
+go get -u -v github.com/scottferg/Go-SDL2/sdl
+go get -u -v github.com/scottferg/Go-SDL2/mixer
+go get -u -v github.com/go-gl/glfw/v3.1/glfw
+
+# Do not require libraries
+go get -u -v github.com/go-gl/gl/v3.3-core/gl
+go get -u -v github.com/go-gl/mathgl/mgl32
+go get -u -v code.google.com/p/freetype-go/freetype
+go get -u -v code.google.com/p/freetype-go/freetype/raster
+go get -u -v code.google.com/p/freetype-go/freetype/truetype
+go get -u -v github.com/robertkrimen/otto
+
+# Old
+# go get -u github.com/kurrik/Go-SDL/mixer
+# go get -u github.com/kurrik/Go-SDL/sdl
