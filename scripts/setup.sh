@@ -40,6 +40,17 @@ function patch_makefile {
   fi
 }
 
+function patch_sdl2_config {
+  # https://github.com/Alexpux/MINGW-packages/issues/51#issuecomment-45574727
+  if [[ "$PLATFORM" == "win" ]]; then
+    yellow "BUILD" "patching sdl2-config"
+    sed s/-XCClinker//g < $PREFIX/bin/sdl2-config > $PREFIX/bin/sdl2-config.new
+    mv $PREFIX/bin/sdl2-config $PREFIX/bin/sdl2-config.old
+    mv $PREFIX/bin/sdl2-config.new $PREFIX/bin/sdl2-config
+    chmod +x $PREFIX/bin/sdl2-config
+  fi
+}
+
 ##### Libraries ################################################################
 
 if file_exists $PREFIX/lib/libglfw3.a; then
@@ -111,8 +122,18 @@ else
   yellow "BUILD" "make"
   make
   yellow "BUILD" "make install"
+  # TODO: Figure out why this fails
   make install
   cd ..
+fi
+
+# Hack bacause `make install` on SDL2 fails on Windows
+if file_exists $PREFIX/lib/pkgconfig/sdl2.pc; then
+  green "EXISTS" "sdl2.pc"
+else
+  yellow "BUILD" "sdl2.pc"
+  cp SDL2-2.0.3/sdl2.pc $PREFIX/lib/pkgconfig/
+  patch_sdl2_config
 fi
 
 if file_exists $PREFIX/lib/libSDL2_image.a; then
@@ -156,6 +177,7 @@ else
     --prefix=$PREFIX \
     --with-sdl-prefix=$PREFIX \
     --disable-music-ogg-shared \
+    --disable-music-midi \
     --disable-shared
   make
   make install
@@ -164,8 +186,9 @@ fi
 
 ##### Go libraries #############################################################
 
+PKG_CONFIG_LIBS=`pkg-config --static --libs SDL2_mixer | sed s/-XCClinker//g`
 export CGO_CFLAGS="-I$PREFIX/include"
-export CGO_LDFLAGS="`$PREFIX/bin/sdl2-config --static-libs` -lvorbisfile -lvorbis -logg"
+export CGO_LDFLAGS="`$PREFIX/bin/sdl2-config --static-libs` $PKG_CONFIG_LIBS -lvorbisfile -lvorbis -logg"
 
 # Require libraries
 go get -u -v github.com/scottferg/Go-SDL2/sdl
