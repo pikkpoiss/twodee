@@ -2,6 +2,15 @@ set -e  # Aborts if any step fails.
 
 ROOT=`git rev-parse --show-toplevel`
 
+if [ "$(uname)" == "Darwin" ]; then
+  PLATFORM="osx"
+elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+  PLATFORM="nix"
+elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+  PLATFORM="win"
+  ROOT=`echo $ROOT | sed s/c:/\\\\/c/`
+fi
+
 function red {
   echo -e "\033[1;31m$1\033[0m $2"
 }

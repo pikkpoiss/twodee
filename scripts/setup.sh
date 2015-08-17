@@ -2,22 +2,19 @@
 
 . `git rev-parse --show-toplevel`/scripts/common.sh
 
-BUILDROOT=$ROOT/build
-PREFIX=$BUILDROOT/usr
-LIBDIR=$PREFIX/lib
-
-export LDFLAGS="-L$PREFIX/lib"
-export CFLAGS="-I$PREFIX/include"
-export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
-
-if [ "$(uname)" == "Darwin" ]; then
-  PLATFORM="osx"
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
-  PLATFORM="nix"
-elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
-  PLATFORM="win"
+if [ "$PLATFORM" == "win" ]; then
   export CC="/c/mingw/mingw32/bin/gcc.exe"
 fi
+
+BUILDROOT=$ROOT/build
+PREFIX=$BUILDROOT/usr
+INCDIR=$PREFIX/include
+LIBDIR=$PREFIX/lib
+
+export LDFLAGS="-L$LIBDIR"
+export CPPFLAGS="-I$INCDIR $EXTRA_CPPFLAGS"
+export CFLAGS="-I$INCDIR $EXTRA_CPPFLAGS"
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 
 green "INIT" "Prefix is $PREFIX, Platform is $PLATFORM"
 
@@ -29,8 +26,19 @@ if [ -n "$CLEAN" ]; then
 fi
 
 mkdir -p $BUILDROOT
-cp lib/*.zip $BUILDROOT
+cp lib/*.{zip,tar.gz} $BUILDROOT
 cd $BUILDROOT
+
+##### Helpers ##################################################################
+
+function patch_makefile {
+  if [ "$PLATFORM" == "win" ]; then
+    yellow "BUILD" "patching Makefile"
+    sed s/c:\\\//\\\/c\\\//g < Makefile > Makefile.new
+    mv Makefile Makefile.old
+    mv Makefile.new Makefile
+  fi
+}
 
 ##### Libraries ################################################################
 
@@ -86,18 +94,23 @@ if file_exists $PREFIX/lib/libSDL2.a; then
 else
   yellow "BUILD" "SDL2"
   rm -rf SDL2-2.0.3
+  yellow "BUILD" "unzip"
   unzip -q SDL2-2.0.3.zip
   cd SDL2-2.0.3
   if [ "$PLATFORM" == "win" ]; then
+    yellow "BUILD" "patching"
     cd src
     git apply ../../../lib/SDL2-fix-gcc-compatibility.patch
     git apply ../../../lib/SDL2-prevent-duplicate-d3d11-declarations.patch
     cd ..
   fi
+  yellow "BUILD" "configure"
   ./configure \
     --prefix=$PREFIX \
     --disable-shared
+  yellow "BUILD" "make"
   make
+  yellow "BUILD" "make install"
   make install
   cd ..
 fi
@@ -107,16 +120,28 @@ if file_exists $PREFIX/lib/libSDL2_image.a; then
 else
   yellow "BUILD" "SDL2 image"
   rm -rf SDL2_image-2.0.0
-  unzip -q SDL2_image-2.0.0.zip
-  cd SDL2_image-2.0.0
-  ./configure \
-    --prefix=$PREFIX \
-    --with-sdl-prefix=$PREFIX \
-    --disable-png-shared \
-    --disable-shared
-  make
-  make install
-  cd ..
+  if [ "$PLATFORM" == "win" ]; then
+    tar -xf SDL2_image-devel-2.0.0-mingw.tar.gz
+    cd SDL2_image-2.0.0/x86_64-w64-mingw32
+    cp -r {include,lib} $PREFIX
+    cd ../..
+  else
+    unzip -q SDL2_image-2.0.0.zip
+    cd SDL2_image-2.0.0
+    yellow "BUILD" "configure"
+    ./configure \
+      --disable-sdltest \
+      --prefix=$PREFIX \
+      --with-sdl-prefix=$PREFIX \
+      --disable-png-shared \
+      --disable-shared
+    patch_makefile
+    yellow "BUILD" "make"
+    make
+    yellow "BUILD" "make install"
+    make install
+    cd ..
+  fi
 fi
 
 if file_exists $PREFIX/lib/libSDL2_mixer.a; then
@@ -127,6 +152,7 @@ else
   unzip -q SDL2_mixer-2.0.0.zip
   cd SDL2_mixer-2.0.0
   ./configure \
+    --disable-sdltest \
     --prefix=$PREFIX \
     --with-sdl-prefix=$PREFIX \
     --disable-music-ogg-shared \

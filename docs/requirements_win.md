@@ -9,6 +9,14 @@ features).
 
  - http://conemu.github.io/
 
+## Go 1.4.2
+
+Compiles all our stuff!
+
+ - Project http://golang.org/
+ - Install to `C:\Go`
+ - `PATH` is automatically updated
+
 ## 7z
 
 You need this for unpacking some projects and bundling.
@@ -70,3 +78,18 @@ Needed to configure some dependent libs.
  - Project http://www.cmake.org/
  - Download http://www.cmake.org/files/v3.3/cmake-3.3.1-win32-x86.exe
  - Add CMake to system `PATH`
+
+## GnuWin32
+
+ - Project http://getgnuwin32.sourceforge.net/
+ - Download http://sourceforge.net/projects/getgnuwin32/files/latest/download
+ - Install to `C:\getgnuwin32`
+ - Run (not in Git Bash!)
+   - `cd C:\getgnuwin32\GetGnuWin32`
+   - `download.bat`
+
+## Running
+
+Run all commands from a Git bash window.  Note that when you update the `PATH`
+you will need to quit and restart the entire ConEmu program (not just close
+the terminal tab).
