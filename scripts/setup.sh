@@ -3,7 +3,7 @@
 . `git rev-parse --show-toplevel`/scripts/common.sh
 
 if [[ "$PLATFORM" == "win" ]]; then
-  export CC="/c/mingw/mingw32/bin/gcc.exe"
+  export CC="/c/mingw64/mingw64/bin/gcc.exe"
 fi
 
 BUILDROOT=$ROOT/build
