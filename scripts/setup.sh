@@ -2,7 +2,7 @@
 
 . `git rev-parse --show-toplevel`/scripts/common.sh
 
-if [ "$PLATFORM" == "win" ]; then
+if [[ "$PLATFORM" == "win" ]]; then
   export CC="/c/mingw/mingw32/bin/gcc.exe"
 fi
 
@@ -32,7 +32,7 @@ cd $BUILDROOT
 ##### Helpers ##################################################################
 
 function patch_makefile {
-  if [ "$PLATFORM" == "win" ]; then
+  if [[ "$PLATFORM" == "win" ]]; then
     yellow "BUILD" "patching Makefile"
     sed s/c:\\\//\\\/c\\\//g < Makefile > Makefile.new
     mv Makefile Makefile.old
@@ -97,7 +97,7 @@ else
   yellow "BUILD" "unzip"
   unzip -q SDL2-2.0.3.zip
   cd SDL2-2.0.3
-  if [ "$PLATFORM" == "win" ]; then
+  if [[ "$PLATFORM" == "win" ]]; then
     yellow "BUILD" "patching"
     cd src
     git apply ../../../lib/SDL2-fix-gcc-compatibility.patch
@@ -120,7 +120,7 @@ if file_exists $PREFIX/lib/libSDL2_image.a; then
 else
   yellow "BUILD" "SDL2 image"
   rm -rf SDL2_image-2.0.0
-  if [ "$PLATFORM" == "win" ]; then
+  if [[ "$PLATFORM" == "win" ]]; then
     tar -xf SDL2_image-devel-2.0.0-mingw.tar.gz
     cd SDL2_image-2.0.0/x86_64-w64-mingw32
     cp -r {include,lib} $PREFIX

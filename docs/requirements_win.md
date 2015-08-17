@@ -87,6 +87,8 @@ Needed to configure some dependent libs.
  - Run (not in Git Bash!)
    - `cd C:\getgnuwin32\GetGnuWin32`
    - `download.bat`
+   - `install C:\gnuwin32`
+ - Add `C:\gnuwin32\bin` to your `PATH`
 
 ## Running
 

@@ -2,11 +2,11 @@ set -e  # Aborts if any step fails.
 
 ROOT=`git rev-parse --show-toplevel`
 
-if [ "$(uname)" == "Darwin" ]; then
+if [[ "$(uname)" == "Darwin" ]]; then
   PLATFORM="osx"
-elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+elif [[ "$(expr substr $(uname -s) 1 5)" == "Linux" ]]; then
   PLATFORM="nix"
-elif [ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]; then
+elif [[ "$(expr substr $(uname -s) 1 10)" == "MINGW32_NT" ]]; then
   PLATFORM="win"
   ROOT=`echo $ROOT | sed s/c:/\\\\/c/`
 fi
