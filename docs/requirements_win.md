@@ -16,6 +16,8 @@ Compiles all our stuff!
  - Project http://golang.org/
  - Install to `C:\Go`
  - `PATH` is automatically updated
+ - Make a gopath directory: `mkdir /c/Gocode`
+ - Set `GOPATH` environment variable to `C:\Gocode`
 
 ## 7z
 
@@ -50,8 +52,9 @@ Contains a compiler and various tools.
  - http://mingw-w64.org/doku.php/download/mingw-builds
  - Links to SourceForge (ugh) http://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/
  - Get installer `mingw-w64-install.exe`
- - Extract to `C:\mingw`
- - Add `C:\mingw\mingw32\bin` to `PATH`
+ - Change architecture to `x86_64`
+ - Install to `C:\mingw64`
+ - Add `C:\mingw64\mingw64\bin` to `PATH`
 
 ## GTK+ 2.24
 
@@ -59,9 +62,9 @@ Contains pkg-config.
 
  - Download http://ftp.acc.umu.se/pub/gnome/binaries/win32/gtk+/
  - Downloaded `/2.24/gtk+-bundle_2.24.10-20120208_win32.zip`
- - Extract to `C:\mingw\mingw32`
+ - Extract to `C:\mingw64\mingw64`
  - Don't overwrite files
- - Add a new system variable `PKG_CONFIG_PATH`, set to `C:\mingw\mingw32\lib\pkgconfig`
+ - Add a new system variable `PKG_CONFIG_PATH`, set to `C:\mingw64\mingw64\lib\pkgconfig`
 
 ## Make 3.82.90
 
@@ -69,7 +72,8 @@ Allows the bundling scripts to work.
 
  - Download http://sourceforge.net/projects/mingw-w64/files/External%20binary%20packages%20%28Win64%20hosted%29/make/
  - Downloaded `make-3.82.90-20111115.zip`
- - Extract `bin_amd64/*` to `C:\mingw\mingw32\bin`
+ - Extract `bin_amd64/*` to `C:\mingw64\mingw64\bin`
+ - Don't overwrite
 
 ## CMake 3.3.1
 
