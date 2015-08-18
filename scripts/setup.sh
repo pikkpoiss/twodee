@@ -3,7 +3,8 @@
 . `git rev-parse --show-toplevel`/scripts/common.sh
 
 if [[ "$PLATFORM" == "win" ]]; then
-  export CC="/c/mingw64/mingw64/bin/gcc.exe"
+  export CC="/c/mingw64/mingw64/bin/x86_64-w64-mingw32-gcc"
+  # ROOT=`echo $ROOT | sed s/c:/\\\\/c/`
 fi
 
 BUILDROOT=$ROOT/build
@@ -14,6 +15,7 @@ LIBDIR=$PREFIX/lib
 export LDFLAGS="-L$LIBDIR"
 export CPPFLAGS="-I$INCDIR $EXTRA_CPPFLAGS"
 export CFLAGS="-I$INCDIR $EXTRA_CPPFLAGS"
+export LD_LIBRARY_PATH="$PREFIX/bin"
 export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 
 green "INIT" "Prefix is $PREFIX, Platform is $PLATFORM"
@@ -30,26 +32,6 @@ cp lib/*.{zip,tar.gz} $BUILDROOT
 cd $BUILDROOT
 
 ##### Helpers ##################################################################
-
-function patch_makefile {
-  if [[ "$PLATFORM" == "win" ]]; then
-    yellow "BUILD" "patching Makefile"
-    sed s/c:\\\//\\\/c\\\//g < Makefile > Makefile.new
-    mv Makefile Makefile.old
-    mv Makefile.new Makefile
-  fi
-}
-
-function patch_sdl2_config {
-  # https://github.com/Alexpux/MINGW-packages/issues/51#issuecomment-45574727
-  if [[ "$PLATFORM" == "win" ]]; then
-    yellow "BUILD" "patching sdl2-config"
-    sed s/-XCClinker//g < $PREFIX/bin/sdl2-config > $PREFIX/bin/sdl2-config.new
-    mv $PREFIX/bin/sdl2-config $PREFIX/bin/sdl2-config.old
-    mv $PREFIX/bin/sdl2-config.new $PREFIX/bin/sdl2-config
-    chmod +x $PREFIX/bin/sdl2-config
-  fi
-}
 
 ##### Libraries ################################################################
 
@@ -75,14 +57,26 @@ if file_exists $PREFIX/lib/libogg.a; then
 else
   yellow "BUILD" "ogg"
   rm -rf libogg-1.3.2
-  unzip -q libogg-1.3.2.zip
-  cd libogg-1.3.2
-  ./configure \
-    --prefix=$PREFIX \
-    --disable-shared
-  make
-  make install
-  cd ..
+  if [[ "$PLATFORM" == "win" ]]; then
+    unzip -q libogg-1.3.2.zip
+    cd libogg-1.3.2
+    ./configure \
+      --build=x86_64-w64-mingw32 \
+      --host=x86_64-w64-mingw32 \
+      --prefix=$PREFIX \
+    make
+    make install
+    cd ..
+  else
+    unzip -q libogg-1.3.2.zip
+    cd libogg-1.3.2
+    ./configure \
+      --prefix=$PREFIX \
+      --disable-shared
+    make
+    make install
+    cd ..
+  fi
 fi
 
 if file_exists $PREFIX/lib/libvorbis.a; then
@@ -90,14 +84,26 @@ if file_exists $PREFIX/lib/libvorbis.a; then
 else
   yellow "BUILD" "vorbis"
   rm -rf libvorbis-1.3.5
-  unzip -q libvorbis-1.3.5.zip
-  cd libvorbis-1.3.5
-  ./configure \
-    --prefix=$PREFIX \
-    --disable-shared
-  make
-  make install
-  cd ..
+  if [[ "$PLATFORM" == "win" ]]; then
+    unzip -q libvorbis-1.3.5.zip
+    cd libvorbis-1.3.5
+    ./configure \
+      --build=x86_64-w64-mingw32 \
+      --host=x86_64-w64-mingw32 \
+      --prefix=$PREFIX
+    make
+    make install
+    cd ..
+  else
+    unzip -q libvorbis-1.3.5.zip
+    cd libvorbis-1.3.5
+    ./configure \
+      --prefix=$PREFIX \
+      --disable-shared
+    make
+    make install
+    cd ..
+  fi
 fi
 
 if file_exists $PREFIX/lib/libSDL2.a; then
@@ -105,35 +111,46 @@ if file_exists $PREFIX/lib/libSDL2.a; then
 else
   yellow "BUILD" "SDL2"
   rm -rf SDL2-2.0.3
-  yellow "BUILD" "unzip"
-  unzip -q SDL2-2.0.3.zip
-  cd SDL2-2.0.3
   if [[ "$PLATFORM" == "win" ]]; then
+    yellow "BUILD" "unzip"
+    unzip -q SDL2-2.0.3.zip
+    cd SDL2-2.0.3
+
     yellow "BUILD" "patching"
     cd src
     git apply ../../../lib/SDL2-fix-gcc-compatibility.patch
     git apply ../../../lib/SDL2-prevent-duplicate-d3d11-declarations.patch
     cd ..
-  fi
-  yellow "BUILD" "configure"
-  ./configure \
-    --prefix=$PREFIX \
-    --disable-shared
-  yellow "BUILD" "make"
-  make
-  yellow "BUILD" "make install"
-  # TODO: Figure out why this fails
-  make install
-  cd ..
-fi
 
-# Hack bacause `make install` on SDL2 fails on Windows
-if file_exists $PREFIX/lib/pkgconfig/sdl2.pc; then
-  green "EXISTS" "sdl2.pc"
-else
-  yellow "BUILD" "sdl2.pc"
-  cp SDL2-2.0.3/sdl2.pc $PREFIX/lib/pkgconfig/
-  patch_sdl2_config
+    #tar -xf SDL2-devel-2.0.3-mingw.tar.gz
+    #cd SDL2-2.0.3/x86_64-w64-mingw32
+    #cp -r {include,lib} $PREFIX
+    #cd ../..
+
+    yellow "BUILD" "configure"
+    ./configure \
+      --build=x86_64-w64-mingw32 \
+      --host=x86_64-w64-mingw32 \
+      --prefix=$PREFIX
+    yellow "BUILD" "make"
+    make
+    yellow "BUILD" "make install"
+    make install
+    cd ..
+  else
+    yellow "BUILD" "unzip"
+    unzip -q SDL2-2.0.3.zip
+    cd SDL2-2.0.3
+    yellow "BUILD" "configure"
+    ./configure \
+      --prefix=$PREFIX \
+      --disable-shared
+    yellow "BUILD" "make"
+    make
+    yellow "BUILD" "make install"
+    make install
+    cd ..
+  fi
 fi
 
 if file_exists $PREFIX/lib/libSDL2_image.a; then
@@ -144,8 +161,24 @@ else
   if [[ "$PLATFORM" == "win" ]]; then
     tar -xf SDL2_image-devel-2.0.0-mingw.tar.gz
     cd SDL2_image-2.0.0/x86_64-w64-mingw32
-    cp -r {include,lib} $PREFIX
+    cp -r * $PREFIX
     cd ../..
+
+    #unzip -q SDL2_image-2.0.0.zip
+    #cd SDL2_image-2.0.0
+    #yellow "BUILD" "configure"
+    #./configure \
+    #  --disable-sdltest \
+    #  --build=x86_64-w64-mingw32 \
+    #  --host=x86_64-w64-mingw32 \
+    #  --prefix=$PREFIX \
+    #  --with-sdl-prefix=$PREFIX \
+    #  --disable-png-shared
+    #yellow "BUILD" "make"
+    #make
+    #yellow "BUILD" "make install"
+    #make install
+    #cd ..
   else
     unzip -q SDL2_image-2.0.0.zip
     cd SDL2_image-2.0.0
@@ -156,7 +189,6 @@ else
       --with-sdl-prefix=$PREFIX \
       --disable-png-shared \
       --disable-shared
-    patch_makefile
     yellow "BUILD" "make"
     make
     yellow "BUILD" "make install"
@@ -169,31 +201,65 @@ if file_exists $PREFIX/lib/libSDL2_mixer.a; then
   green "EXISTS" "SDL2 mixer"
 else
   yellow "BUILD" "SDL2 mixer"
-  rm -rf SDL2_mixer-2.0.0
-  unzip -q SDL2_mixer-2.0.0.zip
-  cd SDL2_mixer-2.0.0
-  ./configure \
-    --disable-sdltest \
-    --prefix=$PREFIX \
-    --with-sdl-prefix=$PREFIX \
-    --disable-music-ogg-shared \
-    --disable-music-midi \
-    --disable-shared
-  make
-  make install
-  cd ..
+  if [[ "$PLATFORM" == "win" ]]; then
+
+    #tar -xf SDL2_mixer-devel-2.0.0-mingw.tar.gz
+    #cd SDL2_mixer-2.0.0/x86_64-w64-mingw32
+    #cp -r {include,lib} $PREFIX
+    #cd ../..
+
+    rm -rf SDL2_mixer-2.0.0
+    unzip -q SDL2_mixer-2.0.0.zip
+    cd SDL2_mixer-2.0.0
+    ./configure \
+      --disable-sdltest \
+      --build=x86_64-w64-mingw32 \
+      --host=x86_64-w64-mingw32 \
+      --prefix=$PREFIX \
+      --with-sdl-prefix=$PREFIX \
+      --disable-music-ogg-shared \
+      --disable-music-cmd \
+      --disable-music-wave \
+      --disable-music-mod \
+      --disable-music-midi
+    make
+    make install
+    cd ..
+  else
+    rm -rf SDL2_mixer-2.0.0
+    unzip -q SDL2_mixer-2.0.0.zip
+    cd SDL2_mixer-2.0.0
+    ./configure \
+      --disable-sdltest \
+      --prefix=$PREFIX \
+      --with-sdl-prefix=$PREFIX \
+      --disable-music-ogg-shared \
+      --disable-music-cmd \
+      --disable-music-wave \
+      --disable-music-mod \
+      --disable-music-midi \
+      --disable-shared
+    make
+    make install
+    cd ..
+  fi
 fi
 
 ##### Go libraries #############################################################
 
-PKG_CONFIG_LIBS=`pkg-config --static --libs SDL2_mixer | sed s/-XCClinker//g`
+export LDFLAGS=""
+export CPPFLAGS=""
+export CFLAGS=""
+export PKG_CONFIG_PATH="$PREFIX/lib/pkgconfig"
 export CGO_CFLAGS="-I$PREFIX/include"
-export CGO_LDFLAGS="`$PREFIX/bin/sdl2-config --static-libs` $PKG_CONFIG_LIBS -lvorbisfile -lvorbis -logg"
+
+echo "CGO_CFLAGS=\"$CGO_CFLAGS\" CGO_LDFLAGS=\"$CGO_LDFLAGS\""
 
 # Require libraries
-go get -u -v github.com/scottferg/Go-SDL2/sdl
-go get -u -v github.com/scottferg/Go-SDL2/mixer
-go get -u -v github.com/go-gl/glfw/v3.1/glfw
+go get -u -v -a github.com/scottferg/Go-SDL2/sdl
+CGO_LDFLAGS="`pkg-config --libs SDL2_mixer`" \
+  go get -u -v -a github.com/scottferg/Go-SDL2/mixer
+go get -u -v -a github.com/go-gl/glfw/v3.1/glfw
 
 # Do not require libraries
 go get -u -v github.com/go-gl/gl/v3.3-core/gl
