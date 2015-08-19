@@ -60,3 +60,47 @@ executable in order for the built application to be portable.
 *On OSX* this will build static libraries in `.a` format and install them
 to `build/usr/lib`. Packaged executables linked against these libraries
 should be portable without needing to package any shared libraries.
+
+## Using
+
+The twodee lib is not installed with `go get` like most Go libraries. Instead,
+bootstrap a project using the provided scripts.
+
+### Initializing a project
+
+Once you have the libraries installed, run:
+
+    ./scripts/setup_project.sh PATH_TO_PROJECT_DIRECTORY
+
+This will set up a project structure, install support scripts, and copy
+shared libraries if needed.
+
+Once the project is set up, commit the files to git as needed and push to
+origin.
+
+If you rebuild the twodee libs, run the `setup_project.sh` script again.
+Be careful though, as it will overwrite any modifications.
+
+### Checking out the project
+
+Other developers will need to follow the steps to set up the twodee library
+before checking out the other project.  Once that is complete, they must
+check out the project from git and run the following from the project root:
+
+    git submodule init
+    git submodule update
+
+### Running the project
+
+Run the project with the following command:
+
+    make run
+
+### Packaging the project
+
+Build a distributable bundle with:
+
+    make package
+
+This will place a zip file in the `build/PLATFORM` directory with a bundled
+executable.

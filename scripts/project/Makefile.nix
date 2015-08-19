@@ -1,4 +1,4 @@
-.phony: build run
+.phony: build run package
 
 APPDIR    = $(PROJECT)-linux
 APPROOT   = build/$(APPDIR)
@@ -16,13 +16,15 @@ $(BUILDROOT)/resources/%: src/resources/%
 	mkdir -p $(dir $@)
 	cp -R $< $@
 
-build/$(APPDIR)-$(VERSION).zip: \
+build/$(APPDIR)-$(VERSION).zip: build
+	cd build && zip -r $(notdir $@) $(APPDIR)
+
+build: \
 	$(BUILDROOT)/launch.sh \
 	$(BUILDROOT)/$(PROJECT) \
 	$(subst src/resources/,$(BUILDROOT)/resources/,$(ASSETS))
-	cd build && zip -r $(notdir $@) $(APPDIR)
 
-build: build/$(APPDIR)-$(VERSION).zip
+package: build/$(APPDIR)-$(VERSION).zip
 
 run: build
 	$(BUILDROOT)/launch.sh

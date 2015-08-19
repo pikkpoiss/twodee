@@ -1,4 +1,4 @@
-.phony: build run
+.phony: build run package
 
 ICON_ASSETS = $(wildcard assets/*.icns)
 
@@ -26,15 +26,17 @@ $(BUILDROOT)/Resources/resources/%: src/resources/%
 	mkdir -p $(dir $@)
 	cp -R $< $@
 
-build/$(APPDIR)-$(VERSION).zip: \
+build/$(APPDIR)-$(VERSION).zip: build
+	cd build && zip -r $(notdir $@) $(APPDIR)
+
+build: \
 	$(BUILDROOT)/MacOS/launch.sh \
 	$(BUILDROOT)/Info.plist \
 	$(BUILDROOT)/MacOS/$(PROJECT) \
 	$(subst src/resources/,$(BUILDROOT)/Resources/resources/,$(ASSETS)) \
 	$(subst assets/,$(BUILDROOT)/Resources/,$(ICON_ASSETS))
-	cd build && zip -r $(notdir $@) $(APPDIR)
 
-build: build/$(APPDIR)-$(VERSION).zip
+package: build/$(APPDIR)-$(VERSION).zip
 
 run: build
 	$(BUILDROOT)/MacOS/launch.sh
