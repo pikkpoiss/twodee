@@ -255,9 +255,16 @@ export CGO_CFLAGS="-I$PREFIX/include"
 
 echo "CGO_CFLAGS=\"$CGO_CFLAGS\" CGO_LDFLAGS=\"$CGO_LDFLAGS\""
 
+if [[ "$PLATFORM" == "osx" ]]; then
+  PKGCFG_FLAGS="--static"
+else
+  PKGCFG_FLAGS=""
+fi
+
 # Require libraries
-go get -u -v -a github.com/scottferg/Go-SDL2/sdl
-CGO_LDFLAGS="`pkg-config --libs SDL2_mixer`" \
+CGO_LDFLAGS="`pkg-config --libs $PKGCFG_FLAGS sdl2 SDL2_image`" \
+  go get -u -v -a github.com/scottferg/Go-SDL2/sdl
+CGO_LDFLAGS="`pkg-config --libs $PKGCFG_FLAGS SDL2_mixer vorbisfile vorbis ogg`" \
   go get -u -v -a github.com/scottferg/Go-SDL2/mixer
 go get -u -v -a github.com/go-gl/glfw/v3.1/glfw
 
