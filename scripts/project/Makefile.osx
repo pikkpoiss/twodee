@@ -1,0 +1,40 @@
+.phony: build run
+
+ICON_ASSETS = $(wildcard assets/*.icns)
+
+APPDIR    = $(PROJECT)-osx-yosemite
+APPROOT   = build/$(APPDIR)
+BUILDROOT = $(APPROOT)/$(PROJECT).app/Contents
+
+$(BUILDROOT)/MacOS/launch.sh: pkg/osx/launch.sh
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(BUILDROOT)/Info.plist: pkg/osx/Info.plist
+	mkdir -p $(dir $@)
+	sed $(REPLACE) $< > $@
+
+$(BUILDROOT)/MacOS/$(PROJECT): $(SOURCES)
+	mkdir -p $(dir $@)
+	go build -o $@ src/*.go
+
+$(BUILDROOT)/Resources/%.icns: assets/%.icns
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(BUILDROOT)/Resources/resources/%: src/resources/%
+	mkdir -p $(dir $@)
+	cp -R $< $@
+
+build/$(APPDIR)-$(VERSION).zip: \
+	$(BUILDROOT)/MacOS/launch.sh \
+	$(BUILDROOT)/Info.plist \
+	$(BUILDROOT)/MacOS/$(PROJECT) \
+	$(subst src/resources/,$(BUILDROOT)/Resources/resources/,$(ASSETS)) \
+	$(subst assets/,$(BUILDROOT)/Resources/,$(ICON_ASSETS))
+	cd build && zip -r $(notdir $@) $(APPDIR)
+
+build: build/$(APPDIR)-$(VERSION).zip
+
+run: build
+	$(BUILDROOT)/MacOS/launch.sh

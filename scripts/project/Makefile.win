@@ -1,0 +1,32 @@
+.phony: build run package
+
+ICON_ASSETS = $(wildcard assets/*.icns)
+
+APPDIR    = $(PROJECT)-win
+APPROOT   = build/$(APPDIR)
+BUILDROOT = $(APPROOT)
+LIBS      = $(subst lib/win32-x64,$(BUILDROOT),$(wildcard lib/win32-x64/*.dll))
+
+$(BUILDROOT)/%.dll: lib/win32-x64/%.dll
+	mkdir -p $(dir $@)
+	cp $< $@
+
+$(BUILDROOT)/$(PROJECT).exe: $(SOURCES) $(LIBS)
+	mkdir -p $(dir $@)
+	go build -o $@ src/*.go
+
+$(BUILDROOT)/resources/%: src/resources/%
+	mkdir -p $(dir $@)
+	cp -R $< $@
+
+build/$(APPDIR)-$(VERSION).zip: build
+	cd build && /c/Program\ Files/7-Zip/7z.exe a -r $(notdir $@) $(APPDIR)
+
+build: \
+	$(BUILDROOT)/$(PROJECT).exe \
+	$(subst src/resources/,$(BUILDROOT)/resources/,$(ASSETS))
+
+package: build/$(APPDIR)-$(VERSION).zip
+
+run: build
+	cd $(BUILDROOT) && $(PROJECT).exe
