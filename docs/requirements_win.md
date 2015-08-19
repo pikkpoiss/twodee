@@ -99,3 +99,18 @@ Needed to configure some dependent libs.
 Run all commands from a Git bash window.  Note that when you update the `PATH`
 you will need to quit and restart the entire ConEmu program (not just close
 the terminal tab).
+
+
+## (OLD) Running examples
+
+This is based off of an old version of the library but should roughly match
+what is needed now.
+
+    git clone git@github.com:kurrik/twodee-examples.git
+    cd twodee-examples
+    git submodule init
+    git submodule update
+    cd examples/basic
+    PATH="$PATH;C:\mingw64\lib" go run *.go
+    PATH="/c/mingw64/lib:$PATH" go run *.go (cygwin)
+

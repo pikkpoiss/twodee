@@ -17,12 +17,34 @@ so it changes from time to time.
  - Import from Tiled native file format (http://www.mapeditor.org/)
  - Some effects shaders (like Glow)
 
+## Supported platforms
+
+This library has been tested by developing games for:
+
+ - OSX 10.10 Yosemite using x86_64 CPUs.
+ - Windows 8.1 using x86_64 CPUs.
+
+It should support:
+
+ - Linux variants using x86_64 CPUs.
+
+Other versions may work but have not been tested.  32-bit CPUs are not
+supported.
+
 ## Requirements
 
  - [Windows](docs/requirements_win.md)
  - [OSX](docs/requirements_osx.md)
 
 ## Setup
+
+This project is both a library and a set of support scripts which
+will install dependencies needed to make the library work correctly.
+
+To run the support scripts you must check out the library:
+
+    git clone https://github.com/pikkpoiss/twodee.git
+    cd twodee
 
 This library depends on various C/C++ packages.  To try and get a stable
 environment for building, sources have been included in the `lib` directory.
@@ -31,64 +53,10 @@ Golang wrapper:
 
     ./scripts/setup.sh
 
+*On Windows* this will build shared libraries in `.dll` format and install
+them to `build/usr/bin`.  These DLLs _must_ be included next to a packaged
+executable in order for the built application to be portable.
 
-# The following is out of date and will be removed shortly.
-
-## Building (Ubuntu Trusty)
-
-Install deps:
-
-    sudo apt-get install cmake libglu1-mesa-dev libxrandr-dev libxi-dev libxcursor-dev clang libglew-dev mercurial
-    sudo apt-get install libsdl1.2-dev libsdl-mixer1.2-dev libsdl-image1.2-dev
-
-Build glfw:
-
-    git clone https://github.com/glfw/glfw
-    mkdir glfw/build
-    cd glfw/build
-    cmake -DBUILD_SHARED_LIBS=1 ..
-    make
-    sudo make install
-    cd /usr/local/lib
-    sudo ln -s libglfw3.a libglfw.a
-
-Install go-gl/glfw3:
-
-    CGO_CFLAGS="-I/usr/include" \
-    CGO_LDFLAGS="`pkg-config --libs glu x11 glfw3 xrandr xxf86vm xi xcursor` -lm" \
-    go get github.com/go-gl/glfw3
-
-Install other deps:
-
-    go get github.com/go-gl/gl
-    go get code.google.com/p/freetype-go/freetype
-    go get github.com/Agon/googlmath
-
-Install SDL stuff:
-
-    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/kurrik/Go-SDL/sdl
-    CGO_CFLAGS="-I/usr/include/SDL" go get github.com/kurrik/Go-SDL/mixer
-
-## Building (Windows 8.1)
-
-### Go Library Dependencies
-(may need to put `CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib"` in front of some/all of these but it doesn't seem to need it any more for all of them.
-
-    go get -u github.com/go-gl/gl/v3.3-core/gl
-    go get -u github.com/go-gl/glfw/v3.1/glfw
-    go get -u github.com/go-gl/mathgl/mgl32
-    go get -u github.com/robertkrimen/otto
-    go get -u github.com/go-gl/glfw/v3.1/glfw
-    go get code.google.com/p/freetype-go/freetype
-    go get -u github.com/kurrik/Go-SDL/sdl
-    CGO_CFLAGS="-I C:\mingw64\include" CGO_LDFLAGS="-L C:\mingw64\lib" go get -u github.com/kurrik/Go-SDL/mixer
-
-### Twodee
-
-    git clone git@github.com:kurrik/twodee-examples.git
-    cd twodee-examples
-    git submodule init
-    git submodule update
-    cd examples/basic
-    PATH="$PATH;C:\mingw64\lib" go run *.go
-    PATH="/c/mingw64/lib:$PATH" go run *.go (cygwin)
+*On OSX* this will build static libraries in `.a` format and install them
+to `build/usr/lib`. Packaged executables linked against these libraries
+should be portable without needing to package any shared libraries.
