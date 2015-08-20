@@ -81,6 +81,10 @@ origin.
 If you rebuild the twodee libs, run the `setup_project.sh` script again.
 Be careful though, as it will overwrite any modifications.
 
+Include the twodee library by including the following path in your Go code:
+
+    "../lib/twodee/twodee"
+
 ### Checking out the project
 
 Other developers will need to follow the steps to set up the twodee library
