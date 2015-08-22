@@ -21,16 +21,18 @@ import (
 )
 
 type Grid struct {
-	Width  int32
-	Height int32
-	points []bool
+	Width     int32
+	Height    int32
+	BlockSize float32
+	points    []bool
 }
 
-func NewGrid(w, h int32) *Grid {
+func NewGrid(w, h, blocksize int32) *Grid {
 	return &Grid{
-		points: make([]bool, w*h),
-		Width:  w,
-		Height: h,
+		points:    make([]bool, w*h),
+		Width:     w,
+		Height:    h,
+		BlockSize: float32(blocksize),
 	}
 }
 
@@ -77,15 +79,16 @@ func (g *Grid) GetImage(fg, bg color.Color) *image.NRGBA {
 	return img
 }
 
-func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y, sizex, sizey float32) bool {
+func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y float32) bool {
 	// Bounds are {minx, miny, maxx, maxy}
 	// Sizex, sizey are the number of coordinate units a grid entry occupies.
 	var (
+		size  = g.BlockSize
 		fudge = float32(0.001) // Prevents item from sticking to wall when we round its coordinates.
-		minx  = int32((bounds[0] + x) / sizex)
-		miny  = int32((bounds[1] + y) / sizey)
-		maxx  = int32((bounds[2] + x - fudge) / sizex)
-		maxy  = int32((bounds[3] + y - fudge) / sizey)
+		minx  = int32((bounds[0] + x) / size)
+		miny  = int32((bounds[1] + y) / size)
+		maxx  = int32((bounds[2] + x - fudge) / size)
+		maxy  = int32((bounds[3] + y - fudge) / size)
 		i     int32
 		j     int32
 	)
@@ -99,35 +102,36 @@ func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y, sizex, sizey float32) boo
 	return false
 }
 
-func (g *Grid) FixMove(bounds mgl32.Vec4, move mgl32.Vec2, sizex, sizey float32) (out mgl32.Vec2) {
+func (g *Grid) FixMove(bounds mgl32.Vec4, move mgl32.Vec2) (out mgl32.Vec2) {
 	out = move
-	if g.squareCollides(bounds, out[0], 0.0, sizex, sizey) {
+	if g.squareCollides(bounds, out[0], 0.0) {
 		out[0] = g.GridAligned(bounds[0], sizex) - bounds[0]
 	}
-	if g.squareCollides(bounds, out[0], out[1], sizex, sizey) {
+	if g.squareCollides(bounds, out[0], out[1]) {
 		out[1] = g.GridAligned(bounds[1], sizey) - bounds[1]
 	}
 	return
 }
 
-func (g *Grid) GridAligned(x float32, sizex float32) float32 {
-	return sizex * float32(int32((x/sizex)+0.5))
+func (g *Grid) GridAligned(x float32) float32 {
+	return g.BlockSize * float32(int32((x/sizex)+0.5))
 }
 
-func (g *Grid) GridPosition(v float32, sizev float32) int32 {
-	return int32(v / sizev)
+func (g *Grid) GridPosition(v float32) int32 {
+	return int32(v / g.BlockSize)
 }
 
-func (g *Grid) InversePosition(i int32, sizei float32) float32 {
-	return float32(i)*sizei + sizei/2.0
+func (g *Grid) InversePosition(i int32) float32 {
+	return float32(i)*g.BlockSize + g.BlockSize/2.0
 }
 
-func (g *Grid) CanSee(from, to mgl32.Vec2, sizex, sizey float32) bool {
+func (g *Grid) CanSee(from, to mgl32.Vec2) bool {
 	var (
-		minx  = int32(from[0] / sizex)
-		maxx  = int32(to[0] / sizex)
-		miny  = int32(from[1] / sizey)
-		maxy  = int32(to[1] / sizey)
+		size  = g.BlockSize
+		minx  = int32(from[0] / size)
+		maxx  = int32(to[0] / size)
+		miny  = int32(from[1] / size)
+		maxy  = int32(to[1] / size)
 		slope = float32(maxy-miny) / float32(maxx-minx)
 		c     = float32(miny) - (slope * float32(minx))
 		x     int32
