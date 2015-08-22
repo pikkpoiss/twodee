@@ -20,16 +20,21 @@ import (
 	"image/color"
 )
 
+type GridItem interface {
+	Passable() bool
+	Opaque() bool
+}
+
 type Grid struct {
 	Width     int32
 	Height    int32
 	BlockSize float32
-	points    []bool
+	points    []GridItem
 }
 
 func NewGrid(w, h, blocksize int32) *Grid {
 	return &Grid{
-		points:    make([]bool, w*h),
+		points:    make([]GridItem, w*h),
 		Width:     w,
 		Height:    h,
 		BlockSize: float32(blocksize),
@@ -43,22 +48,22 @@ func (g *Grid) Index(x, y int32) int32 {
 	return g.Width*(g.Height-y-1) + x
 }
 
-func (g *Grid) Get(x, y int32) bool {
+func (g *Grid) Get(x, y int32) GridItem {
 	return g.GetIndex(g.Index(x, y))
 }
 
-func (g *Grid) GetIndex(index int32) bool {
+func (g *Grid) GetIndex(index int32) GridItem {
 	if index < 0 || index > g.Width*g.Height {
 		return false
 	}
 	return g.points[index]
 }
 
-func (g *Grid) Set(x, y int32, val bool) {
+func (g *Grid) Set(x, y int32, val GridItem) {
 	g.SetIndex(g.Index(x, y), val)
 }
 
-func (g *Grid) SetIndex(index int32, val bool) {
+func (g *Grid) SetIndex(index int32, val GridItem) {
 	if index < 0 || index > g.Width*g.Height {
 		return
 	}
@@ -69,7 +74,7 @@ func (g *Grid) GetImage(fg, bg color.Color) *image.NRGBA {
 	var img = image.NewNRGBA(image.Rect(0, 0, int(g.Width), int(g.Height)))
 	for x := 0; x < int(g.Width); x++ {
 		for y := 0; y < int(g.Height); y++ {
-			if g.Get(int32(x), int32(y)) {
+			if g.Get(int32(x), int32(y)).Passable() {
 				img.Set(x, y, fg)
 			} else {
 				img.Set(x, y, bg)
@@ -94,7 +99,7 @@ func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y float32) bool {
 	)
 	for i = minx; i <= maxx; i++ {
 		for j = miny; j <= maxy; j++ {
-			if g.Get(i, j) {
+			if g.Get(i, j).Passable() {
 				return true
 			}
 		}
@@ -139,14 +144,14 @@ func (g *Grid) CanSee(from, to mgl32.Vec2) bool {
 	)
 	for x = minx; x <= maxx; x++ {
 		y = int32(slope*float32(x) + c)
-		if g.Get(x, y) {
+		if g.Get(x, y).Opaque() {
 			// Something blocks the way
 			return false
 		}
 	}
 	for y = miny; y <= maxy; y++ {
 		x = int32((float32(y) - c) / slope)
-		if g.Get(x, y) {
+		if g.Get(x, y).Opaque() {
 			// Something blocks the way
 			return false
 		}
