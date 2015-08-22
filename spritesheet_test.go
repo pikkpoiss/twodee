@@ -55,12 +55,10 @@ func TestParseTexturePackerJSONArrayString(t *testing.T) {
 		sheet  *Spritesheet
 		frame  *SpritesheetFrame
 		err    error
-		point0 = TexturedPoint{-0.40625, -0.40625, 0.0, 0.03125, 0.41328412}
-		point1 = TexturedPoint{-0.40625, 0.40625, 0.0, 0.03125, 0.5092251}
-		point2 = TexturedPoint{0.40625, -0.40625, 0.0, 0.4375, 0.41328412}
-		point3 = TexturedPoint{0.40625, 0.40625, 0.0, 0.4375, 0.5092251}
+		expectedW float32 = 0.8125
+		expectedH float32 = 0.8125
 	)
-	if sheet, err = ParseTexturePackerJSONArrayString(TEST_ARRAY_STRING); err != nil {
+	if sheet, err = ParseTexturePackerJSONArrayString(TEST_ARRAY_STRING, 32); err != nil {
 		t.Fatalf("Problem parsing JSON array: %v", err)
 	}
 	if sheet.GetFrame("non_existent_frame.png") != nil {
@@ -69,16 +67,10 @@ func TestParseTexturePackerJSONArrayString(t *testing.T) {
 	if frame = sheet.GetFrame("frame01.png"); frame == nil {
 		t.Fatalf("GetFrame with known name should return non-nil")
 	}
-	if frame.Points[0] != point0 {
-		t.Fatalf("Invalid point, got %v, expected %v", frame.Points[0], point0)
+	if frame.Width != expectedW {
+		t.Fatalf("Invalid width, got %v, expected %v", frame.Width, expectedW)
 	}
-	if frame.Points[1] != point1 {
-		t.Fatalf("Invalid point, got %v, expected %v", frame.Points[1], point1)
-	}
-	if frame.Points[2] != point2 {
-		t.Fatalf("Invalid point, got %v, expected %v", frame.Points[2], point2)
-	}
-	if frame.Points[3] != point3 {
-		t.Fatalf("Invalid point, got %v, expected %v", frame.Points[3], point3)
+	if frame.Height != expectedH {
+		t.Fatalf("Invalid height, got %v, expected %v", frame.Height, expectedH)
 	}
 }
