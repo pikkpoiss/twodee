@@ -54,7 +54,7 @@ func (g *Grid) Get(x, y int32) GridItem {
 
 func (g *Grid) GetIndex(index int32) GridItem {
 	if index < 0 || index > g.Width*g.Height {
-		return false
+		return nil
 	}
 	return g.points[index]
 }
@@ -71,10 +71,14 @@ func (g *Grid) SetIndex(index int32, val GridItem) {
 }
 
 func (g *Grid) GetImage(fg, bg color.Color) *image.NRGBA {
-	var img = image.NewNRGBA(image.Rect(0, 0, int(g.Width), int(g.Height)))
+	var (
+		img  = image.NewNRGBA(image.Rect(0, 0, int(g.Width), int(g.Height)))
+		item GridItem
+	)
 	for x := 0; x < int(g.Width); x++ {
 		for y := 0; y < int(g.Height); y++ {
-			if g.Get(int32(x), int32(y)).Passable() {
+			item = g.Get(int32(x), int32(y))
+			if item != nil && item.Passable() {
 				img.Set(x, y, fg)
 			} else {
 				img.Set(x, y, bg)
@@ -96,10 +100,12 @@ func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y float32) bool {
 		maxy  = int32((bounds[3] + y - fudge) / size)
 		i     int32
 		j     int32
+		item  GridItem
 	)
 	for i = minx; i <= maxx; i++ {
 		for j = miny; j <= maxy; j++ {
-			if g.Get(i, j).Passable() {
+			item = g.Get(i, j)
+			if item != nil && item.Passable() {
 				return true
 			}
 		}
@@ -110,16 +116,16 @@ func (g *Grid) squareCollides(bounds mgl32.Vec4, x, y float32) bool {
 func (g *Grid) FixMove(bounds mgl32.Vec4, move mgl32.Vec2) (out mgl32.Vec2) {
 	out = move
 	if g.squareCollides(bounds, out[0], 0.0) {
-		out[0] = g.GridAligned(bounds[0], sizex) - bounds[0]
+		out[0] = g.GridAligned(bounds[0]) - bounds[0]
 	}
 	if g.squareCollides(bounds, out[0], out[1]) {
-		out[1] = g.GridAligned(bounds[1], sizey) - bounds[1]
+		out[1] = g.GridAligned(bounds[1]) - bounds[1]
 	}
 	return
 }
 
 func (g *Grid) GridAligned(x float32) float32 {
-	return g.BlockSize * float32(int32((x/sizex)+0.5))
+	return g.BlockSize * float32(int32((x/g.BlockSize)+0.5))
 }
 
 func (g *Grid) GridPosition(v float32) int32 {
@@ -141,17 +147,20 @@ func (g *Grid) CanSee(from, to mgl32.Vec2) bool {
 		c     = float32(miny) - (slope * float32(minx))
 		x     int32
 		y     int32
+		item  GridItem
 	)
 	for x = minx; x <= maxx; x++ {
 		y = int32(slope*float32(x) + c)
-		if g.Get(x, y).Opaque() {
+		item = g.Get(x, y)
+		if item != nil && item.Opaque() {
 			// Something blocks the way
 			return false
 		}
 	}
 	for y = miny; y <= maxy; y++ {
 		x = int32((float32(y) - c) / slope)
-		if g.Get(x, y).Opaque() {
+		item = g.Get(x, y)
+		if item != nil && item.Opaque() {
 			// Something blocks the way
 			return false
 		}

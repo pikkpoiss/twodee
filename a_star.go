@@ -118,7 +118,7 @@ func (g *Grid) GetPath(x1, y1, x2, y2 int32) (out []GridPoint, err error) {
 				var nx, ny int32
 				nx = current.x + xm
 				ny = current.y + ym
-				if g.Get(nx, ny) == true {
+				if g.Get(nx, ny).Passable() == true {
 					// Spot is occupied
 					continue
 				}
