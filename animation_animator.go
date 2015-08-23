@@ -22,7 +22,7 @@ import (
 type AnimatorCallback func()
 
 type Animator interface {
-	SetCallback(callback AnimatorCallback)
+	SetCallback(Callback AnimatorCallback)
 	IsDone() bool
 	Update(elapsed time.Duration) time.Duration
 	Reset()
@@ -32,11 +32,11 @@ type Animator interface {
 type BoundedAnimation struct {
 	Elapsed  time.Duration
 	Duration time.Duration
-	callback AnimatorCallback
+	Callback AnimatorCallback
 }
 
-func (a *BoundedAnimation) SetCallback(callback AnimatorCallback) {
-	a.callback = callback
+func (a *BoundedAnimation) SetCallback(Callback AnimatorCallback) {
+	a.Callback = Callback
 }
 
 func (a *BoundedAnimation) IsDone() bool {
@@ -46,8 +46,8 @@ func (a *BoundedAnimation) IsDone() bool {
 func (a *BoundedAnimation) Update(elapsed time.Duration) time.Duration {
 	a.Elapsed += elapsed
 	if a.IsDone() {
-		if a.callback != nil {
-			a.callback()
+		if a.Callback != nil {
+			a.Callback()
 		}
 		return a.Elapsed - a.Duration
 	}
@@ -63,11 +63,11 @@ func (a *BoundedAnimation) Delete() {
 
 type GroupedAnimation struct {
 	animators []Animator
-	callback  AnimatorCallback
+	Callback  AnimatorCallback
 }
 
-func (a *GroupedAnimation) SetCallback(callback AnimatorCallback) {
-	a.callback = callback
+func (a *GroupedAnimation) SetCallback(Callback AnimatorCallback) {
+	a.Callback = Callback
 }
 
 func (a *GroupedAnimation) IsDone() bool {
@@ -96,8 +96,8 @@ func (a *GroupedAnimation) Update(elapsed time.Duration) time.Duration {
 		}
 	}
 	if done {
-		if a.callback != nil {
-			a.callback()
+		if a.Callback != nil {
+			a.Callback()
 		}
 		return total
 	}
@@ -121,11 +121,11 @@ type ChainedAnimation struct {
 	animators []Animator
 	loop      bool
 	index     int
-	callback  AnimatorCallback
+	Callback  AnimatorCallback
 }
 
-func (a *ChainedAnimation) SetCallback(callback AnimatorCallback) {
-	a.callback = callback
+func (a *ChainedAnimation) SetCallback(Callback AnimatorCallback) {
+	a.Callback = Callback
 }
 
 func (a *ChainedAnimation) IsDone() bool {
@@ -143,8 +143,8 @@ func (a *ChainedAnimation) Update(elapsed time.Duration) time.Duration {
 					a.animators[a.index].Reset()
 				}
 				a.index = (a.index + 1) % count
-				if !a.loop && a.index == 0 && a.callback != nil {
-					a.callback()
+				if !a.loop && a.index == 0 && a.Callback != nil {
+					a.Callback()
 					break
 				}
 			}
@@ -187,8 +187,8 @@ func NewLinearAnimation(target *float32, from, to float32, duration time.Duratio
 	}
 }
 
-func (a *LinearAnimation) Update(elapsed time.Duration) {
-	a.BoundedAnimation.Update(elapsed)
+func (a *LinearAnimation) Update(elapsed time.Duration) (remainder time.Duration) {
+	remainder = a.BoundedAnimation.Update(elapsed)
 	var (
 		denom = float64(a.BoundedAnimation.Duration)
 		numer = math.Min(float64(a.BoundedAnimation.Elapsed), denom)
@@ -196,4 +196,38 @@ func (a *LinearAnimation) Update(elapsed time.Duration) {
 		value = pct*(a.to-a.from) + a.from
 	)
 	*a.target = value
+	return
+}
+
+type EaseOutAnimation struct {
+	BoundedAnimation
+	target *float32
+	from   float32
+	to     float32
+}
+
+func NewEaseOutAnimation(target *float32, from, to float32, duration time.Duration) *EaseOutAnimation {
+	return &EaseOutAnimation{
+		BoundedAnimation{
+			0,
+			duration,
+			nil,
+		},
+		target,
+		from,
+		to,
+	}
+}
+
+func (a *EaseOutAnimation) Update(elapsed time.Duration) (remainder time.Duration) {
+	remainder = a.BoundedAnimation.Update(elapsed)
+	var (
+		denom = float64(a.BoundedAnimation.Duration)
+		numer = math.Min(float64(a.BoundedAnimation.Elapsed), denom)
+		pct   = float32(numer / denom)
+		c     = a.to - a.from
+		value = -c*pct*(pct-2) + a.from
+	)
+	*a.target = value
+	return
 }
