@@ -44,7 +44,7 @@ func (c *Camera) SetWorldBounds(bounds Rectangle) (err error) {
 		bounds.Min.Y(),
 		bounds.Max.Y(),
 		1,
-		0)
+		-1)
 	c.Inverse, err = GetInverseMatrix(c.Projection)
 	return
 }
