@@ -143,7 +143,7 @@ func (tr *TextRenderer) Bind() error {
 	return nil
 }
 
-func (tr *TextRenderer) Draw(tex *Texture, x, y float32) (err error) {
+func (tr *TextRenderer) Draw(tex *Texture, x, y, scale float32) (err error) {
 	gl.ActiveTexture(gl.TEXTURE0)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
@@ -152,7 +152,7 @@ func (tr *TextRenderer) Draw(tex *Texture, x, y float32) (err error) {
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
-	gl.Uniform3f(tr.ScaleLoc, float32(tex.Width), float32(tex.Height), 1)
+	gl.Uniform3f(tr.ScaleLoc, float32(tex.Width) * scale, float32(tex.Height) * scale, 1)
 	if e := gl.GetError(); e != 0 {
 		return fmt.Errorf("ERROR: %X", e)
 	}
