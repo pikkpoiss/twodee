@@ -19,6 +19,7 @@ import (
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/raster"
 	"github.com/golang/freetype/truetype"
+	"golang.org/x/image/math/fixed"
 	"image"
 	"image/color"
 	"image/draw"
@@ -92,7 +93,7 @@ func NewFontFace(path string, size float64, fg, bg color.Color) (fontface *FontF
 	context.SetFont(font)
 	context.SetFontSize(size)
 	context.SetDPI(72)
-	scale = float32(context.PointToFix32(size) >> 8)
+	scale = float32(context.PointToFixed(size) >> 8)
 	fontface = &FontFace{
 		font:    font,
 		charw:   scale * float32(bounds.XMax-bounds.XMin),
@@ -110,7 +111,7 @@ func (ff *FontFace) GetText(text string) (t *Texture, err error) {
 		bg        image.Image
 		dst       draw.Image
 		shortened draw.Image
-		pt        raster.Point
+		pt        fixed.Point26_6
 		w         int
 		h         int
 	)
