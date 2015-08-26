@@ -17,7 +17,6 @@ package twodee
 import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/golang/freetype"
-	"github.com/golang/freetype/raster"
 	"github.com/golang/freetype/truetype"
 	"golang.org/x/image/math/fixed"
 	"image"
