@@ -15,10 +15,10 @@
 package twodee
 
 import (
-	"code.google.com/p/freetype-go/freetype"
-	"code.google.com/p/freetype-go/freetype/raster"
-	"code.google.com/p/freetype-go/freetype/truetype"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/golang/freetype"
+	"github.com/golang/freetype/raster"
+	"github.com/golang/freetype/truetype"
 	"image"
 	"image/color"
 	"image/draw"
