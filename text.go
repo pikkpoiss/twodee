@@ -23,6 +23,7 @@ import (
 	"image/color"
 	"image/draw"
 	"io/ioutil"
+	"fmt"
 )
 
 type TextCache struct {
@@ -88,11 +89,12 @@ func NewFontFace(path string, size float64, fg, bg color.Color) (fontface *FontF
 		return
 	}
 	bounds = font.Bounds(1)
+	fmt.Printf("bounds %v\n", bounds)
 	context = freetype.NewContext()
 	context.SetFont(font)
 	context.SetFontSize(size)
 	context.SetDPI(72)
-	scale = float32(context.PointToFixed(size) >> 8)
+	scale = float32(context.PointToFixed(size) / 64)
 	fontface = &FontFace{
 		font:    font,
 		charw:   scale * float32(bounds.XMax-bounds.XMin),
@@ -130,7 +132,7 @@ func (ff *FontFace) GetText(text string) (t *Texture, err error) {
 	// if err = WritePNG("hello.png", dst); err != nil {
 	// 	return
 	// }
-	shortened = image.NewRGBA(image.Rect(0, 0, int(pt.X/256), h))
+	shortened = image.NewRGBA(image.Rect(0, 0, int(pt.X/64), h))
 	draw.Draw(shortened, shortened.Bounds(), dst, image.ZP, draw.Src)
 	t, err = GetTexture(shortened, gl.NEAREST)
 	return
